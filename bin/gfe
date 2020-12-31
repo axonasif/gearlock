@@ -1,0 +1,24 @@
+#!/gearlock/bin/bash
+case "$1" in
+-v)
+echo "0.1"
+;;
+*)
+clear
+do_job(){
+ls | nl -s "]. "
+echo -e "\n- \033[1;37mb\033[0m for back; \033[0;32mx\033[0m for exit\n+ GearLock simple fe 0.1 (BETA)"
+read -p "++ Select anything >> " c
+
+if [ $c = "b" ]; then clear; cd ../; fi
+if [ $c = "x" ]; then echo "- Exiting..."; sleep 0.5; clear; exit 0; fi;
+}
+while true; do
+do_job
+VAR=$(ls | nl -s "]. "| grep "\b${c}]. \b" | sed "s|.*]. ||")
+if [ -d "${VAR}" ]; then clear; cd "${VAR}"; do_job; fi
+VAR=$(ls | nl -s "]. "| grep "\b${c}]. \b" | sed "s|.*]. ||")
+if [ -f "${VAR}" ]; then clear; nano "${VAR}"; do_job; fi
+done
+;;
+esac

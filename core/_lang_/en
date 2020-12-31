@@ -1,0 +1,365 @@
+# # # Do not modify any of these mentioned below
+# # @XYZ@
+# # \n
+# # \c
+# # ${varibles}
+# # numbers
+
+
+
+# Ui/Interface Strings
+_press_enter_="Press [${GREEN}Enter${RC}] key to continue"
+_enter_number_choice_="Enter a number"
+_reboot_prompt_="Rebooting in ${BLUE}5${RC} seconds"
+_recovery_mode_reboot_not_required_="No reboot required in recovery mode"
+_not_available_in_recovery_mode_="Not available in RECOVERY mode"
+_press_alt_f7_="Press ${YELLOW}Alt+F7${RC} for GUI"
+
+_function_disabled_="This is either disabled or not available for now"
+_chcking_net_connection_="Checking if you are connected to internet by pinging google"
+_net_connection_unavailable_="Your internet connection might be either down or you are not connected to the internet\n~ Please make sure you are porperly connected to the internet"
+_osroot_not_located_="Failed to locate OSROOT.\nError code 110"
+_sel_interface_theme_="Select Interface Theme"
+_infinityUi_spoiler_="This will the the last & final interface theme for GearLock which will surely make you say *WoW*.\nStay tuned"
+_supercharging_notice_="Your system is not supercharged !\nYou must do it right now! Use option 3 in main-menu"
+_new_update_notice_="New Update found, you must perform the update!\nGo to *More > Updater*"
+_gearrec_info_="Open Android-x86 command-terminal by pressing Alt + F1\nThen type gearrec and hit enter!"
+
+
+# Small phrases
+_attention_="Attention"
+_warning_="Warning"
+_notice_="Notice"
+_info_="Info"
+_example_="Example"
+_information_="Information"
+_yes_="Yes"
+_no_="No"
+_done_="Done"
+_select_="Select"
+_confirm_="Confirm"
+_new_update_="New Update"
+_select_folder_="Select Folder"
+_googleless_mode_="GoogleLess-Mode"
+_enter_either_="Enter either @DUMMY@"
+
+
+_googleless_mode_info_="This GoogleLess-Mode temporarily disable google apps for the current session to reduce the background activities. They will be auto-enabled again over the next boot"
+
+
+# ClassicUi specific
+_footer_items_classicui_="[a].About [h].Help [s].Status [u].Updater [c].Settings [x].Exit [g].GoogleLess-Mode [d].Dev-Zone [r].Record-Screen"
+_sub_footer_items_="[b].Back"
+
+_footer_items_extn_classicui_="[b].Back [i].Install-Extensions [r].Refresh [h].Help"
+_footer_items_gxpm_classicui_="[b].Back [i].View-Installed [u].Uninstall [r].Refresh [s].Reboot"
+_footer_input_prompt_classicui_="Ehh, Whats cooki'n ^_^ Doc?"
+
+_redirecting_to_gxpm_="You are being redirected to GearLock Package & Extension Manager, you can install extensions from there if you have any installable extension package downloaded"
+_extn_not_found_="No installed extension found.\n\nYou can run them here once you install some extension from the package manager"
+
+_body_gxpm_info_not_found_classicui_="No GearLock Package/Extension found...!\n         You need to place GearLock Packages/Extensions on ${GREEN}gearload${RC} folder using ${PURPLE}FX file Manager${RC}\n         Then ${YELLOW}[r].Refresh${RC}"
+
+_noinput_classicui_="You did not enter anything"
+_wronginput_classicui_="dude, are you lost? na..da"
+
+
+
+# MetroUi specific
+_press_esc_metroui_info_="Press ESC to go-back / exit"
+_metroui_more_menu_item_1_="About"
+_metroui_more_menu_item_2_="Updater"
+_metroui_more_menu_item_3_="Dev-Zone"
+_metroui_more_menu_item_4_="Settings"
+_metroui_more_menu_item_5_="Record-Screen"
+_metroui_more_menu_item_6_="Google-Less Mode"
+
+# GxpmUi specific
+_gxpm_menu_item_1_="Install from custom location"
+_gxpm_menu_item_2_="Install from gearload folder"
+_gxpm_menu_item_3_="Uninstall Extension / Package"
+_gxpm_menu_item_4_="View Install / Uninstall Log"
+
+_gxpm_full_name_="GearLock Extension & Package Manager"
+_gxpm_full_name_installer_="GearLock Extension & Package Installer"
+_gxpm_full_name_uninstaller_="GearLock Extension & Package Uninstaller"
+_gxpm_full_name_zip_installer_="GearLock Flashable Zip Installer"
+
+# GxpmUi footer buttons
+_open_="Open"
+_back_="Back"
+_exit_="Exit"
+_uninstall_="Uninstall"
+_view_log_="View-Log"
+
+_zip_flash_info_="You are about to install a flashable ZIP, but you should know that 99% of them were not made for android-x86. Thus most of them are likely to fail and GearLock has nothing to do about that, becuase they we're intended to be installed on mobile-phones.\n\n\nSure to proceed with the following zip ?"
+_sure_to_install_="Are you sure to install"
+_sure_to_uninstall_="Are you sure to uninstall"
+_no_uninstallable_found_="No uninstallable package/extension found"
+_sure_to_run_="Are you sure to run"
+_nothing_was_found_="Nothing was found !"
+_folder_is_empty_="The folder is empty"
+_installed_uninstalled_pak_extn_="Installed/Uninstalled Packages/Extensions"
+_gearload_dir_empty_info_="No package / extension found.\n\nYou need to put them in \Z1gearload\Zn folder from \Z2fx\Zn file-manager"
+_as_you_wish_="Okay, as you wish"
+_beep_boop_="Beep beep, boop beep ?"
+_is_not_gxp_="does not sound like a GearLock package or extension.\n\n  Do it !?"
+_metroui_gxpm_header_meta_="Navigate to your package/extension \n \nCurrent location"
+_reboot_manually_gxpm_info_="A package / extension has placed a reboot request, reboot manually once you're done!"
+_extensions_help_info_="Extensions are custom-made functions by developers to extend gearlock.\nExtensions can operate within gearlock taking the full advantage of GearLock."
+
+
+# GearLock Extension Runner specific
+_gearlock_extension_runner_="GearLock Extension Runner"
+
+
+
+
+# main.src/3
+_checking_system_="Checking system"
+_system_is_supercharged_="The system is SuperCharged"
+_old_sys_files_found_="Old system files found, removing them"
+_supercharge_extend_img_info_="SuperCharging by extending system image to 6GB size"
+_supercharge_decompress_img_info_="SuperCharging by decompressing system image"
+_removing_sys_img_="Removing system image"
+_syncing_drive_="Syncing your drive"
+_decompression_successful_="Decompression successful"
+_something_went_wrong_="Something went wrong, operation failed"
+
+# main.src/4
+_fsbr_menu_item_1_="Backup Data FileSystem"
+_fsbr_menu_item_2_="Backup System + Boot FS"
+_fsbr_menu_item_3_="Restore a Saved Backup"
+_fsbr_menu_item_4_="View Backup & Restore Log"
+_fsbr_menu_item_5_="Wipe /data FileSystem"
+_fsbr_menu_item_6_="Wipe /data/dalvik-cache"
+
+_gearlock_fsbr_="GearLock FileSystem Backup & Restoration"
+_gearlock_fsbr_logs_="FileSystems Backup & Restoration Logs"
+_sel_output_dir_meta_="Browse to where you want to save your backup and use ${MBOLD}${MRED}< Select Folder >${MRC} \nIt is suggested that you use ${MBOLD}${MPINK}gearload${MRC} folder since it's unrelated with your FileSystems \n \nCurrent location"
+_sel_backup_dir_meta_="Browse to the folder where you have your backup FileSystems saved then ${MBOLD}${MRED}< Open >${MRC} it \n \nCurrent location"
+_fs_restore_unavailable_="You can not restore while being on GUI, it will crash your system.\n \nYou need to use RECOVERY-MODE"
+_sure_to_restore_="Are you sure to restore"
+_is_not_backup_fs_="@DUMMY@ is not a backup FileSystem"
+_fs_log_is_empty_="FileSystems logfile is empty"
+_is_not_folder_="@DUMMY@ is not a folder"
+_confirm_backup_fs_name_="Confirm your backupFS name"
+_creating_backup_fs_info_="Creating a compressed backup FileSystem of @DUMMY@"
+_operation_complete_="Operation complete"
+_detecting_fs_time_="Detecting FS type"
+_restore_method_prompt_="How do you want to restore the backup"
+
+
+# emisc.src/
+## 1
+# _sure_to_wipe_data_="Are you sure that you want to clear your data"
+# _wiping_data_="Clearing your data"
+## 2
+_gearlock_partition_mounter_="GearLock Partition Mounter"
+_partition_table_="Partition Table"
+_sel_partition_prompt_="Select the ${BGREEN}partition${RC} number that you want to mount"
+_wronginput_try_again_="Wrong input, please enter again correctly"
+_trying_to_mount_it_="Trying to mount it"
+_failed_to_mount_="Seems like it failed to mount it"
+_successfully_mounted_="Successfully mounted @DUMMY@ at"
+## 4
+_gearlock_data_system_img_extender_="GearLock System & Data Image Extender"
+_not_required_for_ext4_="This is not required on ext4 partitions since it doesnt need to use .img format."
+_if_still_continue_="Do you still want to continue ?"
+# _preparing_environment_info_="Preparing the environment"
+_enter_custom_img_size_="Enter your image size in ${YELLOW}MB${RC} (Will be converted into byte format)"
+_which_image_to_extend_="Which image do you want to extend"
+_specify_img_size_method_="How do you want to specify the image size"
+_from_preset_="From preset"
+_custom_size_="Custom size"
+_sel_preset_img_size_="Select your @DUMMY@.img size"
+## 5
+_gearlock_resolution_changer_="GearLock Resolution Changer"
+_current_resolution_is_="Current resulation is:"
+_current_dpi_is_="Current DPI is:"
+_gearlock_resolution_changer_header_info_="Do remember, the bigger the resulation, the more load over your hardware"
+_how_set_it_="How do you want to set it"
+_setting_res_="Setting @DUMMY@ as resulation"
+_enter_custom_res_prompt_="Enter your custom resulation value"
+_setting_resolution_info_="Setting @DUMMY@ as resolution"
+_restoring_roig_resolution_="Restoring your original resolution"
+## 6
+_how_do_it_="How do you want to do it"
+_dw_install_latest_magisk_="Download and install the latest version (Recommended)"
+_sel_custom_magisk_zip_="Select a custom magisk.zip locally"
+_sel_custom_magisk_zip_prompt_="Select your desired magisk.zip"
+_gearlock_will_use_this_="Okay, now gearlock will use @DUMMY@"
+_put_magisk_zip_gearload_info_="Put your ${YELLOW}magisk.zip${RC} in ${RC}gearload${RC} folder, then press ${BGREEN}Enter${RC}"
+_fetching_latest_magisk_="Fetching latest magisk version from ${PURPLE}topjohnwu${RC}@${ORANGE}github/Magisk${RC}"
+_latest_magisk_is_="Latest Mgaisk version is: ${BGREEN}@DUMMY@${RC}"
+_downloading_magisk_="Downloading ${BRED}Magisk @DUMMY@${RC}"
+_download_was_interrupted_="The download was interrupted, try again"
+_unzipping_magisk_="Unzipping magisk.zip"
+_cleaning_unnecessary_merging_required_="Cleaning up unnecessary files & merging required files altogether"
+_gearlock_is_generating_bootimg_="GearLock is generating a boot.img"
+_failed_to_locate_file_="Failed to get @DUMMY@ location"
+_pushing_gen_bootimg_="Pushing the generated boot.img"
+_compressing_patched_ramdisk_="Compressing the patched ramdisk"
+_saving_ramdisk_in_sudb_="Saving this newly patched ramdisk in GearLock su-handler db"
+_replacing_old_ramdisk_="Replacing your current ramdisk.img with the new patched one"
+_installing_magisk_app_="Installing magisk app"
+_operation_successful_="Operation successfull"
+_reboot_to_see_changes_="Reboot to see changes"
+## 7
+_current_cpu_govs_="Current CPU governors"
+_available_cpu_govs_="Available CPU governors"
+_sel_what_to_do_="Select what do you want to do"
+_sel_what_to_change_="What do you want to change"
+_phrase_X_changer_="@DUMMY@ Changer"
+_phrase_X_freq_="@DUMMY@ frequency"
+_sel_target_X_="Select your terget @DUMMY@"
+_must_close_running_apps_="You must close all running applications before using this"
+_auto_apply_each_boot_prompt_="Do you also want GearLock to auto-apply @DUMMY@ on each boot ?"
+_generated_gbscript_to_autoapply_="Generated a GearBoot post-fs script to auto-apply @DUMMY@"
+_cpu_X_successfully_set_to_="CPU @DUMMY@ successfully set to"
+_cpu_freq_details_header_="Core | Min | Current | Max"
+## 8
+# _sure_to_wipe_dalvik_cache_="Are you sure that you want to clear your dalvik-cache ??"
+# _wiping_dalvik_cache_info_="Clearing your dalvik-cache"
+## 9
+_gearlock_mac_changer_="GearLock MAC Changer"
+_current_mac_addr_by_dev_="Current MAC address by device"
+_turn_off_wifi_dev_info_="Please turn off wifi manually if you have before using this, otherwise it may not work properly"
+_sure_to_change_mac_="Do you want to change your MAC address ???"
+_taking_down_net_devs_="Taking down network devices"
+_evaluating_mac_info_="Evaluating MAC for @DUMMY@"
+_turning_net_devs_back_on_="Turning network devices back on"
+_successfully_set_ran_mac_="Successfully evaluated MAC to @DUMMY@ for all network devices"
+## 10
+_fetching_latest_opengapps_info_="Trying to fetch info about the latest release of OpenGapps for @DUMMY@, it may take a while"
+_gearlock_will_dw_X_gapps_="GearLock will now download ${PINK}@DUMMY@${RC}"
+_for_other_gapps_download_manually_="If you want to use some other variant then download manually and install it with GXPM"
+_pushing_opengapps_to_gxpm_="Pushing opengapps.zip to ${GREEN}GearLock Package Manager${RC} ...\n+ It will take care of the rest"
+_opengapps_dw_failed_="The download might have failed, can not contine, you better try again later"
+_failed_to_gather_opengapps_info_="It seem to have failed to gather information about the latest release, you might want to manually download and install with GearLock"
+
+
+# gst.src/
+## 4
+_current_status_="Current status"
+_phrase_is_active_="is active"
+_phrase_is_unactive_="is inactive or status not unavailable"
+_disable_="Disable"
+_enable_="Enable"
+_not_permanent_info_="Note: this is not permanent, after reboot it will be auto-activated as usual"
+_X_is_already_active_="@DUMMY@ might be already active or something else is wrong"
+
+
+# gxpm/
+## install
+_phrase_running_job_="Running JOB"
+_phrase_installation_failed_="Installation Failed"
+_phrase_gxpm_header_credit_="Developed by @AXON & Powered by"
+_phrase_gen_unins_meta_="This uninstallation script was autogenerated by _GearLock_"
+## uninstall
+_phrase_uninstallation_failed_="Uninstallation of @DUMMY@ failed"
+_phrase_running_custom_unins_func_="Running the custom merged uninstallation function"
+_phrase_rem_files_from_auto_gen_="Removing files from gearlock generated list"
+## extra
+_phrase_gxpm_com_public_jobs_="GXPM Completed Public JOBS"
+_phrase_X_is_requesting_reboot_="This @DUMMY@ is requesting to reboot"
+_phrase_allow_to_reboot_="Allow to ${RED}reboot${RC}?"
+## install-zip
+_gearlock_is_verifying_X_integrity_="GearLock is verifying @DUMMY@ integrity"
+_input_zip_is_broken_="The zip seems to be broken"
+_not_flashable_zip_="@DUMMY@ is not a flashable zip"
+_gearlock_is_verifying_X_signature_="GearLock is verifying @DUMMY@ signature"
+_signature_verification_failed_="Zip verification failed"
+_flashing_X_info_="Flashing @DUMMY@, wait patiently"
+_might_need_to_reboot_info_="You might need to reboot if necessary"
+_raw_flash_log_is_at_="Raw flash log is saved at @DUMMY@"
+_successfully_installed_X_="Successfully installed @DUMMY@"
+_zip_installation_failed_="The installation of @DUMMY@ might have failed"
+
+# updater
+_fetching_gearlock_update_info_="Fetching update information from GearLock web server"
+_failed_to_fetch_gearlock_update_info_="Failed to fetch update information, please try again"
+
+# settings
+_settings_back_title_="GearLock Settings"
+_settings_title_="Press <space> or click to enable or disable the selected option"
+_settings_extra_instructions_="Note: '*' means enabled, also pressing \Z1ESC\Zn will disable everything.\nYou can also do advanced customization by editing \Z2$GEARLOCK_RC\Zn"
+## settings opts
+_settings_bootsound_info_="The bootup sound which gets played when you hit the GUI"
+_settings_gtty_info_="It's an additional command terminal on pressing ALT+F8"
+_settings_update_info_="Whether to check for GearLock updates and being notifed"
+_settings_default_theme_info_="Whether to set the current interface theme as default"
+_settings_norecovery_info_="When enabled, it bypasses the recovery screen countdown prompt"
+_settings_fixfs_info_="When enabled, it quick checks & repairs your ExtFS / .img on each boot"
+
+_ui_about_msg_="
+GearLock is a GUI & Recovery program developed with with lots of time, patience and love by SupremeGamers.
+The initial development of GearLock started in 2019 as a part of the 'PhoenixOS DarkMatter' project.
+There are more people who were partially involved with the development who I would like to mention.
+
+    They are :
+        * HMTheBoy154 (Contibutor)
+        * Night (Contibutor)
+        * Mido Fayad (Contibutor & Donator)
+        * Ahmad Moemen (Contibutor)
+        * Diaz (Donator)
+        * rk (Donator)
+
+    I'd also like to thank :
+        * Igor Pavlov (p7zip)
+        * mcmilk (p7zip zstd plugin)
+        * Jack Palevich (Terminal Emulator)
+        * Roumen Petrov (Terminal Emulator betterments)
+
+I also want to thank everyone else who tried to contribute for our community throughout GearLock.
+GearLock is open for all Android-x86 distributions and comes with ABSOLUTELY NO WARRANTY.
+It is not responsible for any kind of loss caused by a third-party extension/package/modification.
+Copyright (c) $YEAR SupremeGamers. For more information and cool stuff visit supreme-gamers.com
+"
+
+
+
+_ui_help_msg_="@1 What does ${BRED}SuperCharge System${RC} mean ?
+* This function moves all the compressed files inside your system.img into an indipendent system folder in your OS root. (Only valid for ext partitions)
+* In result you get better performance, stability & then it's possible to directly modify the system files from windows.
+* Note: For NTFS and other kinds of partitions and for android7+ GearLock will extend the size of system.img upto 6GB instead of decompressing.
+
+@2 Can I backup my total ${YELLOW}data / system${RC} directory and restore it later ?
+* Yes, you can. Use option ${BPURPLE}>> FS Backup & Restoration${RC}
+
+@3 ${YELLOW}How to install a gearlock package/extension ?${RC}
+* Download the gearlock package/extension and move it to ${BBLUE}gearload${RC} folder from FX File Manager.
+* Then use option ${BPURPLE}>> Install / Uninstall (GXPM)${RC}
+* Protip: You can also select from custom location.
+
+@5 How can I build/make a Custom GearLock Package/Extension ? (Developers Only)
+* Hop into the extended Developer-Workstation from ${BBLUE}>> More > Dev-Zone${RC}
+* You can also build a kernel/mesa package without doing anything directly from your booted mesa/kernel !
+
+@6 How can I leave the command-terminal ?
+* Press ${BPURPLE}Alt+F7 / fn+Alt+F7${RC} [for android_x86 command line only]
+
+@7 How can I receive OTA updates?
+* You will receive notification when there's a new version available.
+* Use ${BBLUE}>> More > Updater${RC} option on GearLock for checking/performing an OTA update.
+
+@8 Can I update/install ${BPURPLE}magisk-core${RC} directly from GearLock?
+* Yes, go to ${GREEN}>> Extra misc. functions > Magisk Installer / Updater${RC}
+
+@9 How to fix ${BRED}game-crash / blackscreen (unity-engine)${RC} ?
+* Use ${BGREEN}>> Game / System Tweaks > Unity Game Engine fix${RC}
+
+@10 How to switch Su-Handler program ${BPURPLE}(SuperSU/Magisk)${RC} ?
+* Yes, go check ${RED}>> Game / System Tweaks${RC}
+
+@11 How to purge / remove extra kernel modules ?
+* Yes, go check ${RED}>> Game / System Tweaks${RC}
+
+@12 Can I debloat / unGoogle my system ?
+* Yes, go check ${RED}>> Game / System Tweaks${RC}
+
+@13 Can I wipe my /data ?
+* Yes, go check ${RED}>> Extra misc. functions${RC}
+
+
+~$ Last edited by AXON on 17-10-2020"

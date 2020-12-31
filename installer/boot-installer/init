@@ -1,0 +1,114 @@
+#!/bin/busybox sh
+#
+# By Chih-Wei Huang <cwhuang@linux.org.tw>
+# and Thorsten Glaser <tg@mirbsd.org>
+#
+# Last updated 2018/01/26
+#
+# License: GNU Public License
+# We explicitely grant the right to use the scripts
+# with Android-x86 project.
+#
+# This customized initrd.img is not for booting android
+# and is only for installing gearlock on bootup.
+
+PATH=/sbin:/bin:/system/bin:/system/xbin; export PATH
+
+# early boot
+if test x"$HAS_CTTY" != x"Yes"; then
+	# initialise /proc and /sys
+	busybox mount -t proc proc /proc
+	busybox mount -t sysfs sys /sys
+	# let busybox install all applets as symlinks
+	busybox --install -s
+	# spawn shells on tty 2 and 3 if debug or installer
+	if test -n "$DEBUG" || test -n "$INSTALL"; then
+		# ensure they can open a controlling tty
+		mknod /dev/tty c 5 0
+		# create device nodes then spawn on them
+		mknod /dev/tty2 c 4 2 && openvt
+		mknod /dev/tty3 c 4 3 && openvt
+	fi
+	if test -z "$DEBUG" || test -n "$INSTALL"; then
+		echo 0 0 0 0 > /proc/sys/kernel/printk
+	fi
+	# initialise /dev (first time)
+	mkdir -p /dev/block
+	echo /sbin/mdev > /proc/sys/kernel/hotplug
+	mdev -s
+	# re-run this script with a controlling tty
+	exec env HAS_CTTY=Yes setsid cttyhack /bin/sh "$0" "$@"
+fi
+
+try_mount()
+{
+	RW=$1; shift
+	if [ "${ROOT#*:/}" != "$ROOT" ]; then
+		# for NFS roots, use nolock to avoid dependency to portmapper
+		mount -o $RW,noatime,nolock $@
+		return $?
+	fi
+	case $(blkid $1) in
+		*TYPE=*ntfs*)
+			mount.ntfs-3g -o rw,force $@
+			;;
+		*TYPE=*)
+			mount -o $RW,noatime $@
+			;;
+		*)
+			return 1
+			;;
+	esac
+}
+
+check_root()
+{
+	if [ "`dirname $1`" = "/dev" ]; then
+		[ -e $1 ] || return 1
+		blk=`basename $1`
+		[ ! -e /dev/block/$blk ] && ln $1 /dev/block
+		dev=/dev/block/$blk
+	else
+		dev=$1
+	fi
+	
+	try_mount ro $dev /mnt || return 1
+	
+	if [ -e /mnt/$SRC/$GEARLOCK_BINARY ] && [ -e /mnt/$SRC/$INITRD_ORIGINAL ]; then
+		:
+	else
+		return 1
+	fi
+	
+	echo " found at $1"
+	rm /sbin/mke2fs
+	hash -r
+}
+
+remount_rw()
+{
+	
+	mount -o remount,rw foo /mnt;:
+	
+}
+
+
+echo -n Detecting GearLock-BootInstaller...
+
+test -z "$SRC" && test -n "$BOOT_IMAGE" && SRC=`dirname $BOOT_IMAGE`
+export BI_PREFIX="bootinstall"; export GEARLOCK_BINARY="$BI_PREFIX-gearlock" INITRD_ORIGINAL="$BI_PREFIX-initrd.img"
+
+cd /
+while :; do
+	for device in ${ROOT:-/dev/[hmnsv][dmrv][0-9a-z]*} ${ROOT:-/dev/xvd[0-9a-z]*} ${ROOT:-/dev/nvme0n[0-9]p[0-9a-z]*}; do
+		check_root $device && (
+				remount_rw && cd /mnt/$SRC
+				mv "$INITRD_ORIGINAL" initrd.img && sync initrd.img
+				mv "$GEARLOCK_BINARY" /tmp/gearlock && sync /tmp/gearlock
+				export GRROOT="$PWD" && cd /tmp && chmod 777 gearlock && ./gearlock
+			)
+		mountpoint -q /mnt && umount /mnt
+	done
+	sleep 1
+	echo -n .
+done

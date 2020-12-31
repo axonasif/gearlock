@@ -1,0 +1,62 @@
+# Check Android env
+if [ -z "$ME" ] && [ -z "$GCOMM" ]; then
+	BD="$(dirname "$(readlink -f "$0")")"
+	export GTMP="$BD/cache" WORKDIR="$BD/workdir" GCOMM="gearlock" GRLOAD="$BD/gearload" PS3="$(echo -e "\nEnter a number >> ")" 
+	mkdir -p "$GTMP" "$GRLOAD"
+	PATH="$BD/bin:$PATH"; ! chmod -R 777 "$BD/bin" > /dev/null 2>&1 && echo "Failed to get execution permissions on 'bin/garc'" && exit 1
+fi
+
+
+main(){
+	! curl --output /dev/null --silent --fail -r 0-0 "https://www.google.com" && echo -e "Your internet is down." && exit 1
+	echo -e "\n+ Downloading $1 ..."
+	curl -LkSs "https://api.github.com/repos/AXIM0S/${1}/tarball" -o "$GTMP/${1}.tar.gz"
+	test "$?" != "0" && echo -e "Failed to download skeleton package, please try again" && exit 1
+	echo -e "\n+ Setting up $1 ...\n"
+	test -e "$WORKDIR" && read -rn1 -p ' -- [!!!] Warning, workdir already exists, remove ? [Y/n] ' c && test "${c,,}" == "y" && rm -r "$WORKDIR"
+	mkdir -p "$WORKDIR"; tar --strip-components=1 -C "$WORKDIR" -xf "$GTMP/${1}.tar.gz"
+	find "$WORKDIR" -name ".keep" -exec rm {} +; chmod -R 755 "$WORKDIR"
+}
+
+wizard_run(){
+	echo -e "~ Choose what kind of Custom Package you want to work with ...\n"
+	echo -e "~ You may select the *kernel/mesa-specific package if you want a pre-build kernel/mesa installer engine\n"
+	echo -e "~ You can use the *core-package for building something complex like an ${BGREEN}Extension${RC} or for ${YELLOW}boot-executables${RC} or anything!\n"
+
+	select opt in "Kernel Package" "Mesa Package" "Custom Core Package" "Exit"; do if ! echo "$opt" | grep -q 'Exit'; then main "gearlock-$(echo "${opt,,}" | sed -e 's|custom ||' -e 's| package||')-pkg"; break; else exit 0; fi; done
+}
+
+late_print(){
+	echo -e "\n+ Browse to $WORKDIR"
+	echo -e "\n+ If you havent read the documentation yet then visit https://supreme-gamers.com/gearlock"
+	test -z "$ME" && echo -e "\n\n++ Run ./build to build your extension/package once it's ready"
+	:
+}
+
+show_help(){
+echo -e "
+GearLock Development Kit
+\$ Command Line Options: ./${0##*/} <option>
+
+
+    --gearlock-kernel-pkg           Ready to use kernel package
+    
+    --gearlock-mesa-pkg             Ready to use mesa package
+    
+    --gearlock-core-pkg             The core package for extensive use
+    
+    --help, -h                      Print this help message
+    "
+}
+
+if [ -z "$1" ]; then
+	wizard_run; late_print
+else
+	case "$1" in
+		--gearlock-kernel-pkg) main "${1#--}"; late_print ;;
+		--gearlock-mesa-pkg) main "${1#--}"; late_print ;;
+		--gearlock-core-pkg) main "${1#--}"; late_print ;;
+		--help|-h) show_help ;;
+		*) echo -e "${0##*/}: unknown option: $*" && show_help ;;
+	esac
+fi

@@ -1,0 +1,49 @@
+#
+# Simple script for GearLock to remount android-x86 
+#
+
+test -z "$RECOVERY" && exit 1
+
+# Load vendor data & sdcard mount functions
+source /scripts/*mount*
+
+# Define functions
+remount_rw()
+{
+	mount -o remount,rw foo /mnt
+}
+
+# Remount
+if test -e "$OROOT/ramdisk.img"; then
+
+	cd /android # For below android-10
+	if [ -e /mnt/$SRC/system.sfs ]; then
+		mount -o loop,noatime /mnt/$SRC/system.sfs /sfs; mount -o loop,noatime /sfs/system.img system
+	elif [ -e /mnt/$SRC/system.img ]; then
+		remount_rw; mount -o loop,noatime /mnt/$SRC/system.img system
+	elif [ -d /mnt/$SRC/system ]; then
+		remount_rw; mount --bind /mnt/$SRC/system system
+	elif [ -e /mnt/build.prop ]; then
+		mount --bind /mnt system
+	fi
+
+else
+
+	cd / # For android-10 and above
+	if [ -e /mnt/$SRC/system.sfs ]; then
+		mount -o loop,noatime /mnt/$SRC/system.sfs android
+		if [ -e android/system.img ]; then
+			mount --move android /sfs
+			mount -o loop,noatime /sfs/system.img android
+		fi
+	elif [ -e /mnt/$SRC/system.img ]; then
+		remount_rw; mount -o loop,noatime /mnt/$SRC/system.img android
+	elif [ -s /mnt/$SRC/system/default.prop ]; then
+		remount_rw; mount --bind /mnt/$SRC/system android
+	elif [ -z "$SRC" -a -s /mnt/default.prop ]; then
+		mount --bind /mnt android
+	fi
+
+fi
+
+cd "$origPWD"; { mount_data; mount_sdcard; }>/dev/null 2>&1; cd /; remountfs;:

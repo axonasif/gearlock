@@ -1,0 +1,146 @@
+#!/gearlock/bin/bash
+mount -o rw,remount / 2>/dev/null
+VERSION="1.3"
+
+# Runtime Functions
+function play_bootsound(){
+	test -n "$BOOTSOUND" && test -e "$BOOTSOUND" \
+	&& alsa_aplay "$BOOTSOUND" </dev/null &>/dev/null & disown
+}
+
+function check_app(){
+	test ! -d "/data/data/$GAPPID" && pm install "$GRLBASE/share/gearlock/app.apk" > /dev/null 2>&1
+	return 0
+}
+
+function make_bashls(){
+	test -e "${mk:="/gearlock/tmp/.mkbashls"}" && test ! -e "${lk:="/gearlock/tmp/.bashls"}" \
+	&& touch "$lk" && rm "$mk" && openvt -c $1 gbash -l && setfont "$GRLBASE/share/terminfo/c/cons16-asm" -C /dev/tty$1 \
+	&& setterm --linewrap on > /dev/tty$1
+}
+
+function bind_grload(){
+	if ! mountpoint -q "/mnt/gearload"; then
+		ckdirex "/mnt/gearload" 777
+		mount --bind "$GRROOT/gearload" "/mnt/gearload"
+	fi
+}
+function chmod_mnt(){
+	chmod 777 "$GRROOT_DIR" && test -d "/mnt/runtime" && chmod 777 "/mnt/runtime"
+	test -e "/mnt/runtime/default" && {
+		test -z "$(find "/mnt/runtime/default" -maxdepth 0 -empty)" && chmod -f 777 /mnt/runtime/default/*
+	}
+}
+
+function hook_boot(){
+	export GBRUNTIME="yes" && source /gearlock/bin/fetch
+}
+
+function do_zygote_job(){
+	test -e /system/bin && test -e /system/xbin && chmod 777 /system/*bin/su>/dev/null 2>&1
+	test -e /sbin/su && chmod 777 /sbin/su
+	hook_boot
+	test "$SECOND_GTTY" != "no" && touch "$GTMP/.mkbashls"
+	mkdir -p "$GBDIR/init" "$GBDIR/post-fs" "$GBDIR/post-fs-data" "$GBDIR/boot-post" "$GBDIR/boot-comp">/dev/null 2>&1
+	chmod -f 755 "$GBDIR/"*>/dev/null 2>&1
+}
+
+
+function gbjob(){
+	export GBSTAGE="$1"
+	if test -d "$GBDIR/init" && test -d "$GBDIR/post-fs" && test -d "$GBDIR/post-fs-data" && test -d "$GBDIR/boot-post" && test -d "$GBDIR/boot-comp"; then
+		if test -n "$1" && test -z "$(find "$GBDIR/$1" -maxdepth 0 -empty)"; then
+			cd "$GBDIR/$1" || return 1
+			test "$1" == "init" && echo -e "\n++ Running GearBoot init executables ...\n"
+			if test ! -e "$GTMP/gearboot.log"; then
+				echo -e "# Start of $1 stage @ $(date)" > "$GTMP/gearboot.log"
+			else
+				echo -e "\n\n\n# Start of $1 stage @ $(date)" >> "$GTMP/gearboot.log"
+			fi
+			shopt -s globstar
+			for f in **/*; do
+				if test -f "$f"; then
+					echo "  $(date '+%T:%N')  :  $1  :  $f" >> "$GTMP/gearboot.log"; chmod 755 "$f"
+					if test "$1" == "init"; then
+						echo -e "\n===== $f" && "$GBDIR/$GBSTAGE/$f"
+					elif [[ "$1" =~ .*post-fs.* ]]; then
+						"$GBDIR/$GBSTAGE/$f" >> "$GTMP/gearboot.raw.log" 2>&1
+					else
+						"$GBDIR/$GBSTAGE/$f" >> "$GTMP/gearboot.raw.log" 2>&1 & disown
+					fi
+				fi
+			done
+			shopt -u globstar
+		fi
+	fi
+}
+
+function write_gblog(){
+	SL="$(/gearlock/bin/grep -nA500 "# Start of $GBSTAGE stage" "$GTMP/gearboot.log" | /gearlock/bin/grep "$(/gearlock/bin/basename "$0")" | /gearlock/bin/head -n1)"
+	/gearlock/bin/sed -i "$(echo "$SL" | /gearlock/bin/cut -d "-" -f1)s/.*/ $(echo "$SL" | /gearlock/bin/cut -d " " -f2-)  :  $@/" "$GTMP/gearboot.log"
+}; export -f write_gblog
+
+case "$1" in
+	s0)
+		do_zygote_job
+		gbjob init
+	;;
+	s1)
+		hook_boot
+		gbjob post-fs
+	;;
+	s2)
+		hook_boot
+		gbjob post-fs-data
+	;;
+	s3)
+		make_bashls 8
+		hook_boot
+		gbjob boot-post
+	;;
+	s4)
+		hook_boot
+		play_bootsound
+		bind_grload
+		gbjob boot-comp
+		chmod_mnt
+		touch "$GTMP/boot-comp"
+		check_app
+	;;
+	-h|--help) echo -e "
+GearBoot $VERSION | Copyright (c) $(date '+%Y') AXON | supreme-gamers.com
+GearBoot is a very simple program which run executables during boot dynamically
+
+Usage:    gearboot <boot-stage>
+
+Examples: gearboot s2        # For running executables in post-fs-data stage
+          gearboot s4        # For running executables in boot-comp stage
+
+<Boot-Stages>
+
+     s1 : post-fs
+     s2 : post-fs-data
+     s3 : boot-post
+     s4 : boot-comp
+  
+Informative output:
+
+     -v,  --version      Print GearBoot version
+     -h,  --help         Print this help message
+
+The logging file is /gearlock/tmp/gearboot.log
+
+GearBoot is a part of GearLock. Init stage is not available for manual triggering
+GearBoot auto runs during boot, you may only manually trigger it for reloading purposes
+For more information & bugreports visit https://supreme-gamers.com/gearlock"
+	;;
+	-v|--version)
+		echo "$VERSION"
+	;;
+*)
+	echo "gearboot: No boot-stage specified.
+You must specify one of s1|2|3|4 stage.
+
+Try \`gearboot -h' or \`gearboot --help' for more information."
+	;;
+esac

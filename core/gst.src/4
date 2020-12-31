@@ -1,0 +1,54 @@
+mouse(){
+geco "${_current_status_} : TrackPad $(if [ -n "$(grep -i touch /proc/bus/input/devices)" ]; then geco "${_phrase_is_active_}"; else geco "${_phrase_is_unactive_}"; fi)"
+
+geco "\n++ ${_sel_what_to_do_} --"
+select opt in "${_disable_} TrackPad" "${_enable_} TrackPad" "${_exit_}"
+do
+    case $opt in
+    "${_disable_} TrackPad")
+    for mod in $(ls $(find /system/lib/modules/$(uname -r) -type d -name mouse) | sed "s|.ko||"); do [ -n "$(lsmod | grep $mod)" ] && echo $mod > "$GTMP/.mmcache" && nout rmmod $mod; done
+    geco "\n+ ${_done_} ...\n+ ${_not_permanent_info_} ..."
+        ;;
+    "${_enable_} TrackPad")
+        if [ -e "$GTMP/.mmcache" ]; then nout modprobe $(cat "$GTMP/.mmcache") && rm "$GTMP/.mmcache" && geco "\n+ ${_done_} ..."; else geco "${_X_is_already_active_/@DUMMY@/TrackPad} ..."; fi
+        ;;
+    "${_exit_}")
+        exit 0
+        ;;
+    esac
+    break
+done
+}
+
+keyboard(){
+geco "${_current_status_} : KeyBoard $(if [ -n "$(grep -i keyboard /proc/bus/input/devices)" ]; then geco "${_phrase_is_active_}"; else geco "${_phrase_is_unactive_}"; fi)"
+
+geco "\n++ ${_sel_what_to_do_} --"
+select opt in "${_disable_} KeyBoard" "${_enable_} KeyBoard" "${_exit_}"
+do
+    case $opt in
+    "${_disable_} KeyBoard")
+    for mod in $(ls $(find /system/lib/modules/$(uname -r) -type d -name keyboard) | sed "s|.ko||"); do [ -n "$(lsmod | grep $mod)" ] && echo $mod > "$GTMP/.mkcache" && nout rmmod $mod; done
+    geco "\n+ ${_done_} ...\n+ ${_not_permanent_info_} ..."
+        ;;
+    "${_enable_} KeyBoard")
+        if [ -e "$GTMP/.mkcache" ]; then nout modprobe $(cat "$GTMP/.mkcache") && rm "$GTMP/.mkcache" && geco "\n+ ${_done_} ..."; else geco "${_X_is_already_active_/@DUMMY@/KeyBoard} ..."; fi
+        ;;
+    "${_exit_}")
+        exit 0
+        ;;
+    esac
+    break
+done
+}
+
+geco "\n+ ${_sel_what_to_change_} --"
+select main in "TrackPad" "KeyBoard" "${_exit_}"
+do
+    case $main in
+    "TrackPad") mouse ;;
+    "KeyBoard") keyboard ;;
+    "${_exit_}") exit 0 ;;
+    esac
+    break
+done

@@ -1,0 +1,199 @@
+# Check Android env
+if [ -z "$ME" ] && [ -z "$GCOMM" ]; then
+	BD="$(dirname "$(readlink -f "$0")")"; export GTMP="$BD/cache";test ! -d "$GTMP" && mkdir "$GTMP"
+	WORKDIR="$BD/workdir" GEARLOCK_NAME="gearlock" GRLOAD="$BD/gearload"; test ! -d "$GRLOAD" && mkdir "$GRLOAD"
+	PATH="$BD/bin:$PATH"; chmod -R 777 "$BD/bin" > /dev/null 2>&1; test $? != 0 && echo "Failed to get execution permissions on 'bin/garc'" && exit 1
+fi
+
+# Check if zygote exist
+GETT="$WORKDIR"/'!zygote.sh'; test ! -e "$GETT" && echo -e "No package was set-up, run ./configure first." && exit 1
+
+# Define Vars
+_self="${0##*/}" CompRatio="-mx=${3:-10}" CompMethod="-m0=${2:-zstd}" PS3="$(echo -e "\nEnter a number >> ")" 
+
+# Colors
+RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
+
+# Define functions
+geco(){ echo -e "$@"; }
+get_value(){ sed -n "s/^$1=//p" "$GETT" | sed -e "s|\"||g" -e "s| #.*||" 2>/dev/null; }
+update_value(){ sed -i "s|\b$1=\".*\"|$1=\"$2\"|g" "$GETT"; }
+set_type(){ test -f "$WORKDIR/$GEARLOCK_NAME/extension.sh" && TTYPE="Extension"; update_value TYPE "${TTYPE:=Package}"; }
+
+show_zygote_header(){
+	cat << EOF
+  ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______
+ /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/
+
+  ._.   ___
+  | |  / /   *Name: $NAME
+  |_|  \ \   *Version: $VERSION
+  |-|  < <   *Author: $AUTHOR
+  | |  / /   *Type: $TYPE
+  |_|  \_\_  *ShortDesc: $SHORTDESC
+
+  ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______
+ /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/
+
+
+
+EOF
+}
+
+gen_attars(){
+	local zD="$WORKDIR"/'.!zygote'
+	local fM="$zD/mode" sP="$zD/.sParent" sT="$zD/.sTarget" sL="$zD/link"
+	mkdir -p ${zD:="$WORKDIR"/'.!zygote'}
+	if [ -n "$(find "$WORKDIR" -type l -exec realpath {} + | sed "s|"$WORKDIR"/||" | awk '{print "\""$0"\""}')" ]; then
+		find "$WORKDIR" -type l -exec realpath {} + | sed "s|"$WORKDIR"/||g" | awk '{print "\""$0"\""}' | sed 's|\"/|\"|g' > "${sP}"
+		find "$WORKDIR" -type l -printf '"%p"\n' | sed "s|"$WORKDIR"/||g" | sed 's|\"/|\"|g' > "${sT}"
+		paste -d " " "$sP" "$sT" > "$sL" && rm -f "$sP" "$sT"
+	else
+		rm -f "$sL"
+	fi
+	find "$WORKDIR" -printf '%#m "%p"\n' | sed -e "s|"$WORKDIR"/||" -e "s|.*"$WORKDIR".*||" | awk 'NF' > "${fM}"
+}
+
+# Build process functions
+build_gxp(){ render_header; gen_attars; "$GARC_PATH" a '-x!readme*' ${CompMethod} ${CompRatio} $@ "$GRLOAD/${NAME}_${VERSION}_${AUTHOR}.gxp" "$WORKDIR"/* "$WORKDIR"/'.!zygote'; print_success; }
+
+render_header(){ clear
+	NAME="$(get_value NAME)"
+	VERSION="$(get_value VERSION)"
+	AUTHOR="$(get_value AUTHOR)"
+	TYPE="$(get_value TYPE)"
+	SHORTDESC="$(get_value SHORTDESC)"
+	test "$(get_value DEF_HEADER)" == "yes" && show_zygote_header
+}
+
+print_success(){ if [ $? != 0 ]; then geco "\nBuild failed ..."; else
+echo -e "\n$TTYPE successfully build as "${NAME}"_"${VERSION}"_"${AUTHOR}".gxp and can be found at gearload dir and you can test it through ${YELLOW}GXPM${RC}"; chmod -Rf 777 "$GRLOAD" 2>/dev/null; fi;:; }
+
+show_help(){
+	echo -e "
+GearLock Development Kit
+\$ Command Line Options: ./${_self} <option> <optional-compMethod> <optional-compRatio>
+
+
+    --noenc                   Does not use encryption
+
+    --normal-enc              Use normal encryption (Package structure can be seen)
+
+    --header-enc              Use powerful header encryption (Package structure can not be seen without passkey)
+
+    --help, -h                Print this help message
+    
+
+\$ Available compMethods: bzip2 bcj2 bcj ppc ia64 arm armt sparc swap2 swap4 copy deflate64 deflate delta lzma2 flzma2 lzma zstd(default) lz4
+\$ Default compRatio level: 10 (Max 23)
+\$ Note: It is advised not to change the compMethod
+	"
+}
+
+wizard_run(){
+	geco "\n++ Try \`./${_self} --help\` to use the command line"
+	geco "\n~ Have you manually configured your ${TTYPE} properties in ${YELLOW}!zygote.sh${RC}? Or do you want to go through the auto wizard?"
+	select opt in "I configured it manually" "Go through auto wizard" "Exit"
+	do
+		case $opt in
+			"I configured it manually")
+				geco "\nOkay"; sleep 1; clear
+
+				;;
+			"Go through auto wizard")
+				clear
+
+				# Name
+				read -eri "$(get_value NAME)" -p "$(geco "Enter your $TTYPE ${GREEN}Name${RC} > ")" "TNAME"
+				update_value NAME "$TNAME" && geco
+
+				# Version
+				read -eri "$(get_value VERSION)" -p "$(geco "Enter your ${GREEN}$TTYPE${RC} version > ")" "TVERSION"
+				update_value VERSION "$TVERSION" && geco
+
+				# Author
+				read -eri "$(get_value AUTHOR)" -p "$(geco "Enter your ${GREEN}Name${RC} as the owner/dev/author > ")" "TAUTHOR"
+				update_value AUTHOR "$TAUTHOR" && geco
+
+				# Description
+				read -eri "$(get_value SHORTDESC)" -p "$(geco "Enter a very short ${GREEN}Description${RC} for your $TTYPE > ")" "TSHORTDESC"
+				update_value SHORTDESC "$TSHORTDESC" && geco
+
+
+				# Reboot Request
+				while true; do
+					geco "\n~ You must require reboot if your ${TYPE} modifies any major system files which can get it unstable duing runtime, otherwise it should be fine..."
+					read -p "$(geco "Enable ${RED}Reboot-Request${RC}? [${GREEN}Y${RC}/n]") (Current Value: $(get_value REQREBOOT)) " c
+					case $c in
+						[Yy]* ) update_value REQREBOOT yes && break ;;
+						[Nn]* ) update_value REQREBOOT no && break ;;
+						* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
+					esac
+				done
+
+				# Generate Uninstaller
+				while true; do
+					geco "\n~ ${GREEN}GearLock${RC} can generate an uninstallation script itself for your ${TTYPE}"
+					geco "~ You can even put your custom unins code in ${RED}uninstall.sh${RC} and also use auto uninstallation script by gearlock at the same time..."
+					geco "~ ${GREEN}GearLock${RC} will merge custom uninstallation script as needed...\n"
+					read -p "$(geco "\nEnable ${RED}Auto-Uninstallation-Script Generation${RC}? [${GREEN}Y${RC}/n]") (Current Value: $(get_value GEN_UNINS)) " c
+					case $c in
+						[Yy]* ) update_value GEN_UNINS yes && break ;;
+						[Nn]* ) update_value GEN_UNINS no && break ;;
+						* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
+					esac
+				done
+				;;
+			"Exit")
+				exit 0
+				;;
+		esac
+		break
+	done
+
+	# Encrypt
+	while true; do
+		read -p "$(geco "\n~ Do you want to encrypt your ${TTYPE}? [${GREEN}Y${RC}/n]") " c
+		case $c in
+			[Yy]* )
+
+				# Show extraction process
+				while true; do
+					geco "\nYou have enabled encryption for your ${TTYPE}"
+					read -p "$(geco "~ Do you also want to hide the extraction progress? [y/${GREEN}N${RC}]") (Current Value: $(get_value SHOW_PROG)) " c
+					case $c in
+						[Yy]* ) update_value SHOW_PROG no && break ;;
+						[Nn]* ) update_value SHOW_PROG yes && break ;;
+						* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
+					esac
+				done
+
+				# Encryption type
+				while true; do
+					geco "\n${GREEN}Normal-Encryption${RC} : In this mode, the package files can not be extracted without encryption key but the file structure can be seen"
+					geco "${YELLOW}Header-Encryption${RC} : This mode does not allow the package files to be seen without having the encryption key"
+					read -p "$(geco "~ What kind of encryption do you want to use? [${GREEN}N${RC}ormal/${YELLOW}H${RC}eader]") " c ; geco "\n"
+						case $c in
+							[Nn]* ) build_gxp -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" && break ;;
+							[Hh]* ) build_gxp -mhe=on -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" && break ;;
+							* ) geco "\nEnter either ${GREEN}N${RC} or H" ;;
+						esac
+					done
+
+					break
+					;;
+
+				[Nn]* ) build_gxp && break ;;
+				* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
+			esac
+		done
+	}
+
+	if [ -z "$1" ]; then set_type; wizard_run; else
+		case "$1" in
+			--noenc) set_type; build_gxp ;;
+			--normal-enc) set_type; build_gxp -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" ;;
+			--header-enc) set_type; build_gxp -mhe=on -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" ;;
+			--help|-h) show_help ;;
+			*) echo -e "${_self}: unknown option: $*" && show_help ;;
+	esac; fi

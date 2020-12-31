@@ -1,0 +1,53 @@
+# Define Functions
+do_sync(){ geco "\n+ ${_syncing_drive_} ..."; (mount -o rw,remount,atime,diratime,relatime "$GRROOT_DIR"; sync; sync "${GRROOT}/"*; sync "${GRROOT}/system.img"; mount -o rw,remount,noatime "$GRROOT_DIR")>/dev/null 2>&1; mount | grep "$GRROOT_DIR" | grep -q "type ext" && export FIXFS=0 && sleep 7 && fixfs;:; }
+
+handleError(){ if [ $? != 0 ]; then geco "\n++++ Error: $1" && exit ${2:-1}; fi; }
+
+extend_system_img(){ "$CORE/extimg" "system.img" "$((SC_SIZE + 10))"; }
+
+decom_sys(){
+	geco "\n+ ${_supercharge_decompress_img_info_} ..."
+	gclone /system "${GRROOT}/"
+	chmod 755 "${GRROOT}"/system
+	(
+	# Free loop devices to avoid read errors.
+		for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | sort -r); do mount 2>/dev/null | grep -q "^$loopDev" && umount -d "$loopDev"; done
+
+	# unMount img mountpoints
+		for mp in /system /data /android/system /android/data /sfs; do mountpoint -q $mp && umount $mp; done
+	)
+	geco "\n- ${_removing_sys_img_} ..."
+	rm -f "${GRROOT}/system.img" "$GRROOT/system.sfs" && sleep 0.7 && remount_android && do_sync
+	geco "\n+ ${_decompression_successful_} ... !"
+}
+
+
+if test -z "$RECOVERY"; then sleep 3 && false; handleError "Only available in RECOVERY-MODE ..."; fi
+if test -z "$ANDROID_VER"; then sleep 3 && false; handleError "Failed to get ANDROID_VERSION information ..."; fi
+# Check if mountpoints are writable
+for mp in "$GRROOT/."; do ! touch -c "$mp">/dev/null 2>&1 && geco "[!!!] ${mp##*/} is not writable." && { greboot; exit 1; }; done
+# Check for running progs in volatile mountpoints
+for mp in /mnt /gearlock/gearroot /android /data /system; do lsof 2>/dev/null | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && sleep 2 && exit 1; done
+
+geco "\n\n+ ${_checking_system_} ..." && sleep 2
+
+# Main
+if ls "$OROOT/system."*>/dev/null 2>&1 && test "$(stat -L --printf="%s" "$OROOT/system."*)" -lt "$((SC_SIZE * 1048576))"; then
+
+    if [[ "$ANDROID_VER" =~ [4-7] ]]; then
+
+            # ext
+        if mount | grep "$GRROOT_DIR" | grep -q "type ext"; then
+            decom_sys
+        else
+            # fuseblk
+            extend_system_img
+        fi
+
+    else
+        extend_system_img
+    fi
+    
+else
+    geco "\n+ ${_system_is_supercharged_}" && sleep 2
+fi

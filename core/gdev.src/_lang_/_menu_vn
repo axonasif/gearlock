@@ -1,0 +1,6 @@
+Thiết lập môi trường để build
+Build & Gói để tạo Gói cho Gearlock đã chỉnh sửa
+Kiểm tra Gói/ Tiện ích bằng hộp cát (sandbox)
+Chỉnh sửa file lệnh bằng nano
+Tự tạo 1 gói kernel bằng kernel hiện tại đang sử dụng
+Auto-Make mesa-package from currently booted mesa

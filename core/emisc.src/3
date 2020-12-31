@@ -1,0 +1,105 @@
+geco "\n++++ ${_gearlock_data_system_img_extender_} ++++\n"
+
+
+# Define Functions
+do_sync(){ geco "\n+ ${_syncing_drive_} ..."; (mount -o rw,remount,atime,diratime,relatime "$GRROOT_DIR"; sync; sync "${GRROOT}/"*; sync "${GRROOT}/system.img" "${GRROOT}/data.img"; mount -o rw,remount,noatime "$GRROOT_DIR")>/dev/null 2>&1; mount | grep "$GRROOT_DIR" | grep -q "type ext" && export FIXFS=0 && sleep 7 && fixfs;:; }
+
+handleError(){ if [ $? != 0 ]; then geco "\n++++ Error: $1" && exit ${2:-1}; fi; }
+watchgrow() { lsof "$1" 2>/dev/null | grep "$1" | head -n 1 | sed -r 's/ +/ /g' | cut '-d ' -f2,4 | sed -r 's/ +/:/g' | xargs pv -s $((1048576 * (origSize + megs2Add))) -d; }
+
+unMount(){
+(
+# Free loop devices to avoid read errors.
+	for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | sort -r); do mount 2>/dev/null | grep -q "^$loopDev" && umount -d "$loopDev"; done
+
+# unMount img mountpoints
+	for mp in /system /data /android/system /android/data /sfs; do mountpoint -q $mp && umount $mp; done
+)>/dev/null 2>&1
+:
+	if test -e "$GRROOT/system.sfs"; then rm -r "$GRROOT/system.sfs" && sync "$GRROOT/"*; handleError "Failed to remove system.sfs"; fi
+}
+
+get_sysimg(){ 
+
+	if test -e "/sfs/system.img"; then
+	
+		sysImg="/sfs/system.img"
+		geco "\n+ Preparing the ${sysImg##*/} ...\n"
+		gclone "$sysImg" "$GRROOT" 2>/dev/null; handleError "Failed to prepare ${sysImg##*/} ..."
+		sysImg="$GRROOT/${sysImg##*/}"
+		sync "$sysImg" && sleep 7
+	
+	elif test -e "$GRROOT/system.img"; then
+	
+		sysImg="$GRROOT/system.img"
+	
+	fi
+}
+
+extend_img(){
+
+# Justify $inputImg paths
+	if echo "$inputImg" | grep -q 'system.img'; then get_sysimg; inputImg="$sysImg"; else inputImg="$GRROOT/$inputImg"; fi
+
+# Ensure $inputImg exists
+	test -e "$inputImg"; handleError "\n++++ Error: ${inputImg##*/} image not found"
+
+# Prepare the $inputSize for safe use
+	echo "$inputSize" | grep -qI "GB" && inputSize="$(echo "${inputSize}000" | sed 's|GB||')"
+	inputSize="$(echo "$inputSize" | tr -d '[:space:]')"
+
+# UnMount & clean the images
+	unMount; handleError "Failed to prepare a working environment"
+
+# Make sure disk has enough space and calculate megs2Add
+	origSize="$(($(stat -L --printf="%s" "$inputImg") / 1048576))"
+	megs2Add="$((inputSize - origSize))"
+	test "$megs2Add" != 0; handleError "$inputImg size is already ${inputSize}MB"
+	if echo "$megs2Add" | grep -q '-'; then false; handleError "Your ${inputImg##*/} is already bigger than ${inputSize}MB size, enter a bigger value"; fi
+	test "$((megs2Add * 1048576))" -lt "$(($(stat -f --format="%a*%S" "$GRROOT_DIR")))"; handleError "Not enough free space in your disk" 
+
+# The main process
+	geco "\n\$\$ Extending ${inputImg##*/} size to ${inputSize}MB by adding ${megs2Add}MB more, wait patiently\n"
+	(dd if=/dev/zero bs=1M count="$megs2Add" >> "$inputImg"; echo $? > "$GTMP/.extimg_retc")>/dev/null 2>&1 &
+	watchgrow "$inputImg"; if test "$(cat "$GTMP/.extimg_retc")" != 0; then false; handleError "Something went wrong, operation failed"; fi
+	e2fsck -fy "$inputImg">/dev/null 2>&1
+	resize2fs "$inputImg">/dev/null 2>&1; handleError "\n Failed to extend ${inputImg##*/}, you ${inputImg##*/} is broken now ..."
+	do_sync && remount_android && echo -e "\n\n%% ${inputImg##*/} has been successfully extended to $((origSize + megs2Add))MB"
+
+}
+
+
+
+sel_method(){
+geco "\n${_specify_img_size_method_} ???"
+select opt in "${_from_preset_}" "${_custom_size_}" "${_exit_}"
+do
+    case $opt in
+    "${_from_preset_}") geco "\n${_sel_preset_img_size_/@DUMMY@/$inputImg} >>"; select inputSize in 4GB 8GB 16GB 32GB 64GB 128GB 256GB; do extend_img; break; done
+        ;;
+    "${_custom_size_}") read -p "$(geco "\n ++ ${_enter_custom_img_size_} >> ")" "inputSize"; extend_img
+        ;;
+    "${_exit_}")
+        exit 0
+        ;;
+    esac
+    break
+done 
+
+}
+
+# Deny without recovery mode
+test -n "$RECOVERY"; handleError "Only available in RECOVERY-MODE ..."
+
+# Check for running progs in volatile mountpoints
+for mp in /mnt /gearlock/gearroot /android /data /system; do lsof 2>/dev/null | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && exit 1; done
+
+# Main
+if test -n "$*"; then
+	inputImg="$1"; inputSize="$2"; extend_img
+else
+	if mount 2>/dev/null | grep "$GRROOT_DIR" | grep -q "ext4"; then geco "\n++ ${_not_required_for_ext4_}"
+	read -p "${_if_still_continue_} [y/n] > " c; test $c == y && geco "${_as_you_wish_}" || exit 1; fi
+	geco "\n${_which_image_to_extend_} ???"
+	select inputImg in "system.img" "data.img" "${_back_}"; do case $inputImg in "system.img"|"data.img") sel_method ;; "${_back_}") exit 0 ;; esac; break; done 
+fi

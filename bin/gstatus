@@ -1,0 +1,69 @@
+#!/gearlock/bin/bash
+clear; if [ -z "$ME" ] && [ -z "$GCOMM" ]; then source fetch; source fetch.in; fi
+if [ "$BOOTCOMP" == "yes" ]; then
+resVarPreload="$(wm size | cut -d : -f2- | xargs | sed 's/ /, /g')">/dev/null 2>&1
+dpiVarPreload="$(wm density | cut -d : -f2- | xargs )">/dev/null 2>&1
+gfxdumpVarPreload="$(dumpsys SurfaceFlinger | grep GLES)">/dev/null 2>&1
+fi
+
+ep(){ while IFS= read -r line; do printf "\r%*s\n" $(tput cols) "$line                         "; done < "$1"; }
+
+systemStatus(){
+	if { command -v gearlock && command -v gearboot && command -v gearprop \
+	&& command -v getprop && command -v wm; } >/dev/null 2>&1 && [ "$BOOTCOMP" == "yes" ]; then
+		echo -e "\n${BGREEN}System Information\n======================${RC}\n"
+		echo -e "  ${YELLOW}GearLock Version:${RC} $(cat "$CORE/version")"
+		echo -e "  ${YELLOW}GearBoot Version:${RC} $(gearboot -v)"
+		echo -e "  ${YELLOW}GearProp Version:${RC} $(gearprop -v)"
+		echo -e "  ${YELLOW}Android Version:${RC} $ANDROID_VER | ${YELLOW}SDK Level:${RC} $SDK"
+		echo -e "  ${YELLOW}Uptime since boot:${RC} $(uptime | cut -f1 -d"," | sed 's/^ *//' | cut -f3- -d" " | sed 's\ \\')"
+		echo -e "  ${YELLOW}Build Number:${RC} $(getprop ro.build.display.id)"
+		if [ -e "/sbin/magisk" ]; then SUD="Magisk"; echo -e "  ${YELLOW}Magisk-Core Version:${RC} $MAGISK_COREV"; else SUD="SuperSU"; fi
+		echo -e "  ${YELLOW}Su-handler:${RC} $SUD "
+		echo -e "  ${YELLOW}GoogleLess-Mode:${RC} $(test -e "$STATDIR/goolm" && echo -e '(On)' || echo -e '(Off)')"
+		echo -e "  ${YELLOW}Screen Resolution:${RC} ${resVarPreload} | ${YELLOW}Dpi:${RC}${dpiVarPreload}"
+		echo -e "  ${YELLOW}MAC address by device:${RC} $(ip link | grep "link/ether" | awk '{print $2}' | xargs | sed 's\ \, \g')"
+		[ -f "$STATDIR/native-bridge" ] && echo -e "  ${YELLOW}Gaming protocol:${RC} $(cat $STATDIR/native-bridge 2>/dev/null)";
+		test -e "${aHoudini:=/system/lib/arm/houdini}" && chmod 755 ${aHoudini} && echo -e "  ${YELLOW}ARM houdini version:${RC} $($aHoudini --version | grep -i ver | cut -d ":" -f2-)${RC}"
+		return 0
+	else
+		return 1
+	fi
+}
+
+kernelStatus(){
+	echo -e "\n${BGREEN}Kernel Information\n======================${RC}\n"
+	echo -e "  ${YELLOW}CPU ARCH:${RC} $CPU_ARCH"
+	echo -e "  ${YELLOW}Boot Structure:${RC} $(if [ -d /sys/firmware/efi ]; then echo -e uEFI; else echo -e Legacy; fi)"
+	echo -e "  ${YELLOW}RAM:${RC} $(awk '/MemTotal/ {print "Total=" $2/1024}' /proc/meminfo)mb | $(awk '/MemAvailable/ {print "Free=" $2/1024}' /proc/meminfo)mb"
+	echo -e "  ${YELLOW}Kernel:${RC} $(uname -s) | $(uname -r) | $(uname -v)"
+	echo -e "  ${YELLOW}CPU:${RC} $(grep "model name" /proc/cpuinfo | tail -n1 | sed "s|.*: ||")"
+	echo -e "  ${YELLOW}[Max] | [Min] CPU freq:${RC} [$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq 2>/dev/null | head -n1)]mHz | [$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_min_freq 2>/dev/null | head -n1)]mHz"
+	echo -e "  ${YELLOW}Current CPU governors:${RC} $(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | head -n2 | xargs | sed 's/ /, /g')"
+	echo -e "  ${YELLOW}Available CPU governors:${RC} $(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_available_governors 2>/dev/null | head -n1 | sed 's/ /, /g')"
+}
+
+graphicsStatus(){
+	if command -v dumpsys>/dev/null 2>&1 && [ "$BOOTCOMP" == "yes" ]; then
+		echo -e "\n${BGREEN}Graphics Information\n======================${RC}\n"
+		echo -e "  ${YELLOW}GL Vendor:${RC}$(echo "${gfxdumpVarPreload}" | cut -d , -f1 | sed "s|GLES:||")"
+		if ! echo "${gfxdumpVarPreload}" | grep -q AMD || ! echo "${gfxdumpVarPreload}" | grep -q "X.Org"; then
+			echo -e "  ${YELLOW}GL Renderer:${RC}$(echo "${gfxdumpVarPreload}" | cut -d , -f2)"
+			echo -e "  ${YELLOW}GL Version:${RC}$(echo "${gfxdumpVarPreload}" | cut -d , -f3)"
+		else
+			echo -e "  ${YELLOW}GL Renderer:${RC}($(echo "${gfxdumpVarPreload}" | cut -d '(' -f2)"
+			echo -e "  ${YELLOW}GL Version:${RC}$(echo "${gfxdumpVarPreload}" | awk -F '), ' '{print $2}')"
+		fi
+	fi
+}
+
+# Show system status
+geco "\033[5B"; ep "$CORE/interface/assets/status_splash" && geco "\033[5A" && geco "\033[20A" && systemStatus
+# Show kernel status
+kernelStatus
+# Show graphics status
+graphicsStatus
+
+# Save GUI screenshot
+sss="/sdcard/GearLock-Status"; command -v screencap>/dev/null 2>&1 && test "$TERMINAL_EMULATOR" == "yes" && screencap -p ${sss}.png > /dev/null 2>&1 && echo -e "\n++++ Status screenshot saved as ${sss}.png"
+:

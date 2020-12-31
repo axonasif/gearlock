@@ -1,0 +1,56 @@
+# The Advanced Linux Sound Architecture (Alsa) Project [  alsa-project.org  |  ALSA team  ]
+# License: GNU GPL & LGPL
+
+#	[ -d /proc/asound/card0 ] || modprobe snd-dummy
+	for c in $(grep '\[.*\]' /proc/asound/cards | awk '{print $1}'); do
+		f=/system/etc/alsa/$(cat /proc/asound/card$c/id).state
+		if [ -e $f ]; then
+			alsa_ctl -f $f restore $c
+			alsa_amixer -c $c set Speaker 50%
+		else
+			# DigitalMics
+			alsa_amixer cset name='Stereo ADC MIXL ADC2 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC2 Switch' on
+			alsa_amixer cset name='Internal Mic Switch' on
+			# HeadsetMic
+			alsa_amixer cset name='Headset Mic Switch' on
+			alsa_amixer cset name='RECMIXL BST2 Switch' on
+			alsa_amixer cset name='RECMIXR BST2 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC Capture Switch' on
+			# IN1-InternalMics
+			alsa_amixer cset name='Internal Mic Switch' on
+			alsa_amixer cset name='RECMIXL BST1 Switch' on
+			alsa_amixer cset name='RECMIXR BST1 Switch' on
+			alsa_amixer cset name='RECMIXL BST3 Switch' off
+			alsa_amixer cset name='RECMIXR BST3 Switch' off
+			alsa_amixer cset name='Stereo ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC Capture Switch' on
+			#IN3-InternalMics
+			alsa_amixer cset name='Internal Mic Switch' on
+			alsa_amixer cset name='RECMIXL BST1 Switch' off
+			alsa_amixer cset name='RECMIXR BST1 Switch' off
+			alsa_amixer cset name='RECMIXL BST3 Switch' on
+			alsa_amixer cset name='RECMIXR BST3 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC Capture Switch' on
+			alsa_amixer -c $c set 'Auto-Mute Mode' Enabled
+		fi
+	done
+	
+	case "$(cat $DMIPATH/uevent)" in
+		*S10T*)
+			alsa_amixer -c 0 set Speaker 95%
+			;;
+		*)
+			;;
+	esac

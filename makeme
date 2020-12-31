@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+# Define functions
+function gslr ()
+{
+	if [ ! -z "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
+		LII=$(grep -n "$2" "$1" | head -n1 | cut -d : -f1);
+		if [ ! -z "$LII" ]; then
+			LI=$(echo -e $LII | awk '{print $1}');
+			sed -i "${LI}s/.*/${3}/" "$1";
+		else
+			echo -e "~ Error [gslr:2], could not find any line containing ${RED}$2${RC}" && return $?
+		fi;
+	else
+		if [ -z "$NPUT" ]; then
+			echo -e "~ Error [gslr:3], lack of input" && return $?
+		fi;
+	fi
+};
+
+function handleError ()
+{
+	_errorCode="${2:-$?}"
+	echo -e "Error code ~ ${_errorCode} : $1" && exit ${_errorCode}
+
+};
+
+function mkInstaller ()
+{
+	rm -rf "${_buildInstallerOut}"; mkdir -p "${_buildInstallerOut}"
+	local GARCA="${_installerSrc}/packer-engine/garca"
+	rsync -a "${_execDir}/installer/packer-engine/bash" "${_execDir}/installer/packer-engine/busybox" "${_buildCacheInstallerDir}"
+	"$GARCA" a -m0=zstd "$3" -sfx "$1" "$2"
+	return $?
+};
+
+function main ()
+{
+		
+	# Define core vars
+	local _buildVariant="$1"
+	local _compressionLevel="$2"
+	local _execDir="$(dirname "$(readlink -f "$0")")"
+	local _buildCacheRoot="${_execDir}/.build_cache"
+	local _buildCache="${_buildCacheRoot}/gearlock"
+	local _buildCacheInstallerDir="${_buildCacheRoot}/gri"
+	local _buildInstallerOut="${_buildCacheRoot}/build_installer_out"
+	local _installerSrc="${_execDir}/installer"
+		
+	echo -e "Start of GearLock $(cat "${_execDir}"/core/version) build\n"
+		
+	# Clean & remake _buildCacheRoot|_buildCache
+	test -e "${_buildCacheRoot}" && rm -r "${_buildCacheRoot}"
+	mkdir -p "${_buildCacheRoot}" "${_buildCache}" || handleError "Failed 'mkdir ${_buildCache}'"
+		
+	# Copy raw files into _buildCache
+	echo -e "Copying raw files into ${_buildCache}"
+	cd "${_execDir}" && rsync -a --info=progress2 bin core etc lib libexec share usr "${_buildCache}" || handleError "Failed to copy files into ${_buildCache}\'"
+		
+	# Change dir to _buildCache
+	cd "${_buildCache}"
+	mkdir ${_extraPlaceHolderDirs=tmp gearroot} && chmod 755 ${_extraPlaceHolderDirs} || handleError "Failed \'mkdir/chmod ${_extraPlaceHolderDirs}\'"
+		
+	# Re-configure/fix shebangs in bin & remove `gearlock/bin`
+	echo -e "Removing ${cExternal:=core/_external_}"
+	rm -r ${cExternal}; test "$?" != "0" && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
+	rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
+	
+	echo -e "Fixing shebangs"
+	# Look for `#/bin/bash`
+	for f in $(grep "#\!/bin/bash" -lr bin | xargs);
+	do
+		gslr "$f" "#\!/bin/bash" "#\!\/gearlock\/bin\/bash" || handleError "Failed to replace shebangs with gslr"
+	done;
+		
+	# Recursive Chmod 755 _buildCache
+	echo -e "Setting permissions to 755 recursively for cpio image"
+	chmod -R 755 "${_buildCache}" || handleError "Failed to \'chmod -R 755 ${_buildCache}\'"
+		
+	# Make cpio archive of `gearlock` ~~ cd into _buildCacheRoot
+	test "$2" == '-p' && read -p "Press [Enter] to continue" readEnterKey
+	echo -e "Making cpio archive of gearlock directory: \c"
+	cd "${_buildCacheRoot}" || handleError "Failed to cd ${_buildCacheRoot}"
+	mkdir -p "${_buildCacheInstallerDir}" || handleError "Failed to mkdir ${_buildCacheInstallerDir}"
+	find gearlock | cpio --owner=root:root -o -H newc -O "${_buildCacheInstallerDir}/gearlock"
+		
+	# Merge files from _installerSrc into _buildCacheInstallerDir
+	echo -e "Merging files from ${_installerSrc} into ${_buildCacheInstallerDir}"
+	local installerSrcFiles=(
+	"${_installerSrc}/bin"
+	"${_installerSrc}/hook"
+	"${_installerSrc}/sp"
+	"${_installerSrc}/fx.apk"
+	"${_installerSrc}/install"
+	"${_execDir}/core/version"
+    )
+    
+	for files in "${installerSrcFiles[@]}"; do
+		rsync -a "${files}" "${_buildCacheInstallerDir}"
+	done
+
+		
+	# Make ghome empty dirs
+	for folders in ghome ghome/dependencies ghome/extensions ghome/status ghome/unins ghome/gearboot \
+	${gd:=ghome/gearboot}/boot-comp $gd/boot-post $gd/init $gd/post-fs $gd/post-fs-data; do mkdir -p "${_buildCacheInstallerDir}/$folders"; done
+	# Copy extra ghome subdirs
+# 	rsync -a "${_installerSrc}/extensions" "${_installerSrc}/.config" "${_installerSrc}/.local" "${_buildCacheInstallerDir}/ghome"
+	chmod -R 755 "${_buildCacheInstallerDir}" 
+		
+	# Create self executable gearlock installer
+	echo -e "Making executable GearLock Installer: \c"
+	mkInstaller "${_buildInstallerOut}"/gearlock gri "${_compressionLevel}" > /dev/null 2>&1
+	local retCode=$?
+	test "$retCode" != "0" && handleError "Making of gearlock installer failed" $retCode
+	ls -lh "${_buildInstallerOut}" | grep gearlock | awk '{print $5}'
+		
+	# Make bootinstall-initrd.img
+	echo -e "Making initrd.img-bootinstall image: \c"
+	"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/bootinstall-initrd.img"
+};
+
+main ${1:-"-mx23"} ${2:-""}

@@ -1,0 +1,74 @@
+clear && test -z "$ME" && exit 1
+# Define vars
+export INPUT_ZIP="$1" \
+	ZIP_META_TMP="$GTMP/.zip_meta" \
+	FAKEFD="1" \
+	ZIP_LOG="$GTMP/zipflash.log" \
+	ZIP_RET_HOLDER="$GTMP/zipret.log"
+rm -rf "$ZIP_META_TMP"
+
+# Setup sbin shells
+mkdir -p /sbin
+for shell in ash sh; do
+	ln -srf "$(command -v gbash)" /sbin/$shell
+done
+
+# Define functions
+# Force override flashable functions
+# FIXME : I tried and i tried ........
+# set_progress(){ printf "\r%*s" $(tput cols) "${PURPLE}$( echo "$1" | cut -d . -f2 )%${RC}"; }; ui_print(){ echo -e "$@"; }
+# for func in set_progress ui_print; do export -f $func; readonly -f $func; done
+
+# GearLock functions
+function signal_failed(){
+	geco && {
+		pause "${RED}Installation of $INPUT_ZIP Failed${RC} | "
+		clear_grlt
+		exit 1
+	}
+}
+
+# Check zip integrity
+JOB="CHECK_INTEGRITY"
+clear; geco "@@ ${YELLOW}GXPM ZipFlash:${RC} ${JOB}" && sleep 0.5
+if ! unzip -qqt "$INPUT_ZIP" 2>&1 | xargs | cut -d: -f2 | sed "s|(.*||"; then
+	geco " :: ${_input_zip_is_broken_}" && signal_failed
+fi
+
+# Verify zip signature; FIXME: This isnt actually doing that
+JOB+=", CHECK_SIGNATURE"
+clear; geco "@@ ${YELLOW}GXPM ZipFlash:${RC} ${JOB}" && sleep 0.5
+test -z "$(unzip -l "$INPUT_ZIP" | grep "META-INF/com/google/android/update-binary")" && geco " :: ${_signature_verification_failed_}" && signal_failed
+
+
+# Check if flashable zip is executable
+JOB+=", CHECK_FLASH_SUPPORT"
+clear; geco "@@ ${YELLOW}GXPM ZipFlash:${RC} ${JOB}" && sleep 0.5
+nout unzip "$INPUT_ZIP" 'META-INF/*' -d "$ZIP_META_TMP"
+test ! -e "$ZIP_META_TMP/META-INF/com/google/android/update-binary" && geco " :: ${_not_flashable_zip_}" && signal_failed
+
+# Runtime
+clear; geco "@@ ${YELLOW}GXPM ZipFlash:${RC} ${JOB} :: ${_flashing_X_info_/@DUMMY@/$(basename "$INPUT_ZIP")}\n"
+chmod -R 777 "$ZIP_META_TMP" || signal_failed
+
+cd "$ZIP_META_TMP" && (
+	META-INF/com/google/android/update-binary GearLock $FAKEFD "$INPUT_ZIP" > "$ZIP_LOG" 2>&1
+	echo $? > "$ZIP_RET_HOLDER"
+	sleep 2 && kill "$(ps -fA | grep "tail -c +0 -f" | grep -v grep | awk '{print $2}')" 2>/dev/null # Kill ziplog stdout and stderr
+) &
+
+tail -c +0 -f "$ZIP_LOG" | stdbuf -o0 grep "ui_print .*" | sed "s|ui_print||"
+! grep -Eq "ui_print" "$ZIP_LOG" && cat "$ZIP_LOG"
+rm -rf "$ZIP_META_TMP"
+
+
+## Print job done
+# Sync
+export REQSYNC="yes" && check_sync_req
+geco "\n+ ${_might_need_to_reboot_info_} ..." && sleep 0.5
+geco "\n+ ${_raw_flash_log_is_at_/@DUMMY@/$ZIP_LOG} ..." && sleep 0.5
+if [ "$(cat "$ZIP_RET_HOLDER")" = "0" ]; then
+    pause "${_successfully_installed_X_/@DUMMY@/${GREEN}$(basename "${INPUT_ZIP}")${RC}}  | "
+else
+    pause "${_zip_installation_failed_/@DUMMY@/$(basename "${INPUT_ZIP}")${RC}} | "
+fi

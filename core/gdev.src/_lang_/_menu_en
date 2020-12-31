@@ -1,0 +1,6 @@
+Set-up the build-environment
+Build & Pack the custom GearLock package
+Test your package/extension installation in a sandbox environment
+Modify scripts using Terminal with Nano Editor
+Auto-Make kernel-package from currently booted kernel
+Auto-Make mesa-package from currently booted mesa

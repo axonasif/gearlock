@@ -1,0 +1,56 @@
+#!/gearlock/bin/bash
+export PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+
+# Define Variable
+RECOVERY_DIR="$GRROOT/recovery"
+KERNEL_VERSION="$(uname -r)"
+BASE64_KERNEL_VERSION="$(echo "${KERNEL_VERSION}" | base64)"
+BASE64_KVCF="$RECOVERY_DIR/version"
+KERNEL_MODULES_PATH="/system/lib/modules/${KERNEL_VERSION}"
+HOST_GPU="$(ls -1 /sys/module/drm_kms_helper/holders | head -n1)"
+
+# Define functions
+
+placemod(){
+if [ -n "$(which rsync)" ]; then
+    rsync -a "$@"
+else
+    cp "$@"
+fi
+}
+
+get_dev(){
+echo "while read dev; do case \$dev in $(grep -E "$1" /lib/modules/$(uname -r)/modules.alias | sed -n 's/^alias  *\([^ ]*\)  *\(.*\)/\1)echo -n \"\2 \";;/p'| sed -e '/brcmfmac/d' -e 's|))|)|g' -e 's|(||g') esac; done" > ${tmp:=/gearlock/tmp/getdev} && chmod 777 $tmp && cat /sys/bus/*/devices/*/uevent | grep MODALIAS | sed 's/^MODALIAS=//' | awk '!seen[$0]++' | $tmp && rm -f $tmp
+}
+
+cache_recovery_km()
+{
+
+if [[ "$(get_dev 'atkbd|hid-apple')" =~ .*atkbd.* ]]; then
+    local CACHE_MODULE[1]="${KERNEL_MODULES_PATH}/kernel/drivers/input/keyboard/atkbd.ko"
+else
+    local CACHE_MODULE[1]="${KERNEL_MODULES_PATH}/kernel/drivers/hid/hid-apple.ko"
+fi
+
+local CACHE_MODULE[2]="${KERNEL_MODULES_PATH}/kernel/drivers/gpu/drm/${HOST_GPU}/${HOST_GPU}.ko"
+
+i=1;for mod_dri in "${CACHE_MODULE[@]}"; do
+	for mod_num in $((i++)); do
+		test -e "$mod_dri" && placemod "$mod_dri" "$RECOVERY_DIR/$mod_num"
+	done
+done
+
+echo -n "$BASE64_KERNEL_VERSION" > "$BASE64_KVCF"; return 0
+
+}
+
+
+mkdir -p "$RECOVERY_DIR" || exit 1 # Make sure recovery dir exist
+
+# First level of check
+if [ ! -e "$RECOVERY_DIR/version" ]; then cache_recovery_km
+elif [ "$(cat "$RECOVERY_DIR/version")" != "$BASE64_KERNEL_VERSION" ]; then cache_recovery_km
+fi
+
+# Check if all required modules are present at recovery dir.
+for mod_num in {1..2}; do test ! -e "$RECOVERY_DIR/$mod_num" && cache_recovery_km && break; done

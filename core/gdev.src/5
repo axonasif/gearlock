@@ -1,0 +1,35 @@
+# Define vars
+GDK_BASE="$CORE/gdev.src"
+BOOTED_KERNEL="$(uname -r)"
+FIRMDIR="/system/lib/firmware"
+KMODDIR="/system/lib/modules/$BOOTED_KERNEL"
+GETT="$WORKDIR"/'!zygote.sh'
+ckExit(){ test $? != 0 && geco "\n[!!!] Operation failed, try again ..." && exit 1; }
+get_value(){ sed -n "s/^$1=//p" "$GETT" | sed -e "s|\"||g" -e "s| #.*||" 2>/dev/null; }
+update_value(){ sed -i "s|\b$1=\".*\"|$1=\"$2\"|g" "$GETT"; }
+geco "\n+ Your booted kernel is: $BOOTED_KERNEL"
+geco "\n+ Press [Enter] to start the process" && read EnterKey
+"$GDK_BASE/1" --gearlock-kernel-pkg; ckExit
+
+	while true
+	do
+		read -n1 -p "$(geco "\n\n++ Do you want to include ${PURPLE}${FIRMDIR}${RC} also? [${GREEN}Y${RC}/n]") " i
+		case $i in
+			[Yy] ) geco "\n\n+ Processing your current kernel module dir & firmware dir\n"
+					gclone "$KMODDIR" "$WORKDIR/system/lib/modules"; ckExit
+					gclone "$FIRMDIR" "$WORKDIR/system/lib"; ckExit; break ;;
+			[Nn] ) geco "\n\n+ Processing your current kernel module dir only"
+					test -e "$WORKDIR$FIRMDIR" && rm -rf "$WORKDIR$FIRMDIR"; gclone "$KMODDIR" "$WORKDIR/system/lib/modules"; ckExit; break ;;
+				*) geco "\n- Enter either ${GREEN}Y${RC}es or no" ;;
+		esac
+	done
+
+rsync -a "$KERNEL_IMAGE" "$WORKDIR/kernel"
+geco && read -eri "$(get_value AUTHOR)" -p "$(geco "Enter your ${GREEN}Name${RC} as the owner/dev/author > ")" "TAUTHOR"
+update_value AUTHOR "$TAUTHOR" && geco
+read -eri "$(uname -r)" -p "$(geco "Enter your ${GREEN}$TTYPE${RC} version > ")" "TVERSION"
+update_value VERSION "$TVERSION"
+
+geco "\n+ Triggering the final build process ..." && sleep 1
+"$GDK_BASE/2" --noenc; ckExit
+

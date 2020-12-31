@@ -1,0 +1,40 @@
+test -z "$ME" && clear && exit 1
+export UNINS_SCRIPT="$1" && clear && source "$1"
+test "$DEF_HEADER" == "yes" && show_zygote_header
+
+if type do_unins_custom > /dev/null 2>&1; then
+	geco "\n- ${_phrase_running_custom_unins_func_} ...\n"
+	sleep 1
+	! do_unins_custom && geco && pause "++ ${_phrase_uninstallation_failed_/@DUMMY@/${GREEN}${NAME}${RC}} | " && exit 1
+fi
+if type do_unins > /dev/null 2>&1; then
+	geco "\n\n- ${_phrase_rem_files_from_auto_gen_} ..."
+	sleep 1
+	do_unins
+fi
+
+geco "\n"
+# Update GXPM LOG
+(
+	if [ -n "$(grep "${NAME}" "$GXPM_LOG" | grep "${AUTHOR}")" ]; then
+		L1="$(grep -n "${NAME}" "$GXPM_LOG" | grep "${AUTHOR}" | cut -d : -f1 | head -n1)"
+		LR1=">>>> Uninstalled >>>> ${NAME} <|> ${VERSION} <|> By ${AUTHOR} <|> ${SHORTDESC}"
+		sed -i "${L1}s/.*/${LR1}/" $GXPM_LOG
+	fi
+	sleep 2
+) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_GXPM_LOG" "MERGE_GXPM_LOG" 
+
+# Extension & GearBoot Executables
+if [ -n "$NAME" ]; then
+	if [ -e "${EXTDIR}/${C_EXTNAME:="$NAME"}" ]; then
+		(sleep 2 && rm "${EXTDIR}/${C_EXTNAME:="$NAME"}") & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: REMOVE" "REMOVE_EXTENSION"
+	fi
+	# GearBoot Scripts
+	if [ -n "$(find "$GBDIR" -name "${NAME}")" ]; then
+		(sleep 2 && find "$GBDIR" -name "${NAME}" -exec rm {} +) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: REMOVE_GEARBOOT_EXEC" "REMOVE_GEARBOOT_EXEC"
+	fi
+fi
+
+(sleep 1 && rm -f "$1") & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: REMOVE_UNINS_SCRIPT" "REMOVE_UNINS_SCRIPT"
+	check_sync_req
+	check_reboot_req

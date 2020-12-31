@@ -1,0 +1,2 @@
+#!/gearlock/bin/bash
+if test -n "$1" && test ! -e "$1"; then mkdir -p "$1" && chmod "${2:-755}" "$1" && chown root:root -h "$1"; fi

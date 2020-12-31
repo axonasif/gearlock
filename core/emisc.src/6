@@ -1,0 +1,78 @@
+[[ ! "$ANDROID_VER" =~ [4-9] ]] && geco "\n+ Currently disabled for android 10 and above, it will be supported in the future updates." && exit 1
+ckdirex "$DEPDIR/su-handler" 755; [ ! -f "/sbin/magisk" ] && rsync "$GRROOT/ramdisk.img" "$DEPDIR/su-handler/supersu.img"
+# # Define vars
+WD="$DEPDIR/mbtmp"; WDC="$WD/common"; MAGCACHE="/data/data/com.topjohnwu.magisk/cache"
+
+# # Define functions
+main(){
+	geco "\n+ ${_unzipping_magisk_} ..." && nout rm -r "$WD"
+	nout garca x -aoa -o"$WD" "$DEPDIR/magisk.zip" && cd "$WD"
+	geco "\n+ ${_cleaning_unnecessary_merging_required_} ..." && sleep 1 && nout rm -r META* arm chrome*
+	mv x86/magiskboot x86/magiskinit common && rm -r x86
+	geco "\n+ ${_gearlock_is_generating_bootimg_} ..."
+# Define ramdisk paths
+	test -e "${iram:="${KERNEL_IMAGE%/*}/initrd.img"}" && IRAM="${iram}" || IRAM="$GRROOT/initrd.img"
+    test -e ${sram:="$DEPDIR/su-handler/supersu.img"} && SRAM="$sram" || SRAM="$GRROOT/ramdisk.img"
+# Recheck ramdisk paths
+	for img in "$IRAM" "$SRAM"; do test ! -e "$img" && geco "\n++++ ${_failed_to_locate_file_/@DUMMY@/"${img##*/}"}" && exit 1; done
+# Generate boot.img
+	mkbootimg --kernel "$KERNEL_IMAGE" --ramdisk "$SRAM" --second "$IRAM" --output "$WDC/boot.img"
+	geco "\n+ ${_pushing_gen_bootimg_} ..." && cd "$WDC" && chmod 777 ./* && ./boot_patch.sh boot.img > /dev/null 2>&1
+	geco "\n+ ${_compressing_patched_ramdisk_} ..." && gzip ramdisk.cpio
+	geco "\n+ ${_saving_ramdisk_in_sudb_} ..." && sleep 0.5 && ckdirex "$DEPDIR/su-handler" 755
+	rsync -a ramdisk.cpio.gz "$DEPDIR/su-handler/magisksu.img" && rsync -a magisk.apk "$DEPDIR"
+	geco "\n+ ${_replacing_old_ramdisk_} ..." && rsync ramdisk.cpio.gz "$GRROOT/ramdisk.img" && chmod -f 777 "$GRROOT/ramdisk.img"
+	geco "\n+ ${_installing_magisk_app_}: \c" && pm install -r magisk.apk
+# 	ckdirex $MAGCACHE 771
+# 	geco "\n+ ${_special_magisk_ins_info_} ..." ; sleep 2;
+# 	nout gclone $DEPDIR/magisk.zip $MAGCACHE
+	geco "\n\n++ ${_operation_successful_}! ${YELLOW}${_reboot_to_see_changes_}${RC} ..."; sleep 1; rm -r "$WD"
+	geco "\n+ Have fun, see ya later - AXON ;)"
+}
+
+fetch_latest(){
+	! get_net_stat && exit 1
+	geco "\n+ ${_fetching_latest_magisk_}"
+	json_data="$(curl --silent "https://raw.githubusercontent.com/topjohnwu/magisk_files/master/stable.json" | grep -A5 '"magisk":')"
+	VER="$(echo "$json_data" | grep '"version":' | sed -E 's/.*"([^"]+)".*/\1/')"
+	DWL="$(echo "$json_data" | grep '"link":' | sed -E 's/.*"([^"]+)".*/\1/')"
+	geco "\n+ ${_latest_magisk_is_/@DUMMY@/$VER}"; sleep 1
+	geco "\n+ ${_downloading_magisk_/@DUMMY@/$VER}"
+	rm -f "$DEPDIR/magisk.zip"
+	! gdload "$DWL" "$DEPDIR/magisk.zip" && geco "${_download_was_interrupted_} ..." && exit 1
+}
+
+sel_custom(){
+	read -p "$(geco "${_put_magisk_zip_gearload_info_}")" readEnterKey
+		geco "${_sel_custom_magisk_zip_prompt_} ..."
+		cd "$GRLOAD"
+		GRP=(*.zip)
+		select SEL in "${GRP[@]}"
+		do
+			rsync "$SEL" "$DEPDIR/magisk.zip"
+			geco "\n+ ${_gearlock_will_use_this_/@DUMMY@/$SEL} ..." && sleep 2
+			break
+		done
+	}
+
+
+	geco "\n- ${_how_do_it_} ???"
+	select opt in "${_dw_install_latest_magisk_}" "${_sel_custom_magisk_zip_}" "${_back_}"
+	do
+		case $opt in
+			"${_dw_install_latest_magisk_}")
+				fetch_latest
+				main
+
+				;;
+			"${_sel_custom_magisk_zip_}")
+				sel_custom
+				main
+
+				;;
+			"${_back_}")
+				exit 0
+				;;
+		esac
+		break
+	done

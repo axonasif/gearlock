@@ -1,0 +1,7 @@
+#!/usr/bin/env bash 
+BD="${0%/*}"
+OUTPUT="$1"
+cd "$BD"
+
+# Generate initrd.img-bootinstall
+find . | grep -v 'keep' | grep -v 'makeme' | cpio --owner=root:root -o -H newc | gzip > "$OUTPUT" | tail -n1

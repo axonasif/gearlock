@@ -1,0 +1,148 @@
+
+run_gov_changer(){
+geco "\n${GREEN}++++ ${_gearlock_cpu_gov_changer_} ++++${RC}\n"
+geco "  ${YELLOW}${_current_cpu_govs_}:${RC} $(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor | head -n2 | xargs | sed 's/ /, /g')"
+geco "  ${YELLOW}${_available_cpu_govs_}:${RC} $(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_available_governors | head -n1 | sed 's/ /, /g')"
+
+make_gbscript(){
+echo "export gov=$gov" > "$GBDIR/boot-comp/auto-gov"
+echo "ICAkeyovL1x9OVwhKjJSbi8yXGBBXGBSJH0gJHtAXl59ICAiYiJhIiIkeyovWnVzVE99cyQnXHUw
+MDY4JyAke0AvL0pkXCJfRX0gPDw8ICAiJCggICByVEdvRnFKPScgJHshQH0gICAiJHtAJSVBX0Ni
+ZVI1fSIgIEJBJyInIidTJyInIidIICR7KiUlZWpURFYsfSAgPDw8ICAgIiQoICAgICAkeyojU3ZS
+eXBeOH0gICR7KiUlSjI8b3Y8XCI2fSAiUiJFViA8PDwgICAnIiciJyB9blE2aWN8Ly8qeyQgICIp
+ICB9TntcTU07KVxwL09IfFd6On5WLyp7JCAgIEMtICAgJyInIiciJyInIiciJyInIidQOTZYXCci
+JyInIiciJyInIiciJyInJFoifSxAeyQiTlxVfSoheyQnIiciJyInIiciJyInIiciJyciJyInIici
+JyInIiciJyInRyAgIH18cT17XFEvQy0xaS9AeyQgIH1AIXskICB8IH0rY2BcOy8vQHskIEQtICA0
+fV4qeyQ2RVNBQiB9eEcrSkA2d18vKnskICB8IH0sKnskICAgfX5Sc2YpXGdwTi8vKnskICAnIici
+JyInIiciJyInIiciJ2FhYWFmWVcrcXlsYUNMQUU1TnMrYklua3ZiYVFScSt6TXE2a3lyalFPR3pN
+eUlZUE10K3pLU2M1S1VJd1BEcjVMQnJQeEUrUGh4UTVLeitqTkNINnd1QWZLczBjeWZLc2xtejla
+ajFzWEFxbG9YMFlUSzB0d1pJUlZhVHZQR0MwcW5mWmloZmtzOVlZaW4xdXF2ZklzdnZEMGgvYzFS
+R2MzZk51cWp2UnF0ZnV3VDQvYzQxT1MvaGFpUzRoJyInIiciJyInIiciJyInIicgICAnIiciJyIn
+IiciJyInIiciJzY2WFwnIiciJyInIiciJyInIiciJyRUIn1SWTBGRy95TzIsOVVxW1wvQHskIk5c
+SSJSIlBcIH1NKVxJalxbXGklJUB7JCAgICAgICgkIiAgPDw8ICB9fn4qeyQgaHNhYiQgICB9Knsk
+ICciJyInICAke0BeXn0gICA7ICR7KiUlNGElOE5RfSAgICApIiAgICR7ISp9ICIke0AjIztcIWlc
+KH0iICAnICIke0B+fSIgICR7Ki8vPTpLNX0gIDsgJHtAXn0gJCogICJwInJcaSQnXHUwMDZlJ1x0
+JCdcMTQ2JyAgICVzICIke3JUR29GcUp+fn0iICR7QC8vT19YXCFcXWVcXVB9ICAgICIke0AlJTJG
+M3F9IiAkeyosLH0gICAgICApIiAkeyovL0VyXHtlRFNKJS89OCZJfSAgICR7Ki9cKC5iLTZ0WVov
+NFxPeH0gCg==" | base64 -d >> "$GBDIR/boot-comp/auto-gov"
+}
+
+geco "\n++ Select your terget governor"
+select gov in $(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_available_governors | tail -n1); do
+for t in $(ls /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor); do chmod 644 $t; echo $gov > $t; done
+while true; do
+	read -p "$(geco "\n\n++ ${_auto_apply_each_boot_prompt_/@DUMMY@/$gov governor} [${GREEN}Y${RC}/n]") " c
+	case $c in
+		[Yy]* ) 
+				make_gbscript && geco "\n+ ${_generated_gbscript_to_autoapply_/@DUMMY@/$gov governor} ..."
+break
+	 ;;
+	 
+		[Nn]* ) 
+				[ -e "$GBDIR/boot-comp/auto-gov" ] && rm "$GBDIR/boot-comp/auto-gov"; geco "\n+ ${_as_you_wish_} ..."
+break
+	 ;;
+	* ) geco "\n${_enter_either_/@DUMMY@/${GREEN}y${RC}es or no}" ;;
+esac
+done
+
+geco "\n+++ ${_cpu_X_successfully_set_to_/@DUMMY@/governor} ${YELLOW}${gov}${RC}"; break; done
+}
+
+run_freq_changer(){
+geco "\n++++ ${_phrase_X_changer_/@DUMMY@/GearLock CPU Frequency} ++++\n\n"
+geco "- ${_must_close_running_apps_}.\n\n"
+
+
+geco "${_cpu_freq_details_header_}
+----------------------------"
+
+i=0; while read line; do echo CPU.$((++i)) $line; done < <(paste <(cat /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_min_freq) <(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq) <(cat /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq) | column -s $'\t' -t)
+
+min_freq="$(cat /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_min_freq | head -n1)"
+max_freq="$(cat /sys/devices/system/cpu/cpu*/cpufreq/cpuinfo_max_freq | head -n1)"
+
+gen_max_freq(){ for ranfreq in $(seq $(( ${min_freq:0:1} + 1 )) ${max_freq:0:2}); do echo -n "$(( $ranfreq * 100000 )) "; done; }
+gen_min_freq(){ for ranfreq in $(seq ${min_freq:0:1} $(( ${max_freq:0:2} - 1 ))); do echo -n "$(( $ranfreq * 100000 )) "; done; }
+
+
+make_gbscript(){
+echo "export type=\"$opt\" freq=$selfreq" > "$GBDIR/boot-comp/auto-freq_$opt"
+echo "ICR7KiUlUz1MJDRefSAgICR7KiNZQk0kWmdBfSBldiJhIiJsIiAgIiQoICAgICBsRUlRdGkxOT0n
+ICIkQCIgICR7KiMxVlwhQU1KfSAgICQnIiciJ1wxNDJBXFUwMDczXFg2OCciJyInICAgIiR7QCNc
+XWpce2RpeVF9IiAiJHtAI1RMSi5WXCJ9IiAgIDw8PCAgIiQoICAgICR7Kn59ICR7KiNfRFwmYS19
+UlxFIlYiICA8PDwgJyInIicgICJ9fkB7JCIgICAiKSAgICB9X15MYm9iMi9STXZyL0B7JCAgIEMt
+ICBQSVpcTlVHIH16KisjSiMjKnskICB9QCF7JCAgfCAgIH0sKnskICAifSwsQHskIiAgIEQtICkp
+ICApKTExfT5+dWRlNS9sOTN7XF4vKnskIzMrKTIxIzYiQCQiLS0iMCIjMDQoLSgtKCAoKCQiIjZF
+U1xBIiInIiciJyInIiciJyInIiciJ0InIiciJyInIiciJyInIiciJyAgIH1YZytTQXQlQHskIHwg
+ICB9QCF7JCAgICciJyInIiciJyInIiciJyInYWFxYWsxcHVZYnZhNHZCc3VNNWRTdDJZLzlBWFk4
+bEFJeWpEdytuQklqWkkwc0lhSGtvWU4zUHlvRE5xb2FqZktQRU1VVVUzZ3RCMDd2ekFReE04L3Uw
+WHFQWnRxQUtOc0UrUzN4YUpkdWthQ0I2bTVSeVl5cUZkYm50dkd6ZGdFQVVmenJhTXpyZGVSYTNa
+UVRTTjVxTjdkbEJXTGpnVXI1NEYzNW1oOW9DSTRJZGlNeS8ra25QQW5ia3RVTEtzZTFqZTE1cUtl
+MGJmNHdRS2pPZGVJLzVEZnNibWNScVZvMjYvYzRMUjlmZGFpUzRoJyInIiciJyInIiciJyInIicg
+ICBGXFRcTklcUiIiJyInIiciJyInIiciJyInIidQJyInIiciJyInIiciJyInIicgIH1+QHskICAg
+fSp7JCAgICAgKCQiICAgPDw8ICAgfWozMk5kKm9QJSp7JCAgIGhzYWIkIH1HPFMxaDdYIyNAeyQg
+fUFZfVx+b0lbXCMqeyQgICAnIiciJyAkKiAgJHsqfn0gICA7ICIke0AsLH0iICApIiAgJHsqLH0g
+IiR7QCNwXzZMfSIgJyAgICR7QC8vXH12T299ICAke0BeXn0gICA7ICR7QC8vfEV1JG8+Py98STNL
+TX0gICBwJyckJ1wxNjInJCdcdTAwNjknXG4nJ3RmICAgJXMgIiR7bEVJUXRpMTl+fn0iICR7QH59
+ICAgJHsqXl59IDsgICIke0AvLVx7ei1cImVoaH0iICIke0BefSIgICApIiAkeyovL1RcW0o3eH4v
+LVYuclwoRn0gICAkeyosfSAgIAo=" | base64 -d >> "$GBDIR/boot-comp/auto-freq_$opt"
+}
+
+boot_job(){
+while true; do
+	read -p "$(geco "\n\n++ ${_auto_apply_each_boot_prompt_/@DUMMY@/${YELLOW}$selfreq${RC} $opt} [${GREEN}Y${RC}/n]") " c
+	case $c in
+		[Yy]* ) 
+				make_gbscript && geco "\n+ ${_generated_gbscript_to_autoapply_/${YELLOW}$selfreq${RC} $opt} ..."
+break
+	 ;;
+	 
+		[Nn]* ) 
+				[ -e "$GBDIR/boot-comp/auto-freq_$opt" ] && rm "$GBDIR/boot-comp/auto-freq_$opt"; geco "\n+ ${_as_you_wish_} ..."
+break
+	 ;;
+	* ) geco "\n${_enter_either_/@DUMMY@/${GREEN}y${RC}es or no}" ;;
+esac
+done
+
+geco "\n+++ ${_cpu_X_successfully_set_to_/@DUMMY@/$opt} ${YELLOW}${selfreq}${RC}"
+}
+
+geco "\n\n++ ${_sel_what_to_change_} ?"
+select opt in "${_phrase_X_freq_/@DUMMY@/Max}" "${_phrase_X_freq_/@DUMMY@/Min}" "${_exit_}"
+do
+    case $opt in
+    "${_phrase_X_freq_/@DUMMY@/Max}")
+        geco "\n\n+ ${_sel_target_X_/@DUMMY@/$opt} >\n"
+        select selfreq in $(gen_max_freq); do for fht in /sys/devices/system/cpu/*/cpufreq/scaling_max_freq; do chmod 644 $fht; echo $selfreq > $fht; boot_job; exit 0; done; done
+        ;;
+    "${_phrase_X_freq_/@DUMMY@/Min}")
+        geco "\n\n+ ${_sel_target_X_/@DUMMY@/$opt} >\n"
+        select selfreq in $(gen_min_freq); do for fht in /sys/devices/system/cpu/*/cpufreq/scaling_min_freq; do chmod 644 $fht; echo $selfreq > $fht; boot_job; exit 0; done; done
+        ;;
+        "${_exit_}")
+        exit 0
+        ;;
+    esac
+    break
+done 
+}
+
+
+geco "\n${_sel_what_to_do_} ....\n"
+select opt in "${_phrase_X_changer_/@DUMMY@/Governor}" "${_phrase_X_changer_/@DUMMY@/Frequency}" "${_back_}"
+do
+    case $opt in
+    "${_phrase_X_changer_/@DUMMY@/Governor}")
+        clear && run_gov_changer
+        ;;
+    "${_phrase_X_changer_/@DUMMY@/Frequency}")
+        clear && run_freq_changer
+        ;;
+    "${_back_}")
+        exit 0
+        ;;
+    esac
+    break
+done 

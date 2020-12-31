@@ -1,0 +1,72 @@
+##### GearLock Configuration File
+### This configuration file is loaded by GearLock core.
+### And is also used by all other sub gearlock applications during their runtime.
+### This configuration file gets modified when you change `Settings` through Gearock Ui.
+### You can override any CORE variable or function through this configuration file. (Do not modify unless you want to change the defaults)
+### Please check `https://supreme-gamers.com/gearlock/customize-integrate-gearlock` to learn more.
+
+
+
+## Boot Sound
+# You can specify your own bootsound in wav format.
+# Remove/Empty/put-something-else in this variable if you want to disable bootsound.
+BOOTSOUND="/gearlock/etc/bootsound.wav"
+
+## Update Check
+# GearLock periodically checks for update
+# You can either set this variable to `no` or remove it.
+UPDATE_CHECK="yes"
+
+## Secondary TTY
+# GearLock spawns a secondary tty that you get on pressing `ALT+F8`
+# You can disable it if you like by either setting to `no` or removing it.
+SECOND_GTTY="yes"
+
+## Default GearLock Interface Theme
+# Since you know that GearLock currently comes with two themes, so you might wanna set a default
+# The current theme keycoddes are: `metro`, `classic`
+DEFAULT_THEME="notset"
+
+## GearLock Interface Language
+# GearLock has utf8 multilang support
+# But that's only available when GearLock is used through the app.
+# Currently there are only translation for `en` & `vn`, you're welcome if you want to contribute.
+GLANG="en"
+
+
+# # ## Below I'm referencing some sensitive configurations that you can change.
+# # ## It is not recommended to modify these unless you know what you're doing.
+# # ## Remove all `# #` to modify.
+# # 
+# # 
+# # ## GRROOT_DIR
+# # # This is the mountpoint folder where your OS-PARTITION is mounted.
+# # GRROOT_DIR="/gearlock/gearroot"
+# # 
+# # ## GRROOT
+# # # GROOT is the place where files like `ramdisk.img` & `initrd.img` exist.
+# # # It is basically needed in cases when your android-x86 distro is installed under a subdirectory in your OS-PARTITION.
+# # # GearLock auto detects the correct path, do not override this unless necessary.
+# # GRROOT="$GRROOT_DIR/example-folder"
+# # 
+# # ## GHOME
+# # # ghome is the place where GearLock store a lot of things for it's work process.
+# # # GBDIR, DEPDIR, STATDIR, UNINSDIR etc. are depended on this variable.
+# # GHOME="/system/ghome"
+# # 
+# # ## Host Architecture
+# # HOST_ARCH="x86_64"
+# # 
+# # ## Android version
+# # ANDROID_VER="7.1"
+# # 
+# # ## HOOKDIR
+# # # This is the directory path for hooking files inside GearLock core.
+# # HOOKDIR="$GHOME/hook"
+# # 
+# # ## HOOK_DEL_FILES
+# # # If you want to delete core file/folder before GearLock load files from your $HOOK_DIR
+# # HOOK_DEL_FILES=(
+# # "/gearlock/core/src.main/10"
+# # "/gearlock/core/help"
+# # )

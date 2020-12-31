@@ -1,0 +1,29 @@
+#[ -e /storage ] && PREFIX="/storage" || 
+PREFIX="/mnt"
+geco "\n++++ ${_gearlock_partition_mounter_} ++++"
+    geco "\n ------- ${_partition_table_} -------\n"
+    blkid -s LABEL -s TYPE | grep -v loop | nl -s "]. " | awk 'NF'
+    
+while true; do
+    geco "\n+ ${_sel_partition_prompt_} >> \c"; read "c"
+    if [ "$c" = "0" ] || [ -z "$(blkid -s LABEL -s TYPE | grep -v loop | awk 'NF' | sed -n "$c p" | cut -d : -f1)" ]; then
+        geco "\n+ ${_wronginput_try_again_} ..."
+    else
+        geco "\n+ ${_trying_to_mount_it_} ..."; ckdirex "$PREFIX"
+        SEL_BLK="$(blkid -s LABEL -s TYPE | grep -v loop | awk 'NF' | sed -n "$c p" | cut -d : -f1)"  
+        # Mountpoint name
+        LABEL_VAR="$(blkid -s LABEL $SEL_BLK | cut -d "=" -f2 | sed 's/"//g')"
+        if [ -n "$LABEL_VAR" ]; then MOUNTP_NAME="$LABEL_VAR"; else MOUNTP_NAME="$(basename $SEL_BLK)"; fi
+        ckdirex "$PREFIX/$MOUNTP_NAME" 777
+            if [ -n "$(blkid $SEL_BLK | grep "TYPE=\"vfat\"")" ]; then
+            mount -t vfat -o rw "$SEL_BLK" "$PREFIX/$MOUNTP_NAME"
+            else
+            mount -o loop,rw "$SEL_BLK" "$PREFIX/$MOUNTP_NAME"
+            fi
+        # On empty Mountpoint
+        [ -z "$(ls -A "$PREFIX/$MOUNTP_NAME")" ] && geco "++++ ${_failed_to_mount_} ..." && break
+      
+      # On success
+      geco "\n++ ${_successfully_mounted_/@DUMMY@/$(basename $SEL_BLK)} ${BRED}$PREFIX/$MOUNTP_NAME${RC} ..." && break
+    fi
+done

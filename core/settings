@@ -1,0 +1,133 @@
+# Define variables
+LIST_OPTS=(BOOTSOUND SECOND_GTTY UPDATE_CHECK DEFAULT_THEME NORECOVERY FIXFS)
+
+# Define functions
+function checklist(){
+	BACK_TITLE="$1" TITLE="$2" NUM_OPTIONS="$3" HEADER_TEXT="$4"; shift;shift;shift;shift
+	
+	CHOSEN_LIST=$(dialog --clear --colors --ok-label "  ${_confirm_}  " --nocancel --backtitle "$BACK_TITLE" --title "$TITLE" --separate-output --checklist "$HEADER_TEXT" 16 100 "$NUM_OPTIONS" "$@"  3>&1 1>&2 2>&3)
+	ORIG_IFS="$IFS"; IFS=$'\n'; CHOSEN_LIST=( $CHOSEN_LIST ); IFS="$ORIG_IFS"
+	
+	CHOSEN=""
+	for i in "${CHOSEN_LIST[@]}"; do
+		CHOSEN+="\"$i\" "
+	done
+	
+	echo "$CHOSEN"
+}
+
+function update_value(){ 
+
+	if grep -q "$1=" "$GEARLOCK_RC"; then
+		sed -i "s|$1=.*|$1=\"$2\"|g" "$GEARLOCK_RC"
+	else
+		echo -e "\n$1=\"$2\"" >> "$GEARLOCK_RC"
+	fi
+
+}
+
+function fetch_value(){ 
+	cat "$GEARLOCK_RC" 2>/dev/null | sed -n "s|^$1=||p" | sed "s|\"||g" | head -n 1
+}
+
+function set_ui_value(){
+
+	if [ "$(fetch_value "$1")" == "yes" ] || [ "$(fetch_value "$1")" == "/gearlock/etc/bootsound.wav" ] \
+	|| [ "$(fetch_value "$1")" == "metro" ] || [ "$(fetch_value "$1")" == "classic" ]; then
+		echo ON 
+	elif [ "$1" == NORECOVERY ] && [ -e "$GRROOT/norecovery" ]; then
+		echo ON
+	elif [ "$1" == FIXFS ] && [ -e "$GRROOT/fixfs" ]; then
+		echo ON
+	else
+		echo OFF
+	fi
+
+}
+
+
+function ask_opts (){
+
+# Get input
+ANSWER=$( checklist "${_settings_back_title_}" " ${_settings_title_} " 5 \
+		"\n${_settings_extra_instructions_} \n \n" \
+		\
+		"${LIST_OPTS[0]}" "${_settings_bootsound_info_}" $(set_ui_value ${LIST_OPTS[0]}) \
+		"${LIST_OPTS[1]}" "${_settings_gtty_info_}" $(set_ui_value ${LIST_OPTS[1]}) \
+		"${LIST_OPTS[2]}" "${_settings_update_info_}" $(set_ui_value ${LIST_OPTS[2]}) \
+		"${LIST_OPTS[3]}" "${_settings_default_theme_info_}" $(set_ui_value ${LIST_OPTS[3]}) \
+		"${LIST_OPTS[4]}" "${_settings_norecovery_info_}" $(set_ui_value ${LIST_OPTS[4]}) \
+		"${LIST_OPTS[5]}" "${_settings_fixfs_info_}" $(set_ui_value "${LIST_OPTS[5]}") )
+
+# Convert $ANSWER into plain string
+ANSWER=( $(eval echo $ANSWER) )
+
+}
+
+function setup_opts(){
+
+# First handle which options were unchecked.
+for allOPT in ${LIST_OPTS[@]}
+do
+	
+	if [[ ! "${ANSWER[*]}" =~ .*$allOPT.* ]]; then
+		
+		if [ "$allOPT" == DEFAULT_THEME ]; then
+			update_value "$allOPT" "notset"
+		elif [ "$allOPT" == BOOTSOUND ]; then
+			update_value "$allOPT" "notset"
+		elif [ "$allOPT" == NORECOVERY ]; then
+			rm -f "$GRROOT/norecovery"
+		elif [ "$allOPT" == FIXFS ]; then
+			rm -f "$GRROOT/fixfs"
+		else
+			update_value "$allOPT" "no"
+		fi
+		
+	fi
+	
+done 
+
+# Handle Newly enabled options
+for newOPT in "${ANSWER[@]}"
+do
+	if [ "$newOPT" == DEFAULT_THEME ]; then
+		update_value "$newOPT" "$IT"
+	elif [ "$newOPT" == BOOTSOUND ]; then
+		update_value "$newOPT" "/gearlock/etc/bootsound.wav"
+	elif [ "$newOPT" == NORECOVERY ]; then
+		touch "$GRROOT/norecovery"
+	elif [ "$newOPT" == FIXFS ]; then
+		touch "$GRROOT/fixfs"
+	else
+		update_value "$newOPT" "yes"
+	fi
+done
+
+}
+
+### Main
+
+# Collect input
+ask_opts
+
+while true; do
+	
+	if test -z "${ANSWER[*]}"; then
+			
+		if yesno "Lack of input" " ${_attention_} " "\n You seem to have disabled all options, do you want to continue ? " 7 70; then
+			msgbox "Hmm ..." " Info " "\n ${_as_you_wish_} " 7 50 && break
+		else
+			ask_opts
+		fi
+	
+	else
+	
+		break
+	
+	fi
+	
+done
+
+# Perform operations as required
+setup_opts

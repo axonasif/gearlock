@@ -1,0 +1,28 @@
+nopause;totalRam="$(( $(awk '/MemTotal/ {print $2/1024}' /proc/meminfo | cut -d '.' -f1) * 1048576 ))"
+halfRam="$((  ( totalRam * 50) / 100  ))"
+geco "Calculating /data size ..." && dataSize="$(du -sb /data | awk '{print $1}')"
+GB_SCRIPT="$GBDIR/init/OhMyRAM"
+
+if test "$(( totalRam / 1048576 ))" -lt 4500; then
+	msgbox "Hol up!" " Notice " "\n Unfortunately this feature was intended for computers with more than ${MBOLD}${MRED}4GB${MRC} RAM.\n But you only have ${MBOLD}${MRED}$((totalRam / 1048576))MB${MRC}, so you can't use it." 8 85 && exit 1
+	
+elif (( $(echo "$totalRam $dataSize" | awk '{print ($1 < $2)}') )); then
+	msgbox "Hol up!" " Error " "\nYour /data size is over than your total RAM size, you better remove any unnecessary files and apps if you want to use this feature. Your ram is ${MBOLD}${MRED}$((totalRam / 1048576))MB${MRC}, but your /data size is ${MBOLD}${MRED}$((dataSize / 1048576))MB${MRC}" 8 85 && exit 1
+	
+elif (( $(echo "$halfRam $dataSize" | awk '{print ($1 < $2)}') )); then
+	msgbox "Hol up!" " Warning " "\nYour current /data size is about ${MBOLD}${MRED}$(( (dataSize / totalRam) * 100 ))%${MRC} of your total RAM, you better remove any unnecessary files and apps and make it under 50% for best experience" 8 85
+	
+fi
+
+job(){
+	
+	test "$1" == "enable" && rsync -a "$(dirname "$(readlink -f "$0")")/OhMyRam.gbscript" "$GB_SCRIPT" || rm -f "$GB_SCRIPT"
+	msgbox " $(gecpc " UtraFPS Unlocker " "#") " " Info " "\n Successfully ${1}d, restart to see changes." 7 60
+	
+}
+
+if dialog --colors --clear --backtitle " $(gecpc " Oh My Ram - A shameless inspiration from the name of oh-my-zsh " "@") " --title " Select Action " --yes-label " Enable " --no-label " Disable " --defaultno  --yesno "\n ${MBOLD}${MU}${MGREEN}Current Status:${MRC} ${MBOLD}${MYELLOW}$(test -e "$GB_SCRIPT" && echo 'Enabled' || echo 'Disabled')${MRC}\n\n This makes your /data to be loaded in virtual RAM filesystem instead of physical disk. In result it is expected to get better read & write\n speeds, which partially also improves gaming performance. This was mainly made for Gamers, not for daily usage.\n\n For the best results you must keep your /data size as much small as possible, because the big your /data size will be, the more RAM space will\n be eaten and in result less RAM will remain for the OS itself. So keep less apps/games/files in your OS and only keep your favorite game for\n which you want more optimization.\n\n Now if you enable it, it will take a snapshot of your current data and load the same data on every boot.\n Meaning whatever change you make in your /data while it's enabled, that won't be reflected for the next boot unless you disable it.\n\n ${MBOLD}${MU}${MRED}Note:${MRC} This can cause some apps & games or even system components to crash / behave abnormally, use at your own risk!" 20 150; then
+	job "enable"
+else
+	job "disable"
+fi

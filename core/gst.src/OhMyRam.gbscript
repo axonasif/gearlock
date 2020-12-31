@@ -1,0 +1,9 @@
+ORIG_DATADIR="/android/data"
+TMP_DATADIR="/android/heck_data"
+
+mkdir -p "$TMP_DATADIR" || { geco "[!!!] Error: /android is not writable, did you supercharge yet ?"; exit 1; }
+mount --move "$ORIG_DATADIR" "$TMP_DATADIR" 2>/dev/null || { geco "[!!!] Error: Failed to run an operation"; exit 1; }
+mount -t tmpfs tmpfs "$ORIG_DATADIR" 2>/dev/null || { geco "[!!!] Error: Failed to setup tmpfs in /android/data"; exit 1; }
+geco "[%%%] Loading raw /data filesystem into RAM"
+gclone "$TMP_DATADIR/" "$ORIG_DATADIR" || { geco "[!!!] Warning: Something might have gone wrong"; }
+{ umount -d "$TMP_DATADIR"; umount "$TMP_DATADIR"; } >/dev/null 2>&1 

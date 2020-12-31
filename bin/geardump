@@ -1,0 +1,56 @@
+#!/gearlock/bin/bash
+# Setup tempdir
+test ! -e /gearlock/bin/fetch && exit 1
+source /gearlock/bin/fetch
+DUMP_DIR="$GTMP/dumpDebug"
+DUMP_ARCHIVE_TARGET="/data/dumpDebug.7z"
+mkdir -p "$DUMP_DIR"
+
+# Dump all variables (Environment + Local)
+echo -e "+ Dumping runtime variables" && sleep 0.7
+( set -o posix; set ) | less > "$DUMP_DIR/runtime_names.log" 2>&1
+
+# Dump tree of system, data, gearroot_dir and ghome folder
+echo -e "+ Dumping major directory trees" && sleep 0.7
+for dir in "system" "data" "gearlock/gearroot" "${GHOME#/}"; do
+	tree -pug -L $(test "$dir" == "${GHOME#/}" && echo 5 || echo 2) /"$dir" 2>/dev/null > "$DUMP_DIR/${dir##*/}_tree.log" 
+done
+
+# Take copy of STATUS DIR
+echo -e "+ Dumping status directory" && sleep 0.7
+test -n "$STATDIR" && rsync -a "$STATDIR/" "$DUMP_DIR/status_dump" 2>/dev/null
+
+# Dump GSTATUS
+echo -e "+ Dumping gstatus output" && sleep 0.7
+gstatus > "$DUMP_DIR/gstatus_dump.log" 2>&1
+
+# Dump boot params
+echo -e "+ Dumping boot parameters" && sleep 0.7
+cat /proc/cmdline 2>/dev/null > "$DUMP_DIR/bootparams.log"
+
+# Dump mountpoints
+echo -e "+ Dumping mountpoint status" && sleep 0.7
+mount > "$DUMP_DIR/mountpoints.log"
+
+# Dump various kernel stuff
+echo -e "+ Dumping kernel related info and directory trees: "
+for _util in demsg lsmod lsusb; do
+    echo -n "$_util "
+    $_util > "$DUMP_DIR/${_util}.log" 2>&1
+done
+for _dir in "/proc" "/sys" "/dev"; do
+    echo -n "$_dir "
+    tree -pug $_dir > "$DUMP_DIR/${_dir}_tree.log" 2>&1
+done
+
+# Dump logcat
+if test -z "$RECOVERY"; then
+    echo -e "+ Dumping logcat for 10 seconds"
+    ( sleep 10 && gkillapp "logcat -f $DUMP_DIR/logcat.log" ) &
+    logcat -f "$DUMP_DIR/logcat.log"
+fi
+    
+# Pack the dump
+echo -e "+ Packing your dumpDebug" && sleep 0.7
+garca a -m0=zstd "$DUMP_ARCHIVE_TARGET" "$DUMP_DIR"/* > /dev/null 2>&1 && rm -rf "$DUMP_DIR"
+echo -e "\n++++ ${DUMP_ARCHIVE_TARGET##*/} saved at ${DUMP_ARCHIVE_TARGET%/*}, kindy upload it to @AXON for debugging" && sleep 5 && exit

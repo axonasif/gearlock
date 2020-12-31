@@ -1,0 +1,25 @@
+for i in /gearlock/etc/profile.d/*.sh; do
+	if [ -r $i ]; then
+		. $i
+	fi
+done
+unset i
+
+# Source etc/bash.bashrc and ~/.bashrc also for interactive bash login shells:
+if [ "$BASH" ]; then
+        if [[ "$-" == *"i"* ]]; then
+                if [ -r /gearlock/etc/bash.bashrc ]; then
+                        . /gearlock/etc/bash.bashrc
+                fi
+                
+                if [ -d "/data/ghome" ]; then
+                    TER=/data/ghome
+                elif [ -d "/system/ghome" ]; then
+                    TER=/system/ghome
+                fi
+                
+                if [ -r $TER/.bashrc ]; then
+                        . $TER/.bashrc
+                fi
+        fi
+fi

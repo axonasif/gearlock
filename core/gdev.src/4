@@ -1,0 +1,4 @@
+echo 'include "/gearlock/share/nano/sh.nanorc"' > /gearlock/etc/nanorc
+geco "Select the writeable files/scripts that you want to modify ..."; sleep 2
+mc "$WORKDIR"
+

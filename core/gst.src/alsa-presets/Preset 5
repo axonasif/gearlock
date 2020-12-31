@@ -1,0 +1,155 @@
+# The Advanced Linux Sound Architecture (Alsa) Project [  alsa-project.org  |  ALSA team  ]
+# License: GNU GPL & LGPL
+
+#	[ -d /proc/asound/card0 ] || modprobe snd-dummy
+	for c in $(grep '\[.*\]' /proc/asound/cards | awk '{print $1}'); do
+		f=/system/etc/alsa/$(cat /proc/asound/card$c/id).state
+		if [ -e $f ]; then
+			alsa_ctl -f $f restore $c
+			alsa_amixer -c $c set Speaker 50%
+		else
+			alsa_ctl init $c
+			alsa_amixer -c $c set Master on
+			alsa_amixer -c $c set Master 100%
+			alsa_amixer -c $c set Headphone on
+			alsa_amixer -c $c set Headphone 100%
+			alsa_amixer -c $c set Speaker 100%
+			alsa_amixer -c $c set Capture 100%
+			alsa_amixer -c $c set Capture cap
+			alsa_amixer -c $c set PCM 100 unmute
+			alsa_amixer -c $c set SPO unmute
+			alsa_amixer -c $c set 'Mic Boost' 0
+			alsa_amixer -c $c set 'Internal Mic Boost' 0
+			alsa_amixer -c $c set Line on
+			alsa_amixer -c $c set Line 100%
+			alsa_amixer -c $c set 'Line Boost' 0
+			alsa_amixer -c $c set 'Front Mic' on
+			alsa_amixer -c $c set 'Front Mic' 100
+			alsa_amixer -c $c set 'Front Mic Boost' 0
+			alsa_amixer -c $c set 'Rear Mic' on
+			alsa_amixer -c $c set 'Rear Mic' 100%
+			alsa_amixer -c $c set 'Rear Mic Boost' 0
+			alsa_amixer -c $c set 'Input Source',0 'Rear Mic'
+			alsa_amixer -c $c set 'Internal Mic Boost' 0
+			alsa_amixer -c $c set 'Inverted Internal Mic' on
+			alsa_amixer -c $c set 'Inverted Internal Mic' 100%
+			alsa_amixer -c $c cset name='Mic Capture Switch' on
+			alsa_amixer -c $c cset name='Internal Mic Capture Switch' on
+			alsa_amixer -c $c cset name='Inverted Internal Mic Capture Switch' on
+			alsa_amixer -c set 'Internal Mic Boost' 0
+			alsa_amixer -c set 'Inverted Internal Mic' on
+			alsa_amixer -c set 'Inverted Internal Mic' 100%
+			alsa_amixer -c cset name='Mic Capture Switch' on
+			alsa_amixer -c cset name='Internal Mic Capture Switch' on
+			alsa_amixer -c cset name='Inverted Internal Mic Capture Switch' on
+			alsa_amixer -c0 $c set Mic on
+			alsa_amixer -c0 $c set Mic 100%
+			alsa_amixer -c0 $c set Capture 20
+			alsa_amixer -c0 $c set Capture cap
+			alsa_amixer -c0 $c set 'Front Mic' on
+			alsa_amixer -c0 $c set 'Front Mic' 100
+			alsa_amixer -c0 $c set 'Front Mic Boost' 0
+			alsa_amixer -c0 $c set 'Rear Mic' on
+			alsa_amixer -c0 $c set 'Rear Mic' 100%
+			alsa_amixer -c0 $c set 'Rear Mic Boost' 0
+			alsa_amixer -c0 $c set Line on
+			alsa_amixer -c0 $c set Line 100%
+			alsa_amixer -c0 $c set 'Line Boost' 0
+			alsa_amixer -c0 $c set 'Input Source',0 'Rear Mic'
+			alsa_amixer -c0 $c set 'Internal Mic Boost' 0
+			alsa_amixer -c0 $c set 'Inverted Internal Mic' on
+			alsa_amixer -c0 $c set 'Inverted Internal Mic' 100%
+			alsa_amixer -c0 $c cset name='Mic Capture Switch' on
+			alsa_amixer -c0 $c cset name='Internal Mic Capture Switch' on
+			alsa_amixer -c0 $c cset name='Inverted Internal Mic Capture Switch' on
+			alsa_amixer -c0 set*'Mic'*on
+			alsa_amixer -c0 set*'Mic'*100%
+			alsa_amixer -c0 cset*name='Mic Capture Switch'*on
+			alsa_amixer -c0 set*'Mic Boost'*1
+			alsa_amixer -c0 set*'Internal Mic'*on
+			alsa_amixer -c0 set*'Internal Mic'*100%
+			alsa_amixer -c0 cset*name='Internal Mic Capture Switch'*on
+			alsa_amixer -c0 set*'Internal Mic Boost'*1
+			alsa_amixer -c0 set*'Inverted Internal Mic'*on
+			alsa_amixer -c0 set*'Inverted Internal Mic'*100%
+			alsa_amixer -c0 cset*name='Inverted Internal Mic Capture Switch'*on
+			alsa_amixer -c1 $c set Mic on
+			alsa_amixer -c1 $c set Mic 100%
+			alsa_amixer -c1 $c set 'Mic Boost' 1
+			alsa_amixer -c1 $c set 'Internal Mic' on
+			alsa_amixer -c1 $c set 'Internal Mic' 100%
+			alsa_amixer -c1 $c set Capture 20
+			alsa_amixer -c1 $c set Capture cap
+			alsa_amixer -c1 $c set 'Front Mic' on
+			alsa_amixer -c1 $c set 'Front Mic' 100
+			alsa_amixer -c1 $c set 'Front Mic Boost' 0
+			alsa_amixer -c1 $c set 'Rear Mic' on
+			alsa_amixer -c1 $c set 'Rear Mic' 100%
+			alsa_amixer -c1 $c set 'Rear Mic Boost' 0
+			alsa_amixer -c1 $c set Line on
+			alsa_amixer -c1 $c set Line 100%
+			alsa_amixer -c1 $c set 'Line Boost' 0
+			alsa_amixer -c1 $c set 'Input Source',0 'Rear Mic'
+			alsa_amixer -c1 $c set 'Internal Mic Boost' 0
+			alsa_amixer -c1 $c set 'Inverted Internal Mic' on
+			alsa_amixer -c1 $c set 'Inverted Internal Mic' 100%
+			alsa_amixer -c1 $c cset name='Mic Capture Switch' on
+			alsa_amixer -c1 $c cset name='Internal Mic Capture Switch' on
+			alsa_amixer -c1 $c cset name='Inverted Internal Mic Capture Switch' on
+			alsa_amixer -c1 set*'Mic'*on
+			alsa_amixer -c1 set*'Mic'*100%
+			alsa_amixer -c1 cset*name='Mic Capture Switch'*on
+			alsa_amixer -c1 set*'Mic Boost'*1
+			alsa_amixer -c1 set*'Internal Mic'*on
+			alsa_amixer -c1 set*'Internal Mic'*100%
+			alsa_amixer -c1 cset*name='Internal Mic Capture Switch'*on
+			alsa_amixer -c1 set*'Internal Mic Boost'*1
+			alsa_amixer -c1 set*'Inverted Internal Mic'*on
+			alsa_amixer -c1 set*'Inverted Internal Mic'*100%
+			alsa_amixer -c1 cset*name='Inverted Internal Mic Capture Switch'*on
+			# DigitalMics
+			alsa_amixer cset name='Stereo ADC MIXL ADC2 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC2 Switch' on
+			alsa_amixer cset name='Internal Mic Switch' on
+			# HeadsetMic
+			alsa_amixer cset name='Headset Mic Switch' on
+			alsa_amixer cset name='RECMIXL BST2 Switch' on
+			alsa_amixer cset name='RECMIXR BST2 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC Capture Switch' on
+			# IN1-InternalMics
+			alsa_amixer cset name='Internal Mic Switch' on
+			alsa_amixer cset name='RECMIXL BST1 Switch' on
+			alsa_amixer cset name='RECMIXR BST1 Switch' on
+			alsa_amixer cset name='RECMIXL BST3 Switch' off
+			alsa_amixer cset name='RECMIXR BST3 Switch' off
+			alsa_amixer cset name='Stereo ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC Capture Switch' on
+			#IN3-InternalMics
+			alsa_amixer cset name='Internal Mic Switch' on
+			alsa_amixer cset name='RECMIXL BST1 Switch' off
+			alsa_amixer cset name='RECMIXR BST1 Switch' off
+			alsa_amixer cset name='RECMIXL BST3 Switch' on
+			alsa_amixer cset name='RECMIXR BST3 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Stereo ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXL ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC MIXR ADC1 Switch' on
+			alsa_amixer cset name='Mono ADC Capture Switch' on
+			alsa_amixer -c $c set 'Auto-Mute Mode' Enabled
+		fi
+	done
+	
+	case "$(cat $DMIPATH/uevent)" in
+		*S10T*)
+			alsa_amixer -c 0 set Speaker 95%
+			;;
+		*)
+			;;
+	esac

@@ -1,0 +1,27 @@
+# Define vars
+GDK_BASE="$CORE/gdev.src"
+
+# Define functions
+GETT="$WORKDIR"/'!zygote.sh'
+ckExit(){ test $? != 0 && geco "\n[!!!] Operation failed, try again ..." && exit 1; }
+get_value(){ sed -n "s/^$1=//p" "$GETT" | sed -e "s|\"||g" -e "s| #.*||" 2>/dev/null; }
+update_value(){ sed -i "s|\b$1=\".*\"|$1=\"$2\"|g" "$GETT"; }
+
+geco "\n+ Your current mesa is: \c"; {
+_sf_dumpString="$(dumpsys SurfaceFlinger | grep "(git.*)")"
+test -z "${_sf_dumpString}" && _sf_dumpString="$(dumpsys SurfaceFlinger | grep "(GearLock-FakeM)")"
+_mesa_ExtractVersion="$(echo "${_sf_dumpString}" | rev | awk '{print $2}' | rev)"; echo "$_mesa_ExtractVersion"
+}
+
+geco "\n+ Press [Enter] to start the process" && read EnterKey
+"$GDK_BASE/1" --gearlock-mesa-pkg; ckExit
+geco && "$CORE/gxpm/mesa-native/job" backup "$WORKDIR"
+
+geco && read -eri "$(get_value AUTHOR)" -p "$(geco "Enter your ${GREEN}Name${RC} as the owner/dev/author > ")" "TAUTHOR"
+update_value AUTHOR "$TAUTHOR" && geco
+read -eri "${_mesa_ExtractVersion}_Android_${ANDROID_VER}" -p "$(geco "Enter your ${GREEN}$TTYPE${RC} version > ")" "TVERSION"
+update_value VERSION "$TVERSION"
+sed -i "s|MESA_ANDROID_VER=\".*\"|MESA_ANDROID_VER=\"${ANDROID_VER%%.*}\"|" "$WORKDIR/install.sh"
+
+geco "\n+ Triggering the final build process ..." && sleep 1
+"$GDK_BASE/2" --noenc; ckExit

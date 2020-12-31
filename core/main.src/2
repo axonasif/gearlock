@@ -1,0 +1,60 @@
+test -z "$ME" && exit 1
+logo_extn(){ gecca $CORE/interface/assets/classic/header_ext; }
+com_body_extn(){ geco "\n\n"; ckdirex $EXTDIR
+	if [ -n "$(find $EXTDIR -maxdepth 0 -empty)" ]; then
+		geco "${_extn_not_found_}..."
+    else
+        i=1 && while read line; do echo [$((i++))]. $line; done < <(ls -1 "$EXTDIR") > ${t:="$GTMP/_ls"}; geco "${BGREEN}\c" && gecca "$t" && rm "$t" 
+    fi; geco "${RC}\n\n"; }
+com_footer_extn(){ gecpc "${_footer_items_extn_classicui_}" "_"; }
+
+com_rinput_extn(){
+	geco; read -p "${_footer_input_prompt_classicui_} >> " "c"
+	case $c in
+		b) exit 0 ;;
+		i) geco "\n+ ${_redirecting_to_gxpm_} ..."; sleep 2; clear; $CORE/main.src/1 ;;
+		r) clear ;;
+		h) geco "${_extensions_help_info_}"; pause ;;
+		*) if [ -z "$c" ]; then geco "\n${_noinput_classicui_} ..."; pause; else TER="$(ls -1 "$EXTDIR" | sed -n "`echo "$c p"`")"; if [ -f "${EXTDIR}/${TER}" ]; then clear && chmod 755 "${EXTDIR}/${TER}" && "${EXTDIR}/${TER}"; pause; else geco "\n~ ${_wronginput_classicui_} ..."; pause; fi; fi ;;
+	esac
+}
+
+metro_extn(){
+	while true; do
+		ckdirex "$EXTDIR"
+		if [ ! -n "$(find "$EXTDIR" -maxdepth 0 -empty)" ]; then
+			TEST_STRING="$(ls -1 "$EXTDIR")" && calcTextDialogSize
+			i=1 W=(); while read -r line; do W+=($((i++)) "$line"); done < <( ls -1 "${EXTDIR}" )
+			FILE_NUM="$(dialog --clear --backtitle "$(gecpc "${_press_esc_metroui_info_}" "\$")" --title " ${_gearlock_extension_runner_} " --ok-label Run --extra-button --extra-label Install-Entensions --cancel-label Refresh --help-button --menu "\n  \n" $(( $RECMD_HEIGHT + 10 )) 130 17 "${W[@]}" 3>&2 2>&1 1>&3)"; RETC=$?
+
+			if [ "$RETC" = "0" ]; then # Run button
+				TER="$(readlink -f "${EXTDIR}/$(ls -1 "$EXTDIR" | sed -n "$FILE_NUM p")" | sed "s|${EXTDIR}/||")"
+				yesno "${_gearlock_extension_runner_}" "${_sure_to_run_}" "\n\n${TER}"
+
+				if [ "$?" = "0" ]; then clear && cf small && chmod 755 "${EXTDIR}/${TER}" && "${EXTDIR}/${TER}"; pause && cf big; else msgbox "${_beep_boop_}" "${_notice_}" "\n\n${_as_you_wish_}"; fi
+
+			elif [ "$RETC" = "3" ]; then # Install-Entensions button
+				msgbox "Redirecting to ${_gxpm_full_name_} ..." "${_notice_}" "${_redirecting_to_gxpm_}" 10 100
+				$CORE/main.src/1
+
+			elif [ "$RETC" = "1" ]; then # Refresh button
+				clear
+
+			elif [ "$RETC" = "2" ]; then # Help button
+				msgbox "${_gearlock_extension_runner_% Runner}s" " ${_information_} " "\n\n${_extensions_help_info_}" 10 100
+
+			elif [ "$RETC" = "255" ]; then
+				break
+			fi
+
+		else msgbox "${_beep_boop_}" "${_notice_}" "${_extn_not_found_}" && break
+		fi
+	done
+}
+
+
+if [ "$IT" = "classic" ]; then
+	struct_interface 0 logo_extn com_body_extn com_footer_extn com_rinput_extn
+elif [ "$IT" = "metro" ]; then
+	metro_extn
+fi

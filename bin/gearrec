@@ -1,0 +1,2 @@
+#!/gearlock/bin/bash
+geco "[!!!] GearRec has been removed from GearLock core since 6.8.3, an extension for it should be available instead" 

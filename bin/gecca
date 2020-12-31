@@ -1,0 +1,12 @@
+#!/gearlock/bin/bash
+input="$1"
+twidth=$(tput cols)
+indent=$(awk -v twidth=$twidth '    {
+                                     w=length();
+                                     if (w > fwidth) fwidth=w;
+                                    }
+                                END {
+                                     indent=int((twidth-fwidth)/2);
+                                     print (indent > 0 ? indent : 0);
+                                    }' < "$input")
+awk -v indent=$indent '{ printf("%*s", indent, " "); print; }' < "$input"

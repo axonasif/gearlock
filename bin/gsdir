@@ -1,0 +1,22 @@
+#!/gearlock/bin/bash
+VERSION="0.1"
+case "$1" in
+-h|--help)
+echo -e "
+Gsdir $VERSION
+Returns the directory path after searching from a specified base for a speicific file with the specified range.
+
+Usage: gsdir <start-search-from> <file-name (wildcards also supported)> <max-dirs-to-look-from>
+
+Example: gsdir /gearlock findme.txt 2
+
+Desired output > /gearlock/gearroot
+"
+;;
+-v|--version)
+echo "$VERSION"
+;;
+*)
+find "$2" -maxdepth "$3" -type f -name "$1" | sed "s|/"$1"||"
+;;
+esac

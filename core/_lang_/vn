@@ -1,0 +1,366 @@
+# # # Không đuợc sửa các kí tự ở dưói
+# # @XYZ@
+# # \n
+# # \c
+# # ${varibles}
+# # numbers
+
+
+
+# Ui/Interface Strings
+_press_enter_="Bấm [${GREEN}Enter${RC}] để tiếp tục"
+_enter_number_choice_="Điền 1 số"
+_reboot_prompt_="Khởi động trong ${BLUE}5${RC} giây"
+_recovery_mode_reboot_not_required_="Không cần phải khởi động lại ở Chế độ Recovery"
+_not_available_in_recovery_mode_="Không có sẵn ở Chế độ Recovery"
+_press_alt_f7_="Nhấn ${YELLOW}Alt+F7${RC} để quay trở lại GUI (giao diện đồ họa chính)"
+
+_function_disabled_="Chức năng này đang bị tắt hoặc không có sẵn"
+_chcking_net_connection_="Ping Google để kiểm tra máy bạn đã kết nối Internet chưa..."
+_net_connection_unavailable_="Internet của bạn đang có vấn đề hoặc chưa kết nối\n~ Hãy kiểm tra lại và chắc chắn rằng bạn đã kết nối nhé !"
+_osroot_not_located_="Không tìm thấy OSROOT.\n Mã Error 110"
+_sel_interface_theme_="Chọn giao diện"
+_infinityUi_spoiler_="Giao diện cuối này sẽ là một bất ngờ siêu to khổng lồ đó :).\nNên hãy lót dép hóng nhé :)."
+_supercharging_notice_="Hệ thống của bạn chưa đuợc giải nén (hay Supercharged) !\nBạn phải làm việc này ngay. Bấm lựa chọn 3 ở Menu chính nhé!"
+_new_update_notice_="Đã có cập nhật mới!\nNhớ vào *Thêm chức năng > Trình cập nhật* để cập nhật ngay nhé !"
+_gearrec_info_="Vào Terminal của Android-x86 bằng Alt + F1\nGõ gearrec sau đó enter!"
+
+
+# Small phrases
+_attention_="Chú Ý"
+_warning_="Cảnh Báo"
+_notice_="Thông Báo"
+_info_="Thông Tin"
+_example_="Ví Dụ"
+_information_="Thông Tin"
+_yes_="Có"
+_no_="Không"
+_done_="Xong"
+_confirm_="Xác Nhận"
+_new_update_="Cập Nhật Mới"
+_googleless_mode_=" Chế độ GoogleLess"
+_enter_either_="Điền cả @DUMMY@"
+
+
+_googleless_mode_info_="Chế độ Google-Less sẽ tạm thời tắt Dịch Vụ của Google Play để giảm tiến trình chạy nền. Nó sẽ đuợc bật sau khi khởi động lại"
+_bootsound_disabled_="Âm thanh khởi động (Bootsound) đã tắt, bấm vào đây để bật lại"
+_bootsound_enabled_="Âm thanh khởi động (Bootsound) đã bật, bấm vào đây để tắt đi"
+
+
+# ClassicUi specific
+# Dịch ClassicUI
+_footer_items_classicui_="[a].Thông tin thêm [h].Trợ giúp [s].Trạng thái [u].Trình cập nhật [c].Cài đặt [x].Thoát [g].Chế độ GoogleLess [d].Khu thử nghiệm (cho Dev) [r].Quay màn hình"
+_sub_footer_items_="[b].Quay lại"
+
+_footer_items_extn_classicui_="[b].Quay lại [i].Cài thêm Tiện Ích [r].Refresh [h].Trợ Giúp"
+_footer_items_gxpm_classicui_="[b].Quay lại [i].Xem gói đã cài [u].Gỡ cài đặt [r].Refresh [s].Khởi động lại"
+_footer_input_prompt_classicui_="Giáo sư đang nấu gì đấy ^_^ ?"
+
+_redirecting_to_gxpm_="Bạn đang được chuyển hướng đến Trình Quản lí Gói & Tiện ích của Gearlock, bạn có thể  cài đặt thêm Tiện ích nếu bạn đã tải xuống gói Tiện ích."
+_extn_not_found_="Không tìm thấy Tiện ích nào.\n\nBạn có thể chạy Tiện ích ở đấy nếu bạn đã cài đặt ở Trình Quản lí Gói & Tiện ích"
+
+_body_gxpm_info_not_found_classicui_="Không tìm thấy Gói/Tiện ích nào...!\n         Bạn nên đặt các Gói/Tiện ích của gearlock ở folder ${GREEN}gearload${RC} bằng ${PURPLE}FX File Manager${RC}\n         Sau đó bấm ${YELLOW}[r].Refresh${RC} "
+
+_noinput_classicui_="Bạn chưa điền gì cả"
+_wronginput_classicui_="oops, bạn bị lạc à ?"
+
+
+
+# MetroUi specific
+# Dành cho MetroUI
+_press_esc_metroui_info_="Bấm ESC để quay lại hoặc thoát"
+_metroui_more_menu_item_1_="Thông tin thêm"
+_metroui_more_menu_item_2_="Trình cập nhật"
+_metroui_more_menu_item_3_="Khu thử nghiệm (cho Dev)"
+_metroui_more_menu_item_4_="Cài Đặt"
+_metroui_more_menu_item_5_="Quay màn hình"
+_metroui_more_menu_item_6_="Chế độ Google-Less"
+
+# GxpmUi specific
+# Dàng cho quản lí gói
+_gxpm_menu_item_1_="Cài đặt tại địa điểm tự chọn"
+_gxpm_menu_item_2_="Cài đặt tại folder GearLoad"
+_gxpm_menu_item_3_="Gỡ cài đặt Gói/Tiện ích"
+_gxpm_menu_item_4_="Xem log khi Cài đặt/Gỡ"
+_gxpm_full_name_="Trình Quản lí Gói & Tiện ích của Gearlock"
+_gxpm_full_name_installer_="Trình Cài đặt Gói & Tiện ích của Gearlock"
+_gxpm_full_name_uninstaller_="Trình Gỡ Gói & Tiện ích của Gearlock"
+_gxpm_full_name_zip_installer_="Trình flash zip của Gearlock"
+
+# GxpmUi footer buttons
+_open_="Mở"
+_back_="Quay lại"
+_exit_="Thoát"
+_uninstall_="Gỡ Cài đặt"
+_view_log_="Xem file log"
+
+_zip_flash_info_="Bạn đang chuẩn bị flash một file zip, bạn nên hiểu rằng phần lớn trong số đó không dành cho Android-x86 (khoảng 99%). Vậy nên phần lớn số file zip này sẽ flash thất bại và Gearlock sẽ không làm gì cả, bởi vì chúng được làm cho điện thoại.\n\n\nBạn chắc muốn flash file zip này chứ ?"
+_sure_to_install_="Bạn chắc chắn muốn cài đặt"
+_sure_to_uninstall_="Bạn chắc chắn muốn gỡ"
+_no_uninstallable_found_="Không tìm thấy Goi/Tiện ích nào có thể gỡ"
+_sure_to_run_="Bạn chắc muốn chạy"
+_nothing_was_found_="Không tìm thấy gì hết !"
+_folder_is_empty_="Folder này trống trơn"
+_installed_uninstalled_pak_extn_="Tiện ích/Gói đã cài/gỡ"
+_gearload_dir_empty_info_="Không tìm thấy Gói/Tiện ích nào.\n\nBạn nên đặt chúng ở folder \Z1gearload\Zn trên \Z2fx\Zn file-manager"
+_as_you_wish_="Được, là bạn muốn đấy nhé"
+_beep_boop_="Beep beep, boop beep ?"
+_is_not_gxp_="Trông không giống một Tiện ích hay một Gói lắm.\n\n  Vẫn làm nhé !?"
+_metroui_gxpm_header_meta_="Chuyển hướng đến Gói hay Tiện ích của bạn"
+_reboot_manually_gxpm_info_="Một Gói/Tiện ích đã yêu cầu bạn khởi động lại, hãy tự khởi động lại nhé!"
+_extensions_help_info_="Tiện ích là một số chức năng được thêm bởi dev để mở rộng Gearlock.\nCác tiện ích có thể thực thi ngay trên đây để tận dụng tối đa GearLock."
+
+
+# GearLock Extension Runner specific
+_gearlock_extension_runner_="Trình chạy Tiện ích của Gearlock"
+
+
+
+
+# main.src/3
+_checking_system_="Kiểm tra hệ thống"
+_system_is_supercharged_="The system is SuperCharged"
+_old_sys_files_found_="Đã tìm thấy các file hệ thống cũ, đang xóa chúng"
+_supercharge_extend_img_info_="Đang SuperCharge bằng cách mở rộng hệ thống lên 6GB"
+_supercharge_decompress_img_info_="Đang giải nén (SuperCharge) hệ thống"
+_removing_sys_img_="Xóa file hệ thống cũ (system.img)"
+_syncing_drive_="Đang đồng bộ hóa ổ cứng"
+_decompression_successful_="Giải nén thành công"
+_something_went_wrong_="Có gì đó không ổn, nhiệm vụ thất bại"
+
+# main.src/4
+_fsbr_menu_item_1_="Backup Data FileSystem"
+_fsbr_menu_item_2_="Backup System + Boot FS"
+_fsbr_menu_item_3_="Restore a Saved Backup"
+_fsbr_menu_item_4_="View Backup & Restore Log"
+_fsbr_menu_item_5_="Wipe /data FileSystem"
+_fsbr_menu_item_6_="Wipe /data/dalvik-cache"
+
+_gearlock_fsbr_="GearLock FileSystem Backup & Restoration"
+_gearlock_fsbr_logs_="FileSystems Backup & Restoration Logs"
+_sel_output_dir_meta_="Browse to where you want to save your backup and use ${MBOLD}${MRED}< Select Folder >${MRC} \nIt is suggested that you use ${MBOLD}${MPINK}gearload${MRC} folder since it's unrelated with your FileSystems \n \nCurrent location"
+_sel_backup_dir_meta_="Browse to the folder where you have your backup FileSystems saved then ${MBOLD}${MRED}< Open >${MRC} it \n \nCurrent location"
+_fs_restore_unavailable_="You can not restore while being on GUI, it will crash your system.\n \nYou need to use RECOVERY-MODE"
+_sure_to_restore_="Are you sure to restore"
+_is_not_backup_fs_="@DUMMY@ is not a backup FileSystem"
+_fs_log_is_empty_="FileSystems logfile is empty"
+_is_not_folder_="@DUMMY@ is not a folder"
+_confirm_backup_fs_name_="Confirm your backupFS name"
+_creating_backup_fs_info_="Creating a compressed backup FileSystem of @DUMMY@"
+_operation_complete_="Operation complete"
+_detecting_fs_time_="Detecting FS type"
+_restore_method_prompt_="How do you want to restore the backup"
+
+
+# emisc.src/
+## 1
+# _sure_to_wipe_data_="Bạn chắc chắn muốn xóa hết dữ liệu hiện tại chứ ?"
+# _wiping_data_="Đang xóa dữ liệu của bạn"
+## 2
+_gearlock_partition_mounter_="Trình mount phân vùng của Gearlock"
+_partition_table_="Danh sách phân vùng"
+_sel_partition_prompt_="Chọn số ứng với ${BGREEN}phân vùng${RC} mà bạn muốn mount"
+_wronginput_try_again_="Sai cú pháp, xin hãy điền lại"
+_trying_to_mount_it_="Đang cố để mount"
+_failed_to_mount_="Có vẻ như không thể mount được"
+_successfully_mounted_="Đã mount phân vùng @DUMMY@ thành công tại"
+## 4
+_gearlock_data_system_img_extender_="Trình mở rộng file (img) hệ thống & dữ liệu của Gearlock"
+_not_required_for_ext4_="Không cần phải sử dụng chức năng này ở phân vùng EXT4 vì chúng không cần file img."
+_if_still_continue_="Bạn vẫn muốn tiếp tục chứ ?"
+# _preparing_environment_info_="Chuẩn bị môi trường"
+_enter_custom_img_size_="Nhập kích thước theo đơn vị ${YELLOW}MB${RC} (Sẽ chuyển sang byte)"
+_which_image_to_extend_="File img nào bạn muốn mỏ rộng"
+_specify_img_size_method_="Bạn muốn chỉ rõ file img như thế nào ?"
+_from_preset_="Từ preset"
+_custom_size_="Kích thước tự đặt"
+_sel_preset_img_size_="Hãy chọn kích thước của @DUMMY@.img"
+## 5
+_gearlock_resolution_changer_="Trình thay đổi độ phân giải của Gearlock"
+_current_resolution_is_="Độ phân giải hiện tại là:"
+_current_dpi_is_="DPI hiện tại là:"
+_gearlock_resolution_changer_header_info_="Hãy nhớ rằng, độ phân giải càng tăng, thì sẽ có càng nhiều thứ cần phải load"
+_how_set_it_="Bạn muốn đặt như thế nào ?"
+_setting_res_="Đang đặt @DUMMY@ là độ phân giải hiện tại"
+_enter_custom_res_prompt_="Nhập độ phân giải bạn muốn"
+_setting_resolution_info_="Đang đặt @DUMMY@ là độ phân giải hiện tại"
+_restoring_roig_resolution_="Đang khôi phục độ phân giải gốc"
+## 6
+_how_do_it_="Bạn muốn làm nó như thế nào"
+_dw_install_latest_magisk_="Tải và Cài đặt bản mới nhất (Khuyến cáo)"
+_sel_custom_magisk_zip_="Chọn một bản magisk.zip tự tải"
+_sel_custom_magisk_zip_prompt_="Chọn file magisk.zip của bạn"
+_gearlock_will_use_this_="Ok, giờ Gearlock sẽ sử dụng @DUMMY@"
+_put_magisk_zip_gearload_info_="Đặt ${YELLOW}magisk.zip${RC} của bạn tại folder ${RC}gearload${RC} , rồi bấm ${BGREEN}Enter${RC}"
+_fetching_latest_magisk_="Đang lấy file Magisk mới nhất tại ${PURPLE}topjohnwu${RC}@${ORANGE}github/Magisk${RC}"
+_latest_magisk_is_="Phiên bản Magisk mới nhất là: ${BGREEN}@DUMMY@${RC}"
+_downloading_magisk_="Đang tải xuống ${BRED}Magisk @DUMMY@${RC}"
+_download_was_interrupted_="Tải xuống bị gián đoạn, hãy thử lại"
+_unzipping_magisk_="Đang mở magisk.zip"
+_cleaning_unnecessary_merging_required_="Đang dọn dẹp các file không cần thiết và ghép các file khác với nhau"
+_gearlock_is_generating_bootimg_="GearLock đang tạo 1 file boot.img"
+_failed_to_locate_file_="Không thể  tìm thấy @DUMMY@"
+_pushing_gen_bootimg_="Đang đẩy boot.img đã tạo"
+_compressing_patched_ramdisk_="Đang nén ramdisk đã chỉnh sửa"
+_saving_ramdisk_in_sudb_="Đang lưu ramdisk đã chỉnh sửa này vào GearLock su-handler db"
+_replacing_old_ramdisk_="Đang thay ramdisk hiện tại bằng bản đã chỉnh sửa"
+_installing_magisk_app_="Đang cài đặt app Magisk"
+_operation_successful_="Hoàn thành nhiệm vụ"
+_reboot_to_see_changes_="Khởi động lại để kiểm tra thay đổi"
+## 7
+_current_cpu_govs_="CPU governors hiện tại"
+_available_cpu_govs_="CPU governors đang có"
+_sel_what_to_do_="Hãy chọn việc bạn muốn làm"
+_sel_what_to_change_="Bạn muốn thay đổi gì ?"
+_phrase_X_changer_="Trình thay đổi @DUMMY@"
+_phrase_X_freq_="@DUMMY@ frequency"
+_sel_target_X_="Hãy chọn mục tiêu @DUMMY@"
+_must_close_running_apps_="Bạn phải đóng tất cả các ứng dụng trước khi sử dụng"
+_auto_apply_each_boot_prompt_="Bạn muốn Gearlock tự động áp dụng @DUMMY@ sau mỗi lần khởi động chứ ?"
+_generated_gbscript_to_autoapply_="Đã tạo thành công file lệnh GearBoot post-fs cho @DUMMY@"
+_cpu_X_successfully_set_to_="CPU @DUMMY@ đã được set thành công thành"
+_cpu_freq_details_header_="Core | Min | Current | Max"
+## 8
+# _sure_to_wipe_dalvik_cache_="Bạn chắc chắn muốn dọn dalvik-cache ??"
+# _wiping_dalvik_cache_info_="Đang dọn dalvik-cache"
+## 9
+_gearlock_mac_changer_="Trình thay đổi địa chỉ MAC của GearLock"
+_current_mac_addr_by_dev_="Địa chỉ MAC hiện tại của thiết bị"
+_turn_off_wifi_dev_info_="Xin hãy tắt mạng trước khi sử dụng chức năng này, không nó sẽ không hoạt động hiệu quả."
+_sure_to_change_mac_="Bạn thực sự muốn thay đổi địa chỉ MAC chứ ???"
+_taking_down_net_devs_="Đang tháo các thiết bị mạng"
+_evaluating_mac_info_="Đánh giá địa chỉ MAC cho @DUMMY@"
+_turning_net_devs_back_on_="Đang bật các thiết bị mạng trở lại"
+_successfully_set_ran_mac_="Đánh giá địa chỉ MAC thành công cho @DUMMY@ trên mọi thiết bị mạng"
+## 10
+_fetching_latest_opengapps_info_="Đang lấy thông tin về bản Gapps mới nhất cho @DUMMY@, sẽ mất một lúc đó..."
+_gearlock_will_dw_X_gapps_="Gearlock giờ sẽ tải xuống ${PINK}@DUMMY@${RC}"
+_for_other_gapps_download_manually_="Néu bạn muốn dùng biến thể khác của gói thì bạn nên tự tải và cài đặt bằng GXPM nhé"
+_pushing_opengapps_to_gxpm_="Đang đẩy opengapps.zip vào ${GREEN}Trình quản lí Gói của Gearlock${RC} ...\n+ Phần còn lại sẽ được xử lí nốt"
+_opengapps_dw_failed_="Tải xuống thật bại, hãy thử lại sau."
+_failed_to_gather_opengapps_info_="Có vẻ như không tìm thấy thông tin mới nhất, bạn nên tự tải và cài đặt bằng Gearlock thôi :("
+
+
+# gst.src/
+## 4
+_current_status_="Tình trạng hiện tại"
+_phrase_is_active_="đang hoạt động"
+_phrase_is_unactive_="đang không hoạt động hoặc không có sẵn"
+_disable_="Vô hiệu hóa"
+_enable_="Kích hoạt"
+_not_permanent_info_="Lưu ý: hành động trên không áp dụng vĩnh viễn, sau khi khởi động lại nó sẽ tự động kích hoạt như thường"
+_X_is_already_active_="@DUMMY@ đang hoạt động hoặc có gì đó không đúng."
+
+
+# gxpm/
+# dịch gxpm
+## install
+_phrase_running_job_="Đang chạy VIỆC"
+_phrase_installation_failed_="Cài đặt thất bại"
+_phrase_gxpm_header_credit_="Phát triển bởi @AXON & Được cung cấp bởi"
+_phrase_gen_unins_meta_="File lệnh gỡ cài đặt này được tự tạo bởi _GearLock_"
+## uninstall
+_phrase_uninstallation_failed_="Gỡ cài đặt @DUMMY@ thất bại"
+_phrase_running_custom_unins_func_="Đang chạy chức năng gỡ cài đặt do chủ gói tự tạo"
+_phrase_rem_files_from_auto_gen_="Đang xóa file do Gearlock tự tạo"
+## extra
+_phrase_gxpm_com_public_jobs_="GXPM đã hoàn thành VIỆC công khai"
+_phrase_X_is_requesting_reboot_="Gói @DUMMY@ đang yêu cầu khởi động lại"
+_phrase_allow_to_reboot_="Đồng ý ${RED}khổi động lại${RC} chứ?"
+## install-zip
+_gearlock_is_verifying_X_integrity_="GearLock đang xác thực tính toàn vẹn của @DUMMY@ "
+_input_zip_is_broken_="File zip có lẽ đã bị hỏng"
+_gearlock_is_verifying_X_signature_="GearLock đang xác thực chữ kí (signature) của @DUMMY@"
+_signature_verification_failed_="Xác thực thất bại"
+_flashing_X_info_="Đang flash @DUMMY@, xin hãy kiên nhẫn"
+_might_need_to_reboot_info_="Bạn nên khởi động lại nếu cần thiết"
+_raw_flash_log_is_at_="file log sau khi flash có thể tìm thấy ở @DUMMY@"
+_successfully_installed_X_="Cài đặt thành công @DUMMY@"
+_zip_installation_failed_="Cài đặt @DUMMY@ có vẻ như thất bại"
+
+# updater
+_fetching_gearlock_update_info_="Đang nhận thông tin từ máy chủ của Gearlock"
+_failed_to_fetch_gearlock_update_info_="Nhận thông tin thất bại, xin hãy thử lại"
+
+# settings
+_settings_back_title_="Cài đặt của GearLock"
+_settings_title_="Nhấn <space> hoặc click chuột để bật hoặc tắt lựa chọn"
+_settings_extra_instructions_="Lưu ý: '*' nghĩa là đã bật và bấm \Z1ESC\Zn sẽ tắt mọi thứ.\nBạn có thể  tự tay tinh chỉnh ở \Z2$GEARLOCK_RC\Zn"
+## settings opts
+_settings_bootsound_info_="Âm thanh khỏi động (Bootsound) là âm thanh phát ra sau khi bạn khởi động máy"
+_settings_gtty_info_="Đây là một của sổ Terminal khác bằng cách bấm ALT+F8"
+_settings_update_info_="Có nên kiểm tra cập nhật Gearlock hay bật thông báo cập nhật mởi không"
+_settings_default_theme_info_="Liệu có nên đặt giao diện này làm mặc định không"
+_settings_norecovery_info_="Khi bật lên, nó sẽ bỏ qua bộ đếm giờ của Chế độ Recovery"
+
+_ui_about_msg_="
+Gearlock là một chương trình GUI & Recovery được phát triển với rất nhiều thời gian, tâm huyết , sự kiên nhẫn và tình yêu bởi SupremeGamers.
+Giai đoạn đầu của chương trình được phát triển vào năm 2019 là một phần của dự án 'PhoenixOS DarkMatter'.
+Có rất nhiều người đã tham gia vào dự án này mà tôi muốn đề cập đến.
+
+    Họ là :
+        * HMTheBoy154 (Người đóng góp)
+        * Night (Người đóng góp)
+        * Mido Fayad (Người đóng góp & Quyên góp)
+        * Ahmad Moemen (Người đóng góp)
+        * Diaz (Quyên góp)
+        * rk (Quyên góp)
+
+    Và tôi cũng muốn cảm ơn :
+        * Igor Pavlov (p7zip)
+        * mcmilk (p7zip zstd plugin)
+        * Jack Palevich (Terminal Emulator)
+        * Roumen Petrov (Terminal Emulator betterments)
+
+Tôi cũng muốn cảm ơn những người đã đóng góp cho cộng đồng thông qua Gearlock.
+Gearlock được mở cho tất cả các bản phối của Android-x86 và KHÔNG ĐI KÈM BẢO HÀNH.
+Chúng tôi sẽ không chịu trách nhiệm cho những trường hợp mất dữ liệu hay hỏng hóc do sử dụng Gói / Tiện ích / Các bản mod bên thứ ba.
+Bản quyền thuộc (c) $YEAR SupremeGamers. Thông tin chi tiết (và những thứ cực ngầu) hãy truy cập  https://supreme-gamers.com
+"
+
+
+
+_ui_help_msg_="@1 ${BRED}SuperCharge hệ thống${RC} nghĩa là gì ?
+* Chức năng này sẽ giải nén toàn bộ các file hệ thống trong system.img ra một thư mục mới tại nơi bạn đặt HĐH của bạn. (Chỉ được dùng cho các phân vùng EXT)
+* Kết quả là bạn có hiệu năng tốt hơn và ổn định hơn. Và bạn cũng có thể chỉnh sửa hệ thống trực tiếp trên HĐH chính của bạn (như Windows hay Linux).
+* Lưu ý: Đối với NTFS và các phân vùng khác chương trình sẽ mở rộng system.img lên 4GB thay vì giải nén.
+
+@2 Tôi có thể sao lưu toàn bộ folder ${YELLOW}data${RC} rồi khôi phục nó sau chứ ?
+* Bạn có thể. Tìm phần >> ${BPURPLE}Sao lưu & Khôi phục dữ liệu${RC}
+
+@3 ${YELLOW}Làm thế nào để cài một Gói/Tiện ích bằng Gearlock ?${RC}
+* Tải xuống Gói/ Tiện ích đó rồi cho vào folder ${BBLUE}gearload${RC} bằng FX File Manager.
+* Sau đó chọn >> ${BPURPLE}Cài đặt Gói / Tiện ích${RC}
+
+@5 Tôi có thể tự tay build một Gói / Tiện ích cho Gearlock chứ ? (Dành cho Dev - nhà phát triển)
+* Vào chế độ Nhà phát triển bằng cách bấm ${YELLOW}d${RC}
+* Bạn sẽ tìm được mọi thứ cần tìm.
+
+@6 Tôi rời Terminal (tty) như thế nào ?
+* Bấm ${BPURPLE}Alt+F7${RC} [chỉ cho chế độ dòng lệnh trên android_x86 (tty)]
+
+@7 Tôi nhận các bản cập nhật OTA mới như thế nào?
+* Bạn sẽ nhận được thông báo mỗi khi có bản cập nhật mới.
+* Sử dụng [u].Trình cập nhật trên Gearlock để cập nhật hoặc kiểm tra bản mới.
+
+@8 Tôi có thể cài đặt hay cập nhật ${BPURPLE}magisk-core${RC} trực tiếp từ GearLock chứ?
+* Có, chọn phần ${GREEN}Magisk Extended${RC}
+
+@9 Tôi chuyển các Gaming Protocols kiểu gì?
+* Tìm ${BPURPLE}Game / System Tweaks >> Gaming Protocols${RC}
+* (Lưu ý : Chức năng này đã bị tắt ở Gearlock 6.5+ , bạn nên tìm ở chỗ Tiện ích)
+
+@10 Làm thế nào để sửa ${BRED}game-crash / blackscreen (unity-engine)${RC} ?
+* Tìm ${BGREEN}Game / System Tweaks >> Unity Game Engine fix${RC}
+
+@11 Làm thế nào để sửa ${ORANGE}Call-Of-Duty${RC} bị đen màn hình ?
+* Kích hoạt Gaming Protocol Delta / Omega from ${ORANGE}Game / System Tweaks >> Gaming-Protocols${RC}
+* Lưu ý @7
+
+@12 Làm thế nào để chỉnh các ứng dụng su-handler như ${BPURPLE}(SuperSU/Magisk)${RC} ?
+* Bạn có thể tìm thấy ở >> ${RED}Game / System Tweaks >> Su-Handler${RC}
+
+
+~$ Last edited by AXON on 3-05-2020
+~$ Chỉnh sửa sang Tiếng Việt bới HMTheBoy154 vào 26-08-2020"
+

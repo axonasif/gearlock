@@ -1,0 +1,1 @@
+! get_net_stat && exit 1; geco "+ ${_fetching_gearlock_update_info_} ..."; curl -o "$GTMP/update.sh" --silent --fail --header "PRIVATE-TOKEN: exefduQX5n1YBWo8MRjm" "https://gitlab.com/api/v4/projects/20100223/repository/files/update%2Esh/raw?ref=master" || { geco "\n- ${_failed_to_fetch_gearlock_update_info_} ..."; exit 1; }; chmod 777 "$GTMP/update.sh" && "$GTMP/update.sh"

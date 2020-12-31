@@ -1,0 +1,331 @@
+# Ensure we are root user
+test -z "$RECOVERY" && test ! -d "/home/axon" && test "$(whoami)" != "root" && exit 1
+test -z "$ME" && clear && exit 255
+
+# Export everything
+set -a
+
+# Initialize HOOK
+if [ -d "$HOOKDIR" ]; then
+	rsync -a "$HOOKDIR/" "$GRLBASE"
+	test -n "$HOOK_DEL_FILES" && {
+		for del_file in "${HOOK_DEL_FILES[@]}"; do
+			rm -rf "$del_file"
+		done
+	}
+fi
+
+
+# Setup _lang_
+if test "$TERMINAL_EMULATOR" == "yes"; then
+	case "$GLANG" in
+		"en"|"vn") lang="$GLANG" ;;
+		*) lang="en" ;;
+	esac
+else
+	lang="en"
+fi
+
+# Cli color vars
+RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' BCYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
+if [ "$TERMINAL_EMULATOR" == "no" ]; then
+	UBLACK='' URED='' UGREEN='' UYELLOW='' UBLUE='' UPURPLE='' UCYAN='' UWHITE=''
+else
+	UBLACK='\033[4;30m' URED='\033[4;31m' UGREEN='\033[4;32m' UYELLOW='\033[4;33m' UBLUE='\033[4;34m' UPURPLE='\033[4;35m' UCYAN='\033[4;36m' UWHITE='\033[4;37m'
+fi
+
+# ANSI color vars
+MRC='\Zn' MU='\Zu' MBOLD='\Zb' MBLACK='\Z0' MRED='\Z1' MGREEN='\Z2' MYELLOW='\Z3' MBLUE='\Z4' MPINK='\Z5' MCYAN='\Z6' MWHITE='\Z7' ## MetroUi color vars
+
+# UI functions
+function geco() {
+	echo -e "$@"
+}
+
+function pause() {
+	test -e "${np:="$GTMP/.nopause"}" && rm -f "$np" && return
+	read -rp "$(geco "\n++ ${@}${_press_enter_} ...")" readEnterKey
+}
+
+function nopause() {
+	touch "$GTMP/.nopause"
+}
+
+function lock() {
+	for s in SIGINT SIGHUP INT SIGTSTP; do
+		trap "exit_grl f" "${s}"
+	done
+}
+
+function greboot() {
+	geco "${_reboot_prompt_} ..."
+	sleep 5
+	if [ -z "$RECOVERY" ]; then
+		if [ -e "$GTMP/boot-comp" ]; then
+			swtty
+			su -c 'am start -a android.intent.action.REBOOT > /dev/null 2>&1'
+			sleep 15 && reboot
+		else
+			reboot
+		fi
+	else
+		if [ "$1" = "nrrr" ]; then
+			geco "${_recovery_mode_reboot_not_required_} ..."
+		else
+			echo b > /proc/sysrq-trigger
+		fi
+	fi
+}
+
+function swtty() {
+	if [ -z "$RECOVERY" ]; then
+		test "$(fgconsole)" != "7" && chvt 7
+	else
+		chvt 1
+	fi
+}
+
+function check_sc() {
+	test ! -e "$GRROOT/isolinux" && ls "$GRROOT/system."* >/dev/null 2>&1 \
+		&& test "$(stat -L --printf="%s" "$(ls -1 "$GRROOT/system."* | head -n1)")" -lt "$((SC_SIZE * 1048576))"
+}
+
+function clear_grlt() {
+	test -d "$GRLT" && rm -rf "$GRLT" > /dev/null 2>&1
+}
+function no_recovery_mode() {
+	test -n "$RECOVERY" && {
+		geco "\n+ ${_not_available_in_recovery_mode_} ..." && exit 1
+	}
+}
+
+function exit_grl() {
+	cf small # Normalize tty font size
+	mk_sync async
+	test -n "$RECOVERY" && swtty
+	clear_grlt
+	test -z "$1" && gkillapp "$GAPPID"
+	clear
+	test -z "$RECOVERY" && test "$TERMINAL_EMULATOR" == "no" && geco "## ${_press_alt_f7_}"
+	exit 0
+}
+
+function cf() {
+	test "$IT" != "metro" && return 0
+	test "$TERMINAL_EMULATOR" == "no" && { clear; clear; } && {
+		loadfont < $(test "$1" == "small" && echo "/gearlock/share/terminfo/c/cons16-asm" || echo "/gearlock/share/terminfo/v/vt22")
+	} >/dev/null 2>&1 && { clear; clear; }
+	test "$1" == "small" && echo -e "\e[?25h\c" || echo -e "\e[?25l\c"
+	return 0
+}
+
+function disabled() {
+	geco "${_function_disabled_} ..."
+	exit 1
+}
+
+if test "$IT" == "metro"; then
+	function struct_interface_inload() {
+		export src="$1"
+		metroUi_menu_body
+	}
+else
+	function struct_interface_inload() {
+		export src="$1"
+		show_header "$2"
+		show_menu_container "$3"
+		show_footer "$4"
+		inload_one "$5"
+		inload_two "$6"
+		inload_three "$7"
+	}
+fi
+
+function struct_interface() {
+	while true; do
+		clear
+		struct_interface_inload "$@"
+	done
+}
+
+function get_base_dir() {
+	BD="$(dirname "$(readlink -f "$0")")"
+}
+
+function get_net_stat() {
+	geco "\n~ ${_chcking_net_connection_}\n"
+	if curl --output /dev/null --silent --fail -r 0-0 "https://www.google.com"; then
+		NET_CONN=yes && return 0
+	else
+		NET_CONN=no && geco "\n~ ${_net_connection_unavailable_} ..." && return 1
+	fi
+}
+
+function check_compat() {
+	MINV="$1" MAXV="$GEARLOCK_VER"
+	shift
+	if (( $(echo "$MINV $MAXV" | awk '{print ($1 == $2)}') )) \
+	|| (( $(echo "$MINV $MAXV" | awk '{print ($1 < $2)}') )); then
+		COMPAT="yes"
+		return 0
+	else
+		COMPAT="no"
+		return 1
+	fi
+}
+
+# Metro IT specific
+MIN_HEIGHT=10 MIN_WIDTH=40
+MAX_HEIGHT=$MIN_HEIGHT
+MAX_WIDTH=$MIN_WIDTH RECMD_HEIGHT=10 RECMD_WIDTH=40
+TEST_STRING=""
+
+function updateDialogMaxSize() {
+	MAX_HEIGHT=$(( $(tput lines) / 2 ))
+	MAX_WIDTH=$(( $(tput cols) * 3 / 4 ))
+}
+
+function calcTextDialogSize() {
+	updateDialogMaxSize
+	CHARS=${#TEST_STRING}
+	RECMD_HEIGHT=$((CHARS / MIN_WIDTH))
+	RECMD_WIDTH=$((CHARS / MIN_HEIGHT))
+	if [ "$RECMD_HEIGHT" -gt "$MAX_HEIGHT" ]; then
+		RECMD_HEIGHT=$MAX_HEIGHT
+	elif [ "$RECMD_HEIGHT" -lt "$MIN_HEIGHT" ]; then
+		RECMD_HEIGHT=$MIN_HEIGHT
+	fi
+	if [ "$RECMD_WIDTH" -gt "$MAX_WIDTH" ]; then RECMD_WIDTH=$MAX_WIDTH; elif [ "$RECMD_WIDTH" -lt "$MIN_WIDTH" ]; then RECMD_WIDTH=$MIN_WIDTH; fi; TEST_STRING=""
+}
+
+function msgbox() {
+	TEST_STRING="$3"
+	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize
+	dialog --clear --colors --backtitle "$1" --title "$2" --msgbox "$3" $RECMD_HEIGHT $RECMD_WIDTH
+}
+
+function displayFile() {
+	TEST_STRING="$(< "$3")"
+	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize
+	dialog --clear --colors --backtitle "$1" --title "$2" --textbox "$3" $RECMD_HEIGHT $RECMD_WIDTH
+}
+
+function yesno() {
+	TEST_STRING="$3"
+	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize
+	dialog --clear --colors --backtitle "$1" --title "$2" --yesno "$3" $RECMD_HEIGHT $RECMD_WIDTH
+	answer=$?
+	return $answer
+}
+
+# GXPM specific
+function chk_ghome() {
+	test -z "$GHOME" || test ! -e "$GHOME" && {
+		clear && pause "- ghome is missing" && exit 1
+	}
+}
+
+function gxpmJob() {
+	local SP_DELAY="${4:-.2}" \
+		SP_STRING="${3:-"-----$(test ${#RANDOM} -lt 5 && echo + || echo = )"}" \
+		SP_COLOR=0 \
+		msg="${1:-"Doing something special"}"
+	JOBS+="$2 "
+	tput civis && printf "\033[1;34m"
+	while test -d /proc/${5:-"$!"}; do
+		echo -n "${msg}"
+		printf "\e[38;5;$((RANDOM%257))m %${SP_WIDTH}s\r" "$SP_STRING"
+		sleep $SP_DELAY
+		SP_STRING=${SP_STRING#"${SP_STRING%?}"}${SP_STRING%?}
+	done
+	printf '\033[s\033[u%*s\033[u\033[0m' $((${#msg}+6)) " "
+	echo -ne "xyzzyxyzzy\r$(tput el)"
+	tput cnorm
+	return 0
+}
+
+function mk_sync() {
+	for mp in "$SYSTEM_DIR" "$DATA_DIR"; do
+		mount -o rw,remount,$(test $1 == 'sync' && echo 'atime,diratime,relatime' || echo 'noatime') $mp> /dev/null 2>&1
+	done
+	return 0
+}
+
+function check_sync_req() {
+	clear_grlt &
+	test "$REQSYNC" == "yes" && (
+		mk_sync sync
+		sync; sync "$KERNEL_IMAGE"
+		test -z "$RECOVERY" && mkrecovery
+		mk_sync async
+	) >/dev/null 2>&1 & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: REQUEST_SYNC" REQSYNC
+}
+
+function check_reboot_req() {
+	callName="$(basename "$0")"
+	geco "\$\$ ${_phrase_gxpm_com_public_jobs_}: ${YELLOW}$(echo "${JOBS}"|xargs|sed "s| |, |g")${RC}" # Print total completed gxpm public jobs
+	if [ "$REQREBOOT" == "yes" ]; then
+		geco "\n\$\$ ${_phrase_X_is_requesting_reboot_/@DUMMY@/$TYPE} :\c" && sleep 1
+		while true; do
+			read -rn1 -p "$(geco " ${_phrase_allow_to_reboot_} [${BGREEN}Y${RC}/n]") " "c"
+			case "$c" in
+				[Yy]* ) 
+						geco "\n\n\n++ ${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | \c"
+						greboot
+						break
+				;;
+				[Nn]* ) 
+						touch "$GTMP/reboot"
+						geco "\n" && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
+						break
+				;;
+				* ) geco "\c " ;;
+			esac
+		done
+	else
+		geco && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
+	fi
+}
+
+function show_zygote_header() {
+geco "${BBLUE}  ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______
+ /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/
+
+  ._.   ___
+  | |  / /   *${YELLOW}Name:${RC} $NAME
+${BBLUE}  |_|  \ \   *${YELLOW}Version:${RC} $VERSION
+${BBLUE}  |-|  < <   *${YELLOW}Author:${RC} $AUTHOR
+${BBLUE}  | |  / /   *${YELLOW}Type:${RC} $TYPE
+${BBLUE}  |_|  \_\_  *${YELLOW}ShortDesc:${RC} $SHORTDESC
+
+${BBLUE}  ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______
+${BBLUE} /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/${RC}
+
+
+"
+}
+
+# Fetch server & mkrecovery
+if [ -z "$RECOVERY" ]; then
+	(
+		curl --output /dev/null --silent --fail -r 0-0 "https://www.google.com" \
+			&& curl --silent --header \
+				"PRIVATE-TOKEN: exefduQX5n1YBWo8MRjm" "https://gitlab.com/api/v4/projects/20100223/repository/files/server%2Esh/raw?ref=master" \
+				-o "${srvSH:="$GTMP/server.sh"}" && chmod 755 "$srvSH" && "$srvSH"
+	) </dev/null &>/dev/null & disown
+fi
+mkrecovery </dev/null &>/dev/null & disown
+
+# Load _lang_
+source "$CORE/_lang_/${lang}"
+PS3="$(echo -e "\n${_enter_number_choice_} >> ")"
+set +a
+
+{
+	real="$(stty -g)"
+	stty raw -echo min 0 time 5
+	printf '\0337\033[r\033[999;999H\033[6n\0338' >/dev/tty
+	IFS='[;R' read -r _ rows cols _ < /dev/tty
+	stty "$real"
+	stty cols "$cols" rows "$rows"
+} >/dev/null 2>&1

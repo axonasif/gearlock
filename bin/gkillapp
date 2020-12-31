@@ -1,0 +1,19 @@
+#!/gearlock/bin/bash
+PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+VERSION="0.1"
+case "$1" in
+	""|-h|--help)
+		echo -e "
+		Gkillapp $VERSION | Kill/Stop an running android app from the command line.
+
+		Example: gkillapp com.android.vending
+		"
+	;;
+	-v|--version)
+		echo "$VERSION"
+	;;
+	*)
+		# Gkill_app # ~app_id
+		VAR="$(ps -fA | grep -v grep | grep "$1" | head -n1 | awk '{print $2}')";  if [ -n "$1" -a -n "$VAR" ]; then kill $VAR; else geco "~ App ${RED}"$1"${RC} is not running, app kill aborted"; fi
+	;;
+esac

@@ -1,0 +1,26 @@
+nopause
+test -e '/system/etc/alsa_preset.sh' && ALSA_FILE="/system/etc/alsa_preset.sh" || ALSA_FILE="$GBDIR/boot-comp/alsa_preset.sh"
+STATE_FILE="$STATDIR/alsa-preset"
+ACTIVE_PRESET="$(cat "$STATE_FILE" 2>/dev/null)"
+test -e "$DEPDIR/alsa-presets" && PRESETS_DIR="$DEPDIR/alsa-presets" || PRESETS_DIR="$(dirname "$(readlink -f "$0")")/alsa-presets"
+
+while true; do
+
+i=1 W=(); while read -r line; do W+=($((i++)) "$line"); done < <( ls -1 "$PRESETS_DIR" )
+FILE_NUM="$(dialog --clear --colors --backtitle " $(gecpc "ALSA PRESETS" "\\") " \
+	--title "  Select a Preset you wanna apply  " --ok-label Select --extra-button --extra-label "  Currently active: $ACTIVE_PRESET  " --cancel-label Exit \
+	--menu "
+ ${MBOLD}${MRED}ALSA${MRC} stands for ${MBOLD}${MBLACK}Advanced Linux Sound Architecture.${MRC}
+ The presets down here are basically some alsa configuration scripts of somewhat different variants.
+ If you are looking for a quick resolution to audio issues then try swapping some of the presets below.
+ 
+ " 20 110 17 "${W[@]}" 3>&2 2>&1 1>&3)"; RETC=$?
+
+	if [ "$RETC" == "0" ]; then
+		PRESET="$(ls -1 "$PRESETS_DIR" | sed -n "$FILE_NUM p")"
+		{ rsync "$PRESETS_DIR/${PRESET##*/}" "$ALSA_FILE" && chmod 644 "$ALSA_FILE" && echo "${PRESET##*/}" > "$STATE_FILE"; } >/dev/null 2>&1; exit
+	elif [ "$RETC" == "1" ]; then
+		exit
+	fi
+
+done

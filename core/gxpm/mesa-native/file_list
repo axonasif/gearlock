@@ -1,0 +1,85 @@
+## A Complete and valid list of mesa dependencies (Covering almost any android-x86 version)
+## If you want to help me imporve this list more then contact me on supreme-gamers.com
+## Completed with time and passion by @AXON
+
+# LLVM names
+libLLVM.so
+libLLVM38.so
+libLLVM39.so
+libLLVM40.so
+libLLVM50.so
+libLLVM60.so
+libLLVM70.so
+libLLVM80.so
+libLLVM90.so
+libLLVM10.so
+libLLVM11.so
+libLLVM12.so
+libLLVM13.so
+libLLVM15.so
+libLLVM16.so
+libLLVM17.so
+libLLVM18.so
+libLLVM19.so
+libLLVM20.so
+
+# Mostly lib/dri
+gallium_dri.so
+i915_dri.so
+i965_dri.so
+
+# Mostly vendor/lib/dri
+gallium_dri.so
+iris_dri.so
+nouveau_dri.so
+r300_dri.so
+r600_dri.so
+radeonsi_dri.so
+virtio_gpu_dri.so
+vmwgfx_dri.so
+swrast_dri.so
+
+# Vulkan
+vulkan.android-x86.so
+vulkan.radv.so
+
+# GLES MESA
+libGLES_mesa.so
+
+# Common lib
+libEGL.so
+libGLESv1_CM.so
+libGLESv2.so
+libGLESv3.so
+libdrm.so
+libdrm_amdgpu.so
+libdrm_intel.so
+libdrm_nouveau.so
+libdrm_radeon.so
+libglapi.so
+libgbm.so
+libgralloc_drm.so
+
+# Uncommon lib
+libEGL_orig.so
+libGLESv1_CM_orig.so
+libGLESv2_orig.so
+libGLESv3_orig.so
+libEGL_orig.so
+libGLESv1_CM_orig.so
+libGLESv2_orig.so
+libGLESv3_orig.so
+
+# Extra libs (mostly lib/hw)
+gralloc.default.so
+gralloc.drm.so
+gralloc.gbm.so
+hwcomposer.drm.so
+## Mostly nougat++
+gralloc.intel.so
+gralloc.minigbm.so
+hwcomposer.drm_minigbm.so
+hwcomposer.intel.so
+
+# Hwdata specific
+amdgpu.ids

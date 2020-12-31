@@ -1,0 +1,168 @@
+# Initialize vars
+trap "cf big" EXIT; cf small
+BACKUP_LOG_FILE="$GRROOT/fs_backup_restore.log"
+
+is_make_fs(){ test "$job" == "make_fs" && true || false; }
+lf(){ ls -1F "$1" | sed -e "s|/| $(printf "\r%*s" $(( $(tput cols) / 30 )) "$( echo -n "Folder" | cut -d . -f2 )")|g" -e "s|*| $(printf "\r%*s" $(( $(tput cols) / 30 )) "$( echo -n "File  " | cut -d . -f2 )")|g" -e "s|@| $(printf "\r%*s" $(( $(tput cols) / 30 )) "$( echo -n "Symlink" | cut -d . -f2 )")|g"; }
+metro_backup_ui(){
+
+job="$1"; test "$job" == "make_fs" && _header_meta_="$_sel_output_dir_meta_" && FS="$2" || _header_meta_="$_sel_backup_dir_meta_"
+cd "$GRROOT"; while true; do
+	[ -z "$PWD" ] && PWD="$OLDPWD"
+	i=1 W=(); while read -r line; do W+=($((i++)) "$line"); done < <( lf "$PWD" ); CUR_DIR="$PWD"
+	FILE_NUM="$(dialog --colors --clear --backtitle "$(gecpc "${_press_esc_metroui_info_}" "%")" --title " ${_gearlock_fsbr_} " --ok-label "${_open_}" --extra-button --extra-label "${_back_}" --cancel-label " ${_view_log_} " --help-button --help-label "$(is_make_fs && echo " ${_select_folder_} ")" --menu  "\n${_header_meta_}: \Zb\Z1$CUR_DIR\Zn \n \n" 30 150 40 "${W[@]}" 3>&2 2>&1 1>&3)"; RETC=$?
+	
+	if [ "$RETC" = "0" ]; then # Open button
+	
+		TER="$(ls -1 "$PWD" | sed -n "$FILE_NUM p")"
+		if [ -d "$TER" ] && [ -n "$(ls -1 "$TER")" ]; then
+			cd "$(readlink -f "$TER")"
+		elif [ -f "$TER" ] && ! is_make_fs; then
+			if echo "$TER" | grep -Eq '.gfs'; then
+				if yesno "$(gecpc " ${_gearlock_fsbr_} " "\$")" " ${_sure_to_restore_} ? " "\n\n$(echo "${TER}" | sed "s|\b.gfs\b||")" 10 70; then
+					restore_fs "$(readlink -f "$TER")"; break;
+				else
+					msgbox "${_beep_boop_}" "${_notice_}" "\n\n${_as_you_wish_} !"
+				fi
+			else
+				msgbox "${_beep_boop_}" " ${_notice_} " "\n ${_is_not_backup_fs_/@DUMMY@/"$TER"}" 7 70
+			fi
+		else
+			msgbox "Opps ..." " ${_info_} " "\n ${_folder_is_empty_}" 7 30
+		fi
+		
+		
+	elif [ "$RETC" = "3" ]; then # Back button
+		cd ../
+	elif [ "$RETC" = "1" ]; then # View-Log button
+		view_backup_log
+		
+	elif [ "$RETC" = "2" ] && is_make_fs; then # Select Folder
+		FILE_NUM="$(echo "$FILE_NUM" | sed 's|HELP ||')"; TER="$(ls -1 "$PWD" | sed -n "$FILE_NUM p")"
+		if [ -d "$TER" ]; then
+			while true; do
+				unset CANCELED
+				INPUT=$(dialog --clear --colors --title " ${_confirm_backup_fs_name_} " \
+				--inputbox "" 7 70 "${FS}FS_Backup_${DATE}.gfs" 3>&1 1>&2 2>&3); RETC=$?
+				test $RETC = 1 && CANCELED=true && break
+				test $RETC != 1 && test $RETC != 255 && break
+			done
+			test "$CANCELED" != "true" && make_fs "$(readlink -f "$TER/$INPUT")" && break
+		else
+			msgbox "${_beep_boop_}" " ${_notice_} " "\n ${_is_not_folder_/@DUMMY@/"$TER"}" 7 60
+		fi
+		
+	elif [ "$RETC" = "255" ]; then # Exit call
+		break
+	fi
+done
+
+}
+
+
+make_fs(){
+
+	cd / # Change PWD to root
+	
+	(test "$FS" == "System" && mkdir -p "/${FS,,}/.gfs" && { rsync "${KERNEL_IMAGE%/*}/initrd.img" "$GRROOT/gearlock" "$GRROOT/ramdisk.img" "/${FS,,}/.gfs"; rsync "$KERNEL_IMAGE" "/${FS,,}/.gfs/kernel"; }>/dev/null 2>&1; tar --exclude="${1##*/}" -cf - "/${FS,,}" | pv -n -s "$(du -sb "/${FS,,}" | awk '{print $1}')" | \
+	zstd > "$1") 2>&1 | dialog --clear --backtitle " $(gecpc "${_gearlock_fsbr_}" "#") " --gauge " ${_creating_backup_fs_info_/@DUMMY@/$FS} " 7 70 && \
+	{ sync "$1"; rm -rf "/${FS,,}/.gfs"; do_sync; FSsize="$(ls -lh "$1" | awk '{print $5}')"; chmod 777 "$1"; }>/dev/null 2>&1
+
+	msgbox " ${_operation_complete_} " " ${_info_} " \
+	"\nA backup ${FS}FS has been successfully saved as ${1##*/} and size is $FSsize" 8 80 && make_backup_log "${1##*/}" "$FSsize";:
+
+}
+
+restore_fs(){
+
+	cd / # Change PWD to root
+	
+	dialog --backtitle " $(gecpc "${_gearlock_fsbr_}" "#") " --infobox "\n   ${_detecting_fs_time_} ..." 5 50 && \
+	{ FS="$(tar --zstd --list --file="$1" | head -n1 | cut -d'/' -f1)"; FS="${FS^}"; FSsize="$(ls -lh "$1" | awk '{print $5}')"; sleep 1.5; }
+	
+	if dialog --colors --clear --backtitle " $(gecpc "${_gearlock_fsbr_}" "#") " \
+	--title " Restore Method " --yes-label ' Clean Restore ' --no-label '    Overwrite Existing FS    ' --yesno \
+	"\n                   ${_restore_method_prompt_} \n " 8 80; then
+		dialog --backtitle " $(gecpc "${_gearlock_fsbr_}" "#") " --infobox "\n   Wiping /${FS,,} ..." 5 45 && \
+		(chattr -R -i "${FS,,}"; find "/${FS,,}" ! -name "${1##*/}" ! \( -type d \) -exec rm -f {} +; find "/${FS,,}" -type d -empty -delete )>/dev/null 2>&1
+	fi
+
+	(pv -n "$1" | tar --zstd --strip-components=1 -xf - -C "/${FS,,}" ) 2>&1 | dialog --clear --backtitle " $(gecpc "${_gearlock_fsbr_}" "#") " --gauge " Restoring ${FS}FS from ${1##*/} " 7 80 && { 
+	if [ "$FS" == "System" ]; then
+		mv "/${FS,,}/.gfs/kernel" "$KERNEL_IMAGE"; mv "/${FS,,}/.gfs/initrd.img" "${KERNEL_IMAGE%/*}/initrd.img"
+		mv "/${FS,,}/.gfs/"* "$GRROOT"; rm -rf "/${FS,,}/.gfs"
+	fi
+	do_sync; }>/dev/null 2>&1
+	
+	msgbox " ${_operation_complete_} " " ${_info_} " "\n${FS}FS has been successfully restored from ${1##*/}" 8 80 && make_backup_log "${1##*/}" "$FSsize"
+	test -z "$RECOVERY" || test "$FS" == "System" && dialog --backtitle " $(gecpc "${_gearlock_fsbr_}" "#") " --infobox "\n   Rebooting ..." 5 45 && sleep 5 && greboot >/dev/null 2>&1
+
+}
+
+make_backup_log(){
+
+	echo -e "\n\n\$\$ ${FS}FS $(is_make_fs && echo 'Backup' || echo 'Restoration') @ $(date)\nName: $1   :::   Size: $2" >> "$BACKUP_LOG_FILE"
+
+}
+
+view_backup_log(){
+
+	if test -e "$BACKUP_LOG_FILE"; then dialog --clear --backtitle " $(gecpc "${_gearlock_fsbr_}" "%") " --title " ${_gearlock_fsbr_logs_} " --textbox "$BACKUP_LOG_FILE" 30 150 ; else msgbox "Opps ..." " ${_info_} " "\n ${_fs_log_is_empty_}" 7 60; fi
+
+}
+
+
+check_gui(){
+
+	# Block GUI
+	if [ -z "$RECOVERY" ]; then
+		msgbox "${_beep_boop_}" " ${_notice_} " \
+		"\n ${_fs_restore_unavailable_}" 10 70 && false
+	else
+		true
+	fi
+
+}
+
+do_sync(){
+
+	for mp in "/${FS,,}" "$GRROOT"; do
+		cd /; mount -o rw,remount,atime,diratime,relatime "$mp"
+		sync; sync "/${FS,,}/" "$KERNEL_IMAGE" "${KERNEL_IMAGE%/*}/initrd.img" "$GRROOT/"*
+		mount -o rw,noatime "$mp"
+	done
+
+}
+
+wipe_fs(){
+
+	test "$TERMINAL_EMULATOR" == "yes" && geco "\n+++++ Only available in recovery mode / tty, exiting ..." && return 1
+	local src="$1"; if dialog --colors --clear --backtitle " $(gecpc "Wipe $src" "#") " \
+	--title " Confirm Action " --defaultno --yesno "\n Are you sure to wipe $src ?" 7 60; then
+		dialog --backtitle " $(gecpc "Wipe $src" "#") " --infobox "\n   Wiping $src ..." 5 45 && \
+		(chattr -R -i "$src"; find "$src" -mindepth 1 -maxdepth 1 | xargs rm -rf)>/dev/null 2>&1
+		test -z "$RECOVERY" && dialog --backtitle " $(gecpc "Wipe $src" "#") " --infobox "\n   Rebooting in 5 seconds ..." 5 45 && greboot >/dev/null 2>&1
+	else
+		msgbox "Hmm ..." " Info " "\n ${_as_you_wish_} " 7 50
+	fi
+
+}
+
+
+# Main
+while true; do
+	cmd=(dialog --clear --backtitle "$(gecpc "${_press_esc_metroui_info_}" "%")" --title " ${_gearlock_fsbr_} " --ok-label Run --nocancel --menu "\n " 15 60 15)
+	choices=$("${cmd[@]}" 1 "${_fsbr_menu_item_1_}" 2 "${_fsbr_menu_item_2_}" 3 "${_fsbr_menu_item_3_}" 4 "${_fsbr_menu_item_4_}" 5 "${_fsbr_menu_item_5_}" 6 "${_fsbr_menu_item_6_}" 2>&1 >/dev/tty)
+	# Handle exit
+	RETC="$?"; [ "$RETC" = "255" ] && break
+	for choice in $choices; do
+		case $choice in
+			1) metro_backup_ui make_fs Data ;;
+			2) metro_backup_ui make_fs System ;;
+			3) check_gui && metro_backup_ui restore_fs ;;
+			4) view_backup_log ;;
+			5) wipe_fs /data ;;
+			6) wipe_fs /data/dalvik-cache ;;
+		esac
+	done
+done

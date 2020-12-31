@@ -1,0 +1,23 @@
+# Verify internet connection
+get_net_stat; test "$?" != "0" && exit 1
+
+get_latest_release(){ for num in {1..12}; do VAR="https://sourceforge.net/projects/opengapps/files/${HOST_ARCH}/$(( $(date '+%Y%m%d') + 1 - $num ))/open_gapps-${HOST_ARCH}-${ANDROID_VER}-pico-$(( $(date '+%Y%m%d') + 1 - $num )).zip/download"; curl --output /dev/null --silent --fail -r 0-0 "$VAR" && export DW_URL="$VAR" && return; done; }
+		
+geco "+ ${_fetching_latest_opengapps_info_/@DUMMY@/$HOST_ARCH}" && get_latest_release
+if [ -n "$DW_URL" ]; then
+	
+	geco "\n+ ${_gearlock_will_dw_X_gapps_/@DUMMY@/open_gapps$(echo "${DW_URL}" | awk -F'open_gapps' '{print $2}' | sed 's|/download||')}} ..." && sleep 1
+	geco "\n+ ${_for_other_gapps_download_manually_} ...\n" && sleep 1
+	DW_TARGET="$DEPDIR/open_gapps$(echo "${DW_URL}" | awk -F'open_gapps' '{print $2}' | sed 's|/download||')"
+	gdload "$DW_URL" "$DW_TARGET"
+		
+	if [ "$?" = "0" ]; then
+		geco "\n+ ${_pushing_opengapps_to_gxpm_} ..." && sleep 0.5
+		"$CORE/gxpm/install-zip" "$DW_TARGET"
+	else
+		geco "\n+ ${_opengapps_dw_failed_} ..." && exit 1
+	fi
+else
+	geco "\n+ ${_failed_to_gather_opengapps_info_} ..."
+	
+fi

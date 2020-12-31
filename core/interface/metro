@@ -1,0 +1,50 @@
+test -z "$ME" && exit 1; export IT="metro"; cf big
+struct_interface_inload(){ export src="$1"; metroUi_menu_body; }
+
+metroUi_menu_body(){
+check_sc && msgbox "SuperCharging needed ..." "${_warning_}" "\n${_supercharging_notice_}"
+[ -e "$STATDIR/update" ] && [ "$UPDATE_CHECK" != "no" ] && msgbox "${_new_update_}" "${_attention_}" "\n${_new_update_notice_}"
+
+TEST_STRING="$(cat "$CORE/${src}/_lang_/_menu_${lang}")"; calcTextDialogSize
+i=1 W=(); while read -r line; do W+=($((i++)) "$line"); done < <( cat "$CORE/${src}/_lang_/_menu_${lang}" )
+
+if [ "$RANDOM" -lt "$RANDOM" ]; then topsep="-"; else topsep="+"; fi
+c="$(dialog --clear --backtitle "$(gecpc "${_press_esc_metroui_info_}" "$topsep")" --title "  GearLock  " --ok-label Go --extra-button --extra-label Status --cancel-label Help --help-button --help-label More --menu "\n    \n" $(( $RECMD_HEIGHT + 8 )) $(( $RECMD_WIDTH + 35 )) 17 "${W[@]}" 3>&2 2>&1 1>&3)"; RETC=$?
+
+if [ "$RETC" = "0" ]; then
+clear; test "$src" != "main.src" && cf small; "$CORE/$src/$c"; test "$src" != "main.src" && pause && cf big
+
+elif [ "$RETC" = "3" ]; then # Status button 
+cf small && gstatus; pause && cf big
+
+elif [ "$RETC" = "1" ]; then # Help button
+clear; cf small && geco "${_ui_help_msg_}" && pause && cf big
+
+elif [ $RETC = 2 ]; then # Extras button
+while true; do
+cmd=(dialog --keep-tite --cancel-label Back --menu "More options" 15 60 15)
+choices=$("${cmd[@]}" 1 "${_metroui_more_menu_item_1_}" 2 "${_metroui_more_menu_item_2_}" 3 "${_metroui_more_menu_item_3_}" 4 "${_metroui_more_menu_item_4_}" 5 "${_metroui_more_menu_item_5_}" 6 "${_metroui_more_menu_item_6_}" 2>&1 >/dev/tty); [ "$?" = "1" -o "$?" = "255" ] && break
+for choice in $choices
+do
+    case $choice in
+        1) msgbox "GearLock About" "Some words" "${_ui_about_msg_}" 28 113 ;;
+        2) clear && cf small && $CORE/updater; pause && cf big ;;
+        3) cf small; $CORE/devz; cf big ;;
+        4) $CORE/settings ;;
+        5) msgbox "gearrec" "Info" "${_gearrec_info_}" ;;
+        6) yesno "${_googleless_mode_}" "Do you want to activate it ?" "${_googleless_mode_info_}" 10 60; if [ $? = 0 ]; then msgbox "GoogleLess-Mode" " Activating " "$(pm disable com.android.vending; pm disable com.google.android.gms)"; touch $GTMP/goolm; else msgbox "GoogleLess-Mode" " Deactivating " "$(pm enable com.android.vending; pm enable com.google.android.gms)"; nout rm $GTMP/goolm; fi ;;
+    esac
+done
+done
+
+elif [ "$RETC" = "255" ]; then
+if [ "$src" = "main.src" ]; then msgbox "Leaving GearLock" "Bye bye" "\nSee ya later ;)"; exit_grl; else exit 0; fi
+
+fi
+}
+
+# Export fun
+export -f metroUi_menu_body struct_interface_inload
+
+# Runtime
+struct_interface main.src 

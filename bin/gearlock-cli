@@ -1,0 +1,56 @@
+#!/gearlock/bin/bash
+EXEC_NAME="${0##*/}"
+argv="$1"
+shift
+function printUsage(){
+	echo -e "
+GearLock-Cli can be used to run anything while hooking gearlock core.
+It scans for your specified input in the following places:
+    '/gearlock/core/'your-input', '\$PATH' or 'specified-path-for-executable'.
+    
+Usage:      gsudo $EXEC_NAME <executable>
+
+Examples:   gsudo $EXEC_NAME main.src/4
+            gsudo $EXEC_NAME chres
+            gsudo $EXEC_NAME gbash
+            gsudo $EXEC_NAME ./my-script.sh
+            
+Note: You have to call \`gearlock-cli\` through \`gsudo\` to ensure optimal environment for GearLock runtime.
+"
+}
+
+function loadCore(){
+	if test -e "${s1:="/gearlock/bin/fetch"}" && test -e "${s2:="/gearlock/bin/fetch.in"}"; then
+		IT="${DEFAULT_THEME:="metro"}" && {
+			source $s1
+			source $s2
+			lock
+		}
+	else
+		exit 1
+	fi
+}
+
+case "$argv" in
+	-v|--version)
+		cat /gearlock/core/version
+	;;
+	-h|--help)
+		printUsage
+	;;
+	*) 
+		if [ -z "$argv" ]; then
+			echo -e "$EXEC_NAME: no input provided, try \`$EXEC_NAME --help\`"
+		elif [ -n "$argv" ]; then
+			test -z "$GSUDO" && echo "$EXEC_NAME: Please run as \`gsudo $EXEC_NAME $argv $@\`" && exit 1
+			if [ -e "/gearlock/core/$argv" ]; then
+				loadCore && "/gearlock/core/$argv" "$@"
+			elif b="$(which "$argv")"; then
+				test ! -x "$b" && echo "$EXEC_NAME: Execution permission not granted for $argv" && exit 1
+				loadCore && "$b" "$@"
+			else
+				echo "$EXEC_NAME: $argv not found"
+			fi
+		fi
+	;;
+esac

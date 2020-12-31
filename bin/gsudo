@@ -1,0 +1,25 @@
+#!/gearlock/bin/bash
+VERSION="0.5"
+
+print_info(){ echo "
+Gsudo $VERSION | Copyright (c) 2020 AXON | supreme-gamers.com
+The android_x86 tty actions are done over the \`root:shell' usergroup.
+Which causes some executable binaries to be working in a wrong manner even while it's still the root user partially.
+
+For example,
++ If you try to extract any .7z archive with p7zip then you will notice that the source permissions of the archive wasnt preserved.
++ The same happens with most other executable binaries also, such as cpio, gzip etc.
+
+Gsudo alter the default su for running commands as root while perserving the current environment and uses bash.
+So, you can use gsudo without leaving the current shell just like any \`sudo' that you find on *unix distros.
+Gsudo acts within the \`root:root' usergroup rather than \`root:shell'.
+
+Usage: gsudo <any-regular-command>
+
+Example: gsudo mkdir /data/new
+
+Gsudo is a part of GearLock
+For more information & bugreports visit https://supreme-gamers.com/gearlock
+"; }
+
+case "$1" in -h|--help) print_info ;; -v|--version) echo "$VERSION" ;; *) suargs=$(printf '%q ' "$@"); if test -n "${suargs}"; then if test -z "$RECOVERY" && test -z "$GSUDO"; then export GSUDO="yes" && su -c "PATH=$PATH;$suargs"; else export GSUDO="yes" && "$@"; fi; else print_info; fi ;; esac

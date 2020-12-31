@@ -1,0 +1,3 @@
+#!/gearlock/bin/bash
+export PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+exec zgrep -F "$@"

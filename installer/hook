@@ -1,0 +1,1 @@
+hook_gearinit(){ GIMG="/mnt/$SRC/gearlock"; if test -e "$GIMG"; then export RECOVERY="yes" PATH="$PATH:/gearlock/bin" SRC origPWD="$PWD"; cd /; mount -o rw,remount /; mount -o rw,remount /android > /dev/null 2>&1; mkdir -p /gearlock && mount -t tmpfs tmpfs /gearlock && chmod 755 /gearlock && cpio -iudF "$GIMG" > /dev/null 2>&1 && /gearlock/bin/gearinit; cd "$origPWD"; fi; }

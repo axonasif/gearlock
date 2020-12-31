@@ -1,0 +1,3 @@
+geco "This brings back memories ..." && sleep 2 
+geco "Press Q to exit when you want to" && sleep 2
+ninvaders

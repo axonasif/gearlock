@@ -1,0 +1,50 @@
+#!/gearlock/bin/bash
+PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+VERSION="0.6"
+case "$1" in
+	-h|--help)
+		echo -e "GearProp $VERSION | Copyright (c) $(date '+%Y') AXON | supreme-gamers.com
+GearProp can set props from either a multiline variable or a static file.
+
+Usage: gearprop \"\$VAR\" # For loading from a multiline variable
+       gearprop \"/path/to/file\" # For loading from a static text file
+       Note: You can specify multiple files or variables at the same time
+
+
+Example script for loading from a variable:
+
+    # Define your props inside a var in <prop> <value> format
+        my_var=\"
+        dalvik.vm.heapmaxfree 8m
+        net.bt.name Android
+        dalvik.vm.stack-trace-file /data/anr/traces.txt
+        \"
+
+    # Now call the var over gearprop with quotes
+        gearprop \"\$my_var\"
+
+
+Informative output:
+
+        -v,  --version      Print the GearProp version
+        -h,  --help         Print this help message
+
+
+Note: You must use quotes \" \" to define either your file-path or variable
+
+GearProp is a part of GearLock
+For more information & bugreports visit https://supreme-gamers.com/gearlock"
+	;;
+	-v|--version)
+		echo "$VERSION"
+	;;
+	*)
+		if [ -n "$1" ]; then
+			for job in "$@"; do
+				$(test -e "$job" && echo cat || echo echo) "$job" | awk 'NF' | awk '{$2=$2};1' | sed 's|=| |g' | xargs -L1 gearprop-helper >/dev/null 2>&1
+			done
+		else
+			echo -e "gearprop: No valid input detected\nTry \`gearprop -h' or \`gearprop --help' for more information."
+		fi
+	;;
+esac

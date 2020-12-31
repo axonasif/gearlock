@@ -1,0 +1,37 @@
+#!/gearlock/bin/bash
+export PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+function printSplash(){
+	clear
+	echo -e "\033[$(( ($(tput lines) * 15) / 100 ))B"
+	co="$(tput cols)"
+	while IFS= read -r line; do
+		printf "%*s\n" $(( (${#line} + co) / 2)) "$line"
+	done < "/gearlock/core/interface/assets/splash"
+}
+
+function run_gearlock(){
+	test "$(tput cols)" -gt "80" && printSplash
+	if [ -z "$RECOVERY" ]; then
+		if [ -x "$(command -v su)" ]; then
+			su -c "gearlock-post"
+		else
+			geco "! Root access not found."
+		fi
+	else
+		gearlock-post
+	fi
+}
+
+function remount(){
+	test -z "$RECOVERY" && su -c 'mount -o rw,remount /'
+}
+
+case "$1" in
+	-v|--version)
+		cat /gearlock/core/version 
+	;;
+	*) 
+		remount
+		run_gearlock
+	;;
+esac

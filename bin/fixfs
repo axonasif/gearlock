@@ -1,0 +1,84 @@
+#!/gearlock/bin/bash
+
+# Check for running progs in volatile mountpoints
+for mp in /mnt /gearlock/gearroot /android /data /system; do
+	lsof 2>/dev/null | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && sleep 2 && exit 1;
+done;
+
+# Define vars
+targetDevice="$(mount | grep "on /mnt" | awk '{print $1}')";
+
+reMount(){
+	(
+		test -n "$unmounted" && true || return
+		test -z "$elsefs" && mount -o rw,noatime "$targetDevice" /mnt
+	)>/dev/null 2>&1
+
+}
+
+unMount(){
+	unmounted=true
+	(
+	# Free loop devices to avoid read errors.
+		for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | sort -r); do
+			mount 2>/dev/null | grep -q "^$loopDev" && umount -d "$loopDev";
+		done;
+
+	# unMount mountpoints
+		for mp in /data /system /android/data /android/system /sfs /gearlock/gearroot $(test -z "$elsefs" && echo '/mnt'); do
+			mountpoint -q $mp && umount $mp;
+		done
+	)>/dev/null 2>&1
+	:
+}
+
+runJob(){
+	
+	checkImg(){
+		for img in data.img system.img; do
+			if [ -e "$OROOT/$img" ]; then
+				test -z "$unmounted" && unMount;
+				echo -e "\n++ Checking $img ...\n" && e2fsck -y $force "$OROOT/$img";
+			fi;
+		done;
+	}
+	
+	! mount 2>/dev/null | grep '/mnt' | grep -q 'type ext' && elsefs=true;
+	test -z "$elsefs" && { ls "$OROOT/system.img" || ls "$OROOT/data.img"; } > /dev/null 2>&1 && bothfs=true;
+	force="$1";
+	
+	echo -e "\n+ Starting the repair / fsCheck process ...\n";
+	
+	## When we have ext* partition and *img
+	if [ -n "$bothfs" ]; then
+		unMount && fsck -CTy $force "$targetDevice";
+		reMount;
+		checkImg;
+	## When we have ext* partition
+	elif [ -z "$elsefs" ]; then
+		unMount && fsck -CTy $force "$targetDevice";
+	## When we have non-ext* partition
+	else
+		checkImg;
+	fi
+	
+	reMount;
+	remount_android;
+	
+}
+
+	
+	if [ -n "$FIXFS" ] || [ -e "$OROOT/fixfs" ] || [ -z "$UI" ]; then
+		runJob;
+	else
+		if dialog --colors --clear --title " Confirm action " --yesno "Are you sure that you want GearLock to repair \Z1$targetDevice\Zn ?" 8 41; then
+			clear && runJob -f;
+			echo -e "\n++ Press any key to continue ...\c" && read -n1;
+		else
+			dialog --clear --title "Notice" --msgbox "\nOkay then !" 8 41;
+		fi;
+	fi;
+	
+
+## Always return true
+:;

@@ -1,0 +1,149 @@
+### Setup environment
+# Ensure we are root user
+test -z "$RECOVERY" && test ! -d "/home/axon" && test "$(whoami)" != "root" && exit 1
+
+# Define functions
+function cmdline(){
+	awk -F"${1}=" '{print $2}' < /proc/cmdline | cut -d' ' -f1 2>/dev/null
+}
+
+function fetch_bootimage(){
+	cKernel="$(uname -r)"
+	BIMGVAR="$(find "$GRROOT" -maxdepth 1 ! -name '___header___' ! -name '*.img' \
+							! -name '*.sfs' ! -name 'gearlock' -type f \
+								| xargs grep -l "$cKernel" | head -n1 | sed "s|$GRROOT_DIR||")"
+	unset cKernel
+}
+
+# Export everything
+set -a
+
+# Initialize some pre-environment vars
+if test -d "/system" && test -d "/data" && test -z "$RECOVERY"; then
+	ANDROID_ROOT="/system" ANDROID_DATA="/data"
+else
+	ANDROID_ROOT="/gearlock" ANDROID_DATA="/gearload/tmp"
+fi
+
+# Initialize terminal
+LC_ALL="en_US.UTF-8"
+TERM="screen-256color"
+TERMINFO="$GRLBASE/share/terminfo"
+DIALOGRC="$GRLBASE/etc/dialogrc"
+: ${GSUDO:="yes"} # To skip invoking su again while being called by gsudo
+
+# Set PATH
+PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+
+# Set GHOME
+test -d "/system/ghome" && GHOME="/system/ghome" || GHOME="/data/ghome"
+HOME="$GHOME"
+
+# Start Initializing core variables
+BIMGVAR="$(cmdline BOOT_IMAGE)"
+SRCVAR="$(cmdline SRC)"
+EFIROOT="/gearlock/efiroot"
+GRLBASE="/gearlock"
+GTMP="$GRLBASE/tmp"
+GRROOT_DIR="${GRLBASE}/gearroot"
+
+if test -z "$SRCVAR" && test -n "$BIMGVAR"; then
+	GRROOT="$(readlink -m "$GRROOT_DIR/${BIMGVAR%/*}")"
+else
+	GRROOT="$(readlink -m "$GRROOT_DIR/$SRCVAR")"
+fi
+
+test -n "$GRROOT" && ckdirex "$GRROOT/gearload" 777 # Ensure gearload dir existence
+
+# Detect boot_image
+if test -e "$GTMP/kernel_image"; then
+	KERNEL_IMAGE="$(< "$GTMP/kernel_image")"
+else
+	test -z "$BIMGVAR" && fetch_bootimage # Try to blindly define boot_image when no cmdline is available
+	if grep -iq "efi" /proc/cmdline && test -n "$BIMGVAR"; then # When we have efi BIOS
+		PEN_VAR="$(find "$EFIROOT" -maxdepth 4 -ipath "*${BIMGVAR}" | head -n1)"
+		if test -z "$PEN_VAR" && test -e "$GRROOT/${BIMGVAR##*/}"; then
+			KERNEL_IMAGE="$GRROOT/${BIMGVAR##*/}"
+		else
+			KERNEL_IMAGE="$PEN_VAR"
+		fi
+		unset PEN_VAR
+	else
+		KERNEL_IMAGE="$GRROOT/${BIMGVAR##*/}"
+	fi
+	KERNEL_IMAGE="$(readlink -m "$KERNEL_IMAGE")"
+	echo "$KERNEL_IMAGE" > "$GTMP/kernel_image"
+fi
+
+
+# Ensure ghome dir existence
+if test ! -d "$GHOME"; then
+	{
+		test -e "${vG:="/system/vendor/ghome"}" && garca x -aoa -o"$GHOME" "$vG" || mkdir -p "$GHOME"
+		chmod -Rf 755 "$GHOME"
+	} 2>>/dev/null
+fi
+
+# Initialize extra core variables
+if test -n "$GRROOT"; then
+	{
+		mkdir -p "$GHOME/dependencies" "$GHOME/extensions" "$GHOME/status" "$GHOME/unins" "$GHOME/.local/bin"
+		chmod -f 755 "$GHOME/"*
+	} 2>>/dev/null
+	ME="AXON"
+	CORE="$GRLBASE/core"
+	DEPDIR="$GHOME/dependencies"
+	STATDIR="$GHOME/status"
+	GRLOAD="$GRROOT/gearload"
+	UNINSDIR="$GHOME/unins"
+	GAPPID="com.supremegamers.gearlock"
+	GBDIR="$GHOME/gearboot"
+	EXTDIR="$GHOME/extensions"
+	HOOKDIR="$GHOME/hook"
+	WORKDIR="$GHOME/workdir"
+	GCOMM="gearlock"
+	YEAR="$(date '+%Y')"
+	DATE="$(date '+%dd-%mmo-%Yy_%Ss-%Mm-%Hh')"
+	GXPM_LOG="$STATDIR/gxpm.log"
+	mount | grep "$GRROOT_DIR" | grep -q ext4 && GRLT="$GRROOT/.gxpm" || GRLT="$GHOME/.gxpm"
+	DISKMPATH="/mnt/runtime/default"
+	DATADIR="$GRROOT/data"
+	BLOCKRPATH="/dev/block"
+	KMODDIR="/system/lib/modules"
+	test -e "/sbin/magisk" && MAGISK_COREV="$(magisk -v)"
+	test -e "$GTMP/boot-comp" && BOOTCOMP="yes" || BOOTCOMP="no"
+	GEARLOCK_VER="$(< "$CORE/version")"
+	ps -fA 2>/dev/null | grep -q "$GAPPID" && GEARLOCK_APP="yes" || GEARLOCK_APP="no" # Detect gearlock app
+	test "$(fgconsole 2>/dev/null)" == "$(test "$SDK" -gt 29 && echo 1 || echo 7)" \
+		&& test "$BOOTCOMP" == "yes" && TERMINAL_EMULATOR="yes" || TERMINAL_EMULATOR="no"
+fi
+
+# HOST VARIABLES
+grep -owq 'lm' /proc/cpuinfo && CPU_ARCH="x86_64" || CPU_ARCH="x86"
+HOST_ARCH="$CPU_ARCH" # FIXME: Needs revision
+if test -e "/system/build.prop"; then
+	SDK="$(sed -n "s/^ro.build.version.sdk=//p" '/system/build.prop' 2>/dev/null | head -n 1)"
+	case "$SDK" in
+		22) v="5.1" ;;
+		23) v="6.0" ;;
+		24) v="7.0" ;;
+		25) v="7.1" ;;
+		26) v="8.0" ;;
+		27) v="8.1" ;;
+		28) v="9.0" ;;
+		29) v="10.0" ;;
+		30) v="11.0" ;;
+	esac
+	ANDROID_VER="$v"
+	unset v
+fi
+SYSTEM_DIR="/system"
+DATA_DIR="/data"
+grep -q 'SC_SIZE=' /proc/cmdline && SC_SIZE="$(($(cmdline SC_SIZE) * 1048576))" || SC_SIZE="5000" # SuperCharge expansion size
+
+# Load .gearlockrc
+test ! -e "${GEARLOCK_RC:="$GHOME/.gearlockrc"}" \
+	&& rsync -a "$GRLBASE/share/gearlock/ghome/" "$SYSTEM_DIR/vendor/ghome/" "$GHOME">/dev/null 2>&1
+test -e "$GEARLOCK_RC" && source "$GEARLOCK_RC"
+
+set +a

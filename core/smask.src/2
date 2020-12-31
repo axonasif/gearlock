@@ -1,0 +1,30 @@
+# Define variables
+test "$BOOTCOMP" == "no" && echo "Fatal error: is your OS booted up into the GUI ?" && exit 1
+test -z "$(which dumpsys)" && echo "Not usable at your current environment" && exit 1
+fakeGearGit="GearLock-FakeM"
+_sf_dumpString="$(dumpsys SurfaceFlinger | grep "(git.*)")"
+test -z "${_sf_dumpString}" && _sf_dumpString="$(dumpsys SurfaceFlinger | grep "(${fakeGearGit})")"
+test -z "${_sf_dumpString}" && "Fatal error: can't gather required information" && exit 1
+_mesa_ExtractVersion="$(echo "${_sf_dumpString}" | rev | awk '{print $2}' | rev)"
+_mesa_ExtractGitVersion="$(echo "${_sf_dumpString}" | rev | awk '{print $1}' | rev)"
+
+# Get input
+INPUT=$(dialog --clear --colors --backtitle "GearLock Mesa Version Faker" --title " Fake Mesa " --max-input "${#_mesa_ExtractVersion}" --inputbox "\n Enter your desired fake mesa version \n" 10 60 "${_mesa_ExtractVersion}" 3>&1 1>&2 2>&3)
+
+ret=$?; test $ret != 0 && exit 1
+
+# Gen extra chars if input is less than max-input.
+test "${#INPUT}" -lt "${#_mesa_ExtractVersion}" && for i in $(seq $((${#_mesa_ExtractVersion} - ${#INPUT} ))); do EXTRA_SUFFIX+="${RANDOM: -1}"; done
+origINPUT="${INPUT}"; INPUT="${INPUT}${EXTRA_SUFFIX}"
+
+dialog --colors --infobox "\n   Faking Mesa Version to \Z1${origINPUT}\Zn ..." 5 70 && (
+for prefix in "/system/lib" "/system/lib64" "/system/vendor/lib" "/system/vendor/lib64" "/system/phoenixos_darkmatter" "/system/phoenixos_darkmatter64"; do
+		
+	if ls "${prefix}/dri/"*; then
+		sed -i "s|${_mesa_ExtractVersion}|${INPUT}|g" "${prefix}/dri/"*
+		sed -i "s|${_mesa_ExtractGitVersion}|(${fakeGearGit})|g" "${prefix}/dri/"*
+	fi
+		
+done)>/dev/null 2>&1
+
+msgbox "GearLock Mesa Version Faker" "Operation Successful" "\n Successfully Faked Mesa Version to \Z1${origINPUT}\Zn\n Press enter to Reboot to allow GearBoot to apply the changes in your next bootup. \n \n" 8 85 && greboot

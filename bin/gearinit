@@ -1,0 +1,201 @@
+#!/gearlock/bin/bash
+
+# Define vars
+export TERM="screen-256color" \
+	LC_ALL="en_US.UTF-8" \
+	DIALOGRC="/gearlock/etc/dialogrc" \
+	PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin";
+export OROOT="$(readlink -m "/mnt/$SRC")"
+RECOVERY_LOADER="$OROOT/___header___"
+: "${SC_SIZE:="5000"}"
+
+# Execute remount_fs
+remount_fs
+
+# Define functions
+function get_dev(){
+	echo "while read dev; do case \$dev in $(grep -E "$1" /lib/modules/$(uname -r)/modules.alias | sed -n 's/^alias  *\([^ ]*\)  *\(.*\)/\1)echo -n \"\2 \";;/p'| sed -e '/brcmfmac/d' -e 's|))|)|g' -e 's|(||g') esac; done" > ${tmp:=/gearlock/tmp/getdev} && chmod 777 $tmp && grep -h 'MODALIAS' /sys/bus/*/devices/*/uevent | sed 's/^MODALIAS=//' | awk '!seen[$0]++' | $tmp && rm -f $tmp
+}
+
+function freeTTYnum(){
+	local var="$(/gearlock/bin/ps -eo tty= | grep tty | sort -u)"
+	echo "$(( "${var: -1}" + 1 ))"
+}
+
+function load_dri(){
+	test "$AUTO_LOAD" == "old" && return 0 # Ignore when AUTO_LOAD is passed
+	
+	function checkFail(){
+		test ! -e "/sys/module/atkbd" && test ! -e "/sys/module/hid_apple" && dialog --infobox "\n   Failed to initialize input device" 5 45 && sleep 2
+	}
+	
+	test -e "$OROOT/norecovery" || test -n "$NORECOVERY" && return 0 # Ignore when NORECOVERY is passed or present
+		
+	if test -e "${kd:="/system/lib/modules/$(uname -r)/kernel/drivers"}/input/keyboard/atkbd.ko" || test -e "$kd/hid/hid-apple.ko"; then
+		{
+			modprobe -a $(get_dev 'atkbd|hid_apple')
+			test ! -e "$OROOT/nogfx" && test -z "$NOGFX" \
+			&& modprobe -a $(get_dev 'i915|amdgpu|radeon|nouveau')
+		}>/dev/null 2>&1
+		checkFail
+	elif [ -e "$RECOVERY_LOADER" ]; then
+		insmod "$RECOVERY_LOADER">/dev/null 2>&1
+		checkFail
+	else
+		checkFail
+	fi
+		setfont /gearlock/share/terminfo/r/rxvt32-asm && setterm --cursor off
+		return 0
+}
+
+function gpower(){
+	if [ "$1" = "poweroff" ]; then
+		echo o > /proc/sysrq-trigger
+	elif [ "$1" = "reboot" ]; then
+		echo b > /proc/sysrq-trigger
+	fi
+	exit 0
+}
+
+function boot_os(){
+	# Recovery countdown
+	test "$1" == "p" && {
+		dialog --clear --title " Booting Operating System " --nocancel --nook --pause "" 8 41 1
+	}
+	
+	# Re-initialize terminal
+	setfont /gearlock/share/terminfo/c/cons16-asm
+	setterm --cursor on
+	
+	# After recovery countdown START
+	print_ran_header
+	test -e "$OROOT/old.system" && echo -e '\n + Old system files found, removing it ...' && rm -rf "$OROOT/old.system" # Check for old system
+	
+	test -n "$FIXFS" || test -e "$OROOT/fixfs" && fixfs # FIXFS trigger
+	
+	# Check for supercharge
+	test ! -e "$OROOT/isolinux" && test -z "$NOSC" && test ! -e "$OROOT/nosc" && ls "$OROOT/system."*>/dev/null 2>&1 \
+		&& test "$(stat -L --printf="%s" "$(ls "$OROOT/system."* | head -n1)")" -lt "$((SC_SIZE * 1048576))" \
+		&& gsudo gearlock-cli main.src/3 2>&1
+	
+	# Start gearboot and android init hooking
+	gearboot s0 2>&1
+	{
+		if test -e /android/init.rc; then
+			initrc="/android/init.rc"
+		elif test -e /android/system/etc/init/hw/init.rc; then
+			initrc="/android/system/etc/init/hw/init.rc"
+		fi
+		
+		if test -n "$initrc"; then
+			! grep -q '/gearlock/etc/gearinit.rc' "$initrc" && {
+				sed -i 's|^import /init.\${ro.hardware}.rc|import /init.\${ro.hardware}.rc\nimport /gearlock/etc/gearinit.rc|' "$initrc"
+				sed -i "s|ghome_dir|$(test -e '/system/ghome' && echo '/system/ghome' || echo '/data/ghome')/.local/bin|g" '/gearlock/etc/gearinit.rc'
+			}
+			! grep -q 'pcspkr' /system/etc/modules.bl* && {
+				for f in /system/etc/modules.bl*; do
+					echo "${f##*.} pcspkr" >> "$f"
+				done
+			}
+			mkdir -p /android/gearlock && exec /bin/mount --move /gearlock /android/gearlock
+		fi
+	} >/dev/null 2>&1
+	exit 0
+}
+
+function print_ran_header(){
+	#test -e '/system/etc/hide_me' && return 0
+	clear && cat << "EOF"
+  ___________________   _____ __________.____    ________  _________  ____  __.
+ /  _____/\_   _____/  /  _  \\______   \    |   \_____  \ \_   ___ \|    |/ _|
+/   \  ___ |    __)_  /  /_\  \|       _/    |    /   |   \/    \  \/|      <
+\    \_\  \|        \/    |    \    |   \    |___/    |    \     \___|    |  \
+ \______  /_______  /\____|__  /____|_  /_______ \_______  /\______  /____|__ \
+        \/        \/         \/       \/        \/       \/        \/        \/
+
+EOF
+
+	quote[0]="-- I destroy my enemies when I make them my friends ... (Abraham Lincoln)"
+	quote[1]="-- Light can not exist without the existence of darkness ... (AXON)"
+	quote[2]="-- You may try to replicate someone, but you can never replicate what he is inside ... (AXON)"
+	quote[3]="-- If fools could fly then the sun would go eclipse ... (Night)"
+	quote[4]="-- Some people act like know-it-all, but deep down they know what they truely are ... (AXON)"
+	quote[5]="-- As things get closer to the light, the shadows get darker ... (AXON)"
+	quote[6]="-- There are more imposters than legit things, maybe that's what helps us define the good ... (AXON)"
+	quote[7]="-- Genius is 1% inspiration, 99% perspiration ... (Thomas Edison)"
+	quote[8]="-- Seek knowledge from cradle to the grave ... (Muhammad (PBUH))"
+	quote[9]="-- You must be the change you wish to see in the world ... (Mahatma Gandhi)"
+
+	echo -e "${quote["${RANDOM: -1}"]}\n\n\n\n++++ Type the word \033[1;33mg\033[0m and press \033[1;32mEnter\033[0m to run \033[1;34mgearlock\033[0m in here.\n++++ Press \033[1;35mAlt + F8\033[0m if you can't type here."
+}
+
+function recovery_menu(){
+	function mkJob(){
+		setfont /gearlock/share/terminfo/c/cons16-asm -C /dev/tty$(freeTTYnum) \
+		&& openvt -c $(freeTTYnum) -s "$@"
+	}
+	
+	while true; do
+		cmd=(dialog --backtitle "$(gecpc " GearLock Recovery Mode " "#" )" \
+				--title " Initialization " --ok-label Execute --extra-button \
+				--extra-label Reboot --cancel-label ShutDown \
+				--menu "\n \n Press Alt + 1 2 3 ... to switch between active windows\n \n" 15 60 15)
+		options=(
+					1 "Boot Operating System"
+					2 "Run GearLock (Recovery Mode)"
+					3 "Open Virtual Command Terminal"
+					4 "Repair /// Check File Systems"
+					5 "MidnightCommander FileManager"
+				)
+		choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+		# Handle exit
+		RETC=$?
+		if [ "$RETC" == "1" ] || [ "$RETC" == "255" ]; then
+			dialog --colors --backtitle "\Z7Press \Zb\Z1ESC\Z7 to cancel" \
+			--title " Shutting Down " --nook --nocancel --pause "" 8 41 5 
+			test "$?" != "255" && gpower poweroff
+		elif [ "$RETC" == "3" ]; then
+			dialog --title " Rebooting " --nook --nocancel --pause "" 8 41 5 && gpower reboot
+		fi
+
+		# Handle input
+		for choice in $choices; do
+			case $choice in
+				1) boot_os p ;;
+				2) mkJob gearlock ;;
+				3) dialog --title " Creating a virtual command term " --nook --nocancel --pause "" 8 41 3 && mkJob bash -l ;;
+				4) clear && export UI=true && fixfs ;;
+				5) mkJob mc.gearinit ;;
+			esac
+		done
+	done
+}
+
+for s in SIGINT SIGHUP INT SIGTSTP; do
+	trap "boot_os p" "${s}"
+done
+
+# Check for ALWAYSRECOVERY
+if test -e "$OROOT/alwaysrecovery" || test -n "$ALWAYSRECOVERY"; then
+
+	load_dri && recovery_menu
+
+else
+	# NORECOVERY not detected
+	if test ! -e "$OROOT/norecovery" && test -z "$NORECOVERY"; then
+
+		# Auto boot prompt
+		while true; do
+			load_dri && dialog --clear --colors --backtitle "\Z7Press \Zb\Z1ESC\Z7 to enter RECOVERY mode" \
+			--title " Booting OS " --nook --nocancel --pause "" 8 41 3
+			test "$?" == "255" && break || boot_os
+		done
+
+		# When ESC is pressed over 'Auto boot prompt'
+		recovery_menu
+	else
+		# NORECOVERY detected
+		boot_os
+	fi
+fi

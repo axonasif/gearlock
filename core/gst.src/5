@@ -1,0 +1,22 @@
+CURRENT_KERNEL="$(uname -r)"
+KMODDIR="/system/lib/modules"
+TOBE_REMOVED="$(ls -1 "$KMODDIR" | grep -v "$CURRENT_KERNEL" | xargs | sed 's/ /, /g')"
+
+geco "++ Currently booted kernel is ${BGREEN}$CURRENT_KERNEL${RC}"
+if test -n "$TOBE_REMOVED"; then
+    geco "++ These kernels will be removed: ${YELLOW}$TOBE_REMOVED${RC}"
+else
+    geco "\n++++ No extra kernels found, exiting ..." && exit 1
+fi
+geco "+++ Note: This will remove all of your kernels except the booted one (Even rescue-kernel)"
+
+geco "\n+ Sure to purge all extra kernels ? \n"
+select opt in "${_yes_}" "${_no_}"; do
+	case "$opt" in
+	"${_yes_}")
+		for kernel in "$KMODDIR/"*; do test "$kernel" != "$KMODDIR/$CURRENT_KERNEL" && geco "\n+ Removing kernel modules: ${PURPLE}${kernel##*/}${RC} ..." && rm -r "$kernel"; done
+		for f in "$UNINSDIR/"*; do grep -qI "Restoring stock kernel image" "$f" && geco "\n+ Removing kernel uninstallation script: ${f##*/}" && rm "$f"; done
+		test -e "${KERNEL_IMAGE%/*}/rescue-kernel" && geco "\n+ Removing rescue-kernel bootimage"; sync; break ;;
+	"${_no_}") geco "\n++ ${_as_you_wish_}" && break ;;
+	esac
+done

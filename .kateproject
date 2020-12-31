@@ -1,0 +1,4 @@
+{
+  "name": "GearLock"
+, "files": [ { "directory": "core", "recursive": 1 } ]
+}

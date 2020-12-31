@@ -1,0 +1,66 @@
+#!/gearlock/bin/bash
+
+EXEC_NAME="${0##*/}"
+
+chkgsudo(){ test -z "$GSUDO" && echo "$EXEC_NAME: Please run as \`gsudo $EXEC_NAME $(test "${#JOB}" -gt 1 && echo "--" || echo "-")$JOB $1\`" && exit 1; }
+
+loadCore(){ if test -e "${s1:="/gearlock/bin/fetch"}" && test -e "${s2:="/gearlock/bin/fetch.in"}"; then source $s1; source $s2; export IT="${DEFAULT_THEME:="metro"}"; lock; else exit 1; fi; return 0; }
+
+run_gxpm_job(){
+if [ -z "$1" ]; then
+	geco "$EXEC_NAME: No valid file name/path provided.\nTry \`$EXEC_NAME --help\` for more info"
+	
+else
+	
+	if [ -e "$1" ]; then chkgsudo "$1"; loadCore
+		
+		if [[ "$JOB" =~ ^i ]]; then
+			if [[ "$1" =~ .*gxp.* ]]; then
+				"$CORE"/gxpm/install "$1"
+			elif [[ "$1" =~ .*zip.* ]]; then
+				"$CORE"/gxpm/install-zip "$1"
+			else
+				echo "$EXEC_NAME: $1 does not refer to any acceptable file-extension." && exit 1
+			fi
+		else
+			"$CORE"/gxpm/uninstall "$1"
+		fi
+		
+	else 
+		echo "$EXEC_NAME: $1 not found"
+	fi
+	
+fi
+}
+
+printUsage(){ echo -e "
+Command line GearLock package & extension manager
+
+Usage:    $EXEC_NAME <operation> <file-name>
+
+Examples: gsudo $EXEC_NAME -i microCode-Updater.gxp        # Installing regular gearlock package/extension
+          gsudo $EXEC_NAME -i opengapps_x86_20190726.zip   # Installing flashable zips
+          gsudo $EXEC_NAME -u <no-input-required>          # To open uninstaller prompt in cli (Not implemented yet)
+          Note: You have to call \`gxpm\` through \`gsudo\` to ensure optimal environment for the operations
+          
+<Operations>
+
+     -i, --install
+     -u, --uninstall
+
+Informative output:
+
+     -h,  --help         Print this help message
+
+GXPM is a part of GearLock
+For more information & bugreports visit https://supreme-gamers.com/gearlock
+"; }
+
+
+case "$1" in
+-v|--version) cat /gearlock/core/version ;;
+-h|--help) printUsage ;;
+-i|--install) JOB="${1##*-}";shift;run_gxpm_job "$1";;
+-u|--uninstall) JOB="${1##*-}";shift;run_gxpm_job "$1" ;;
+*) geco "$EXEC_NAME: No input was provided" && printUsage ;;
+esac

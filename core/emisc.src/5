@@ -1,0 +1,24 @@
+no_recovery_mode
+[ -z "$(which wm)" ] && echo Error && exit 0
+geco "\n${RED}++++ ${_phrase_X_changer_/@DUMMY@/GearLock Resolution} ++++${RC}\n"
+
+geco "\n++ ${_current_resolution_is_} ${WHITE}$(wm size | cut -d : -f2- | sed 's\ \\' | xargs | sed 's\ \, \'g)${RC}"
+geco "++ ${_current_dpi_is_} ${WHITE}$(wm density | cut -d : -f2- )${RC}"
+geco "\n++ ${_gearlock_resolution_changer_header_info_}...\n\n"
+
+RES_VALUES="800x600 960x720 1024x768 1058x600 1280x720 1400x1050 1440x1080 1600x1200 1856x1392 1920x1440 2048x1536 2560x1440 3840x2160"
+
+while true; do
+    read -p "$(geco "\n+ ${_how_set_it_}? [${GREEN}P${RC}reset / ${RED}C${RC}ustom / ${YELLOW}R${RC}estore-Original]") " "c"
+    case $c in
+        [Pp]* ) select res in $RES_VALUES
+                do geco "\n++ ${_setting_res_/@DUMMY@/$res} ..."; wm size ${res}; break; done; break ;;
+
+        [Cc]* ) while true; do
+                read -p "$(geco "\n++ ${_enter_custom_res_prompt_} >> [Example: ${YELLOW}800x600${RC}]") " "c"
+                if [ -z "$c" ]; then geco "${_noinput_classicui_}...!\n"; else geco "+ ${_setting_resolution_info_/@DUMMY/$c}..."; wm size "$c"; break; fi; done; break ;;
+
+        [Rr]* ) geco "\n++ ${_restoring_roig_resolution_} ..."; wm size reset; break ;;
+    * ) geco "\n${_enter_either_/@DUMMY@/${GREEN}P${RC} / ${RED}C${RC} / ${YELLOW}R${RC}}" ;;
+esac
+done

@@ -1,0 +1,69 @@
+test -z "$RECOVERY" && geco "Only available in RECOVERY-MODE ..." && exit 1; nopause
+# Define functions
+do_install(){
+
+	OTA_PACKAGE="$1"
+	geco "\$\$ Installing / Updating operating system from ${OTA_PACKAGE##*/}\n\n"
+	
+	# Ensure GRROOT is writable
+	! touch -c "$GRROOT/." >/dev/null 2>&1 && geco "[!!!] Error: OS partition is not writable (is it hybernated ?)" && exit 1;
+
+	# Ensure GRROOT has at least 2GB free space
+	test "$(($(stat -f --format="%a*%S" "$GRROOT_DIR")))" -lt "$((2000*1048576))" && \
+	geco "[!!!] Error: Not enough free space in your disk, at least 2GB is required" && exit 1;
+
+	mkdir -p "${ISOROOT:="$GTMP/isoroot"}";
+
+	# Mount OTA_PACKAGE
+	mount -o loop "$OTA_PACKAGE" "$ISOROOT" || { geco "[!!!] Error: Failed to mount the ISO, exiting"; exit 1; };
+	# Start updating all files
+	geco "@@ Updating kernel image" && rsync --info=progress2 "$ISOROOT/kernel" "$KERNEL_IMAGE" || { geco "[!!!] Error: Failed to update ${KERNEL_IMAGE##*/}"; exit 1; };
+	for _file in "${KERNEL_IMAGE%/*}/initrd.img" "$GRROOT/system.img" "$GRROOT/system.sfs" "$GRROOT/gearlock"; do
+		if [ -e "$ISOROOT/${_file##*/}" ]; then
+			geco "@@ Updating ${_file##*/}" && rsync --info=progress2 "$ISOROOT/${_file##*/}" "$_file" || { geco "[!!!] Error: Failed to update ${_file##*/}"; exit 1; };
+			chmod -f 777 "$_file"; sync "$_file";
+		fi
+	done
+
+	# Keep the proper system image as per the ISO
+	if [ -e "$ISOROOT/system.img" ] || [ -e "$ISOROOT/system.sfs" ]; then
+		for sysimg in system.img system.sfs; do
+			test -e "$GRROOT/$sysimg" && test ! -e "$ISOROOT/$sysimg" && rm "$GRROOT/$sysimg";
+		done
+	fi
+	geco "\n[-+-] You might need to wipe your /data or /data/dalvik-cache in case if this was a higher android version" && sleep 2;
+	geco "[-+-] Syncing files at \$GRROOT" && { umount -d "$ISOROOT" 2>/dev/null; rm -rf "$GRROOT/system"; mount -o rw,remount,atime,diratime,relatime "$GRROOT_DIR"; sync; sync; };
+	test -z "$EXTERNAL" && geco "[-+-] Successfully installed/updated from ${OTA_PACKAGE##*/}\n" && echo -n '++++ ' && greboot;:;
+
+}
+
+if test -n "$1" && test -e "$1"; then
+	EXTERNAL=true; do_install "$1"
+else
+	lf(){ ls -1F "$1" | sed -e "s|/| $(printf "\r%*s" $(( $(tput cols) / 30 )) "$( echo -n "Folder" | cut -d . -f2 )")|g" -e "s|*| $(printf "\r%*s" $(( $(tput cols) / 30 )) "$( echo -n "File  " | cut -d . -f2 )")|g" -e "s|@| $(printf "\r%*s" $(( $(tput cols) / 30 )) "$( echo -n "Symlink" | cut -d . -f2 )")|g"; }
+
+	cd /data 2>/dev/null || cd /; while true; do
+		[ -z "$PWD" ] && PWD="$OLDPWD"
+		i=1 W=(); while read -r line; do W+=($((i++)) "$line"); done < <( lf "$PWD" ); CUR_DIR="$PWD"
+		FILE_NUM="$(dialog --colors --clear --backtitle "$(gecpc "${_press_esc_metroui_info_}" "%")" --title " GearLock OS Installer/Updater from ISO " --ok-label "${_open_}" --extra-button --extra-label "${_back_}" --cancel-label " Backup SystemFS " --menu  "\nIt is recommended that you take backup of your ${MBOLD}${MBLACK}SystemFS${MRC} before proceeding.\n${_metroui_gxpm_header_meta_/'package/extension'/'Operating System ISO'}: \Zb\Z1$CUR_DIR\Zn \n \n" 30 150 40 "${W[@]}" 3>&2 2>&1 1>&3)"; RETC=$?
+		if [ "$RETC" = "0" ]; then # Open button
+			TER="$(ls -1 "$PWD" | sed -n "$FILE_NUM p")"
+			if [ -d "$TER" ] && [ -n "$(ls -1 "$TER")" ]; then cd "$(readlink -f "$TER")"
+			elif [ -f "$TER" ]; then
+				if [ -n "$(echo "$TER" | grep -E '.iso')" ]; then
+					yesno "$(gecpc " GearLock OS Installer/Updater from ISO " "\$")" "${_sure_to_install_}" "\n\n$(echo "${TER}" | sed "s|\b.iso\b||")" 10 70
+					if [ "$?" = "0" ]; then clear && do_install "$TER"; else msgbox "${_beep_boop_}" "${_notice_}" "\n\n${_as_you_wish_} !"; fi
+				else
+					msgbox "${_beep_boop_}" " ${_notice_} " "$TER ${_is_not_gxp_}" 12 70
+				fi
+			else msgbox "Opps ..." " ${_info_} " "${_folder_is_empty_}"
+			fi
+		elif [ "$RETC" = "3" ]; then # Back button
+			cd ../
+		elif [ "$RETC" = "1" ]; then # BackupFS button
+			"$CORE/backupfs"
+		elif [ "$RETC" = "255" ]; then # Exit call
+			break
+		fi
+	done
+fi

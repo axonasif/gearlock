@@ -1,0 +1,26 @@
+no_recovery_mode
+geco "\n++++ ${_gearlock_mac_changer_} ++++\n"
+
+EVMAC="$(CHARS="0123456789abcdef"; GEN="$(for i in {1..12} ; do echo -n ${CHARS:$(( $RANDOM % 16 )):1} ; done | sed -e 's/\(..\)/:\1/g')"; echo "$GEN" | cut -d : -f2-)"
+
+job(){
+geco "\n++ ${_taking_down_net_devs_} ...\n"; sleep 0.4; su -c 'svc wifi disable'; sleep 10
+for d in $(ip -o link show | grep "link/ether" | awk -F': ' '{print $2}' | grep -v lo | xargs); do
+sleep 0.4; geco "+ ${_evaluating_mac_info_/@DUMMY@/$d} .."; ifconfig $d down; ifconfig $d hw ether $EVMAC; ifconfig $d up; done
+geco "\n++ ${_turning_net_devs_back_on_} ..."; sleep 0.4; su -c 'svc wifi enable'; sleep 10
+geco "\n\n++++ ${_successfully_set_ran_mac_/@DUMMY@/$EVMAC} ..."
+}
+
+geco "-- ${_current_mac_addr_by_dev_}: $(ip link | grep "link/ether" | awk '{print $2}' | xargs | sed 's\ \, \g')"
+geco "\n+ ${_turn_off_wifi_dev_info_} ..."
+
+geco "\n${_sure_to_change_mac_}"
+select opt in "${_yes_}" "${_no_}"
+do
+    case $opt in
+    "${_yes_}") geco; job ;;
+    "${_no_}") geco "${_as_you_wish_} ..."; exit 0 ;;
+    esac
+    break
+done 
+

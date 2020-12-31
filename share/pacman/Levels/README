@@ -1,0 +1,40 @@
+The included level editor (pacmanedit) isn't very difficult to learn to use,
+the status bar tells you everything you need to know but here are the keys
+
+UDLR or WSAD:	Move cursor
+F:		Fills all blank spaces with pellets
+C:		Clears all pellets from board
+Q:		Saves and quits
+CTRL+C:		Quits WITHOUT saving
+
+Key		Inserts
+-----------------------
+0 or space:	Blank
+1:		Wall
+2:		Pellet
+3:		Powerup
+4:		Ghost/Spawning Wall
+5:		Blinky
+6:		Inkey
+7:		Clyde
+8:		Pinky
+9:		Pacman
+
+
+*) The spawning wall is a wall that the ghosts can go through but Pacman
+   cannot. These can be used to make levels REALLY difficult. Check level 09
+
+*) Borders shouldn't need to be used, but give it a more Pacman-like feel.
+   If a ghost or Pacman are able to reach the very edge of the board, he will
+   be teleported to the opposite side of the level, both X and Y just like in
+   the regular game.
+
+*) See any included level__.dat file for examples.
+
+
+To edit a new or existing level, type:
+	$ pacmanedit new_or_old_level.dat
+
+
+To load a custom level, run pacman with the level file as the parameter:
+	$ pacman levelfile.dat

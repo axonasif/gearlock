@@ -1,0 +1,39 @@
+# Define Functions
+jobEnd(){
+	
+	echo 'geco "--+ Clearing dalvik-cache, it may take a bit long on this bootup"; rm -rf /data/dalvik-cache/*; rm $0' > "$GBDIR/init/ClearDalvikForUnityFix"
+	geco "\n+ Successful, please reboot to see changes ..."
+	
+}
+
+# Define Vars
+GETT="/system/build.prop"
+L1="ro.product.cpu.abilist="
+L2="ro.product.cpu.abilist32="
+L3="ro.product.cpu.abilist64="
+
+geco "\n++ This fix was discovered by @HmTheBoy154\n"
+geco "What do you want to do ???"
+select opt in "Apply Fix" "Undo Fix" "Back"
+do
+    case $opt in
+    "Apply Fix")
+		# Define Line to replace
+		gslr $GETT "$L1" "ro.product.cpu.abilist=x86_64,x86,armeabi-v7a,armeabi"
+		gslr $GETT "$L2" "ro.product.cpu.abilist32=x86,armeabi-v7a,armeabi"
+		gslr $GETT "$L3" "ro.product.cpu.abilist64=x86_64"
+		jobEnd
+			;;
+    "Undo Fix")
+		# Define Line to replace
+		gslr $GETT "$L1" "ro.product.cpu.abilist=x86_64,x86,arm64-v8a,armeabi-v7a,armeabi"
+		gslr $GETT "$L2" "ro.product.cpu.abilist32=x86,armeabi-v7a,armeabi"
+		gslr $GETT "$L3" "ro.product.cpu.abilist64=x86_64,arm64-v8a"
+		jobEnd
+			;;
+    "Back")
+		exit 0
+			;;
+    esac
+    break
+done 

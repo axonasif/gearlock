@@ -1,0 +1,2 @@
+LOG_FILE="$GTMP/gearboot.log"
+test -e "$LOG_FILE" && cat "$LOG_FILE" || geco "\n++++ GearBoot log file is not present (It's not an error)"

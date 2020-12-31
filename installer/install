@@ -1,0 +1,357 @@
+# Setup environment
+export BD="${PWD}/gri"
+"$BD/"busybox --install -s "$BD/bin"
+export OLDPATH="$PATH"
+export PATH="$BD/bin:$PATH"
+"$BD/"busybox chmod -R 755 "$BD"
+( for mp in / /data /mnt /system; do
+    mount -o rw,remount $mp
+done ) > /dev/null 2>&1
+# setenforce 0 > /dev/null 2>&1 # Try to make selinux permissive; # FIXME: Not tested properly.
+
+# Color vars
+RC='\033[0m' RED='\033[0;31m' BRED='\033[1;31m' GRAY='\033[1;30m' BLUE='\033[0;34m' BBLUE='\033[1;34m' CYAN='\033[0;34m' CYAN='\033[1;34m' WHITE='\033[1;37m' GREEN='\033[0;32m' BGREEN='\033[1;32m' YELLOW='\033[1;33m' PURPLE='\033[0;35m' BPURPLE='\033[1;35m' ORANGE='\033[0;33m'
+
+# Init vars
+IMGT="$BD/imgtmp"; test -d "$IMGT" && rm -rf "$IMGT"; VER="$(cat "$BD/version")"
+PARTED="$BD/bin/parted"
+
+# Initial functions
+function ckdirex() { 
+	if test -n "$1" && test ! -e "$1"; then
+		mkdir -p "$1" && chmod "${2:-755}" "$1" && chown root:root -h "$1"
+	fi
+}
+
+function play_ani() { 
+	clear
+	echo -e "\e[?25l\c"
+	{ 
+		echo -e "\033[6B"
+		for i in {1..8}; do
+			echo -e "\033[7A" && cat "$BD/sp/$i" && sleep 0.4
+		done 
+	} && echo -n " | Version: $VER";
+	echo -e "\e[?25h\c"
+};
+
+function geco() { 
+	echo -e "$@"
+}
+
+function nout () { 
+	"$@" > /dev/null 2>&1
+}
+
+function umount_gmount() { 
+	{
+		umount -f "$GMOUNT"
+		umount -lf "$GMOUNT"
+	} > /dev/null 2>&1
+}
+
+function greboot() { 
+	geco "\nRebooting in ${BLUE}5${RC} seconds ..."
+	sleep 5
+	if [ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ]; then
+		test "$(fgconsole)" != "7" && chvt 7
+		su -c 'am start -a android.intent.action.REBOOT > /dev/null 2>&1'
+		cleanup
+		sleep 15
+		reboot
+		sleep 2
+		echo b > /proc/sysrq-trigger
+	else
+		cleanup
+		reboot
+		sleep 2
+		echo b > /proc/sysrq-trigger
+	fi
+}
+
+function gslr() { 
+	LII=$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)
+	if [ -n "$LII" ]; then
+		LI=$(geco $LII | awk '{print $1}')
+		sed -i "${LI}s/.*/${3}/" "$1"
+	else
+		geco "~ Error [gslr:1], could not find any line containing ${RED}$2${RC}"
+	fi
+}
+
+function endjob() { 
+	if [ "$1" = "-b" ]; then
+		geco "\n++++++ System structure not supported ..."
+		cleanup
+		exit 1
+	fi
+	geco "\n+++ Something went wrong, the installation can not continue ...\n$@"
+	sleep 5
+	cleanup
+	exit 1
+}
+
+function check_endjob() { 
+	RETVAL="$?"
+	[ "$RETVAL" != "0" ] && endjob "++++ Error Code: $RETVAL $@"
+}
+
+function cmdline() { 
+	awk -F"${1}=" '{print $2}' < /proc/cmdline | cut -d' ' -f1 2> /dev/null
+}
+
+function get_osroot() { 
+	BIMGVAR="$(cmdline BOOT_IMAGE)"
+	SRCVAR="$(cmdline SRC)"
+	test -z "$SRCVAR" && test -n "$BIMGVAR" \
+	&& OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GMOUNT/$(dirname "$BIMGVAR")")" \
+	|| OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GMOUNT/$SRCVAR")"
+}
+
+
+function get_hw_initrc() {
+	test -e "/system/lib64" && TARCH="x86_64" || TARCH="x86"
+	if [ -e "/init.android_$TARCH.rc" ]; then echo "init.android_$TARCH.rc"
+	elif [ -e "/init.remix_$TARCH.rc" ]; then echo "init.remix_$TARCH.rc"
+	elif [ -e "/init.cm_android_$TARCH.rc" ]; then echo "init.cm_android_$TARCH.rc"; fi
+}
+
+function is_old_gl() {
+	if grep -q "gearlock" "/$(get_hw_initrc)"; then
+		true
+	else
+		false
+	fi
+} # To detect whether to revert `GL>6.3` patches
+
+function mount_osroot() {
+	geco "\n\n ------- Partition Table -------\n"
+	blkid -s LABEL -s TYPE | grep -v loop | grep -v "/sr" | nl -s "]. " | awk 'NF'
+	while true; do
+		geco "\n+ Enter the ${BGREEN}partition${RC} number where you got this ${BPURPLE}Android-x86 OS${RC} installed >> \c"; read -r "c"
+		if [ -z "$c" ] || [ "$c" = "0" ] || [ -z "$(blkid -s LABEL -s TYPE | grep -v loop | grep -v "/sr" | awk 'NF' | sed -n "$c p" | cut -d : -f1)" ]; then
+			geco "\n+ Wrong input, please enter again correctly ..."
+		else
+			geco "\n+ Trying to mount it ..."; ckdirex /mnt 755
+			VAR_OROOT="$(blkid -s LABEL -s TYPE | grep -v loop | grep -v "/sr" | awk 'NF' | sed -n "$c p" 2>/dev/null | cut -d : -f1)"; export GMOUNT="/mnt/gmount"
+			ckdirex "$GMOUNT" 777
+			
+				case $(blkid "$VAR_OROOT") in
+				*TYPE=*ntfs*)
+	#                     ntfsfix "$VAR_OROOT" > /dev/null 2>&1
+						mount -o rw,relatime "$VAR_OROOT" "$GMOUNT" # FIXME: Maybe it's better to use ntfs-3g ?
+						;;
+				*TYPE=*)
+						mount -o rw,relatime "$VAR_OROOT" "$GMOUNT"
+						;;
+				*)
+						endjob "++++ Unknown filesystem, failed to mount ..."
+						;;
+				esac
+				
+			test -z "$(ls -A "$GMOUNT")" && endjob "++++ Seems like it failed to mount it ..."
+			break
+		fi
+	done
+}
+
+# Runtime ramdisk functions
+function get_ramdisk() {
+	geco "\n+ Getting ramdisks : \c"; sleep 1
+	test -d "$IMGT" && rm -rf "$IMGT" > /dev/null 2>&1; ckdirex "$IMGT"
+
+	# Define initial ramdisk 
+	## When initial ramdisk is present at EFI fat partition.
+	if grep -iq "efi" /proc/cmdline; then
+
+		# Skip when is being run from within gearlock-updater/initrd.img-installer
+		if test -z "$EFIROOT"; then
+			EFIROOT="/mnt/efiroot"
+			ckdirex "$EFIROOT"
+			for guess in /dev/block/[hms][dmr][a-z] /dev/block/mmcblk[0-9] /dev/block/nvme[0-9]n[0-9]; do
+				for device in "${guess[@]}"; do
+					test -e "$device" && WV="$("$PARTED" "$device" print)" && echo -e "$WV" | grep -Iq "gpt" \
+					&& NO="$(echo -e "$WV" | grep -I "boot" | awk '{print $1}')" && test "0$NO" -gt "0" \
+					&& mount -o rw,relatime "$device$NO" "$EFIROOT" && break
+				done
+			done
+		fi
+		
+		PEN_VAR="$(find "$EFIROOT" -type f -maxdepth 4 -name "initrd.img" | grep -i "$(dirname "$BIMGVAR")" | head -n1)"
+		if [ -z "$PEN_VAR" ] && [ -e "$OSROOT/initrd.img" ]; then
+			IRN="$OSROOT/initrd.img"
+		else
+			IRN="$PEN_VAR"
+		fi
+
+	else
+			## Look in OSROOT
+		if [ -e "$OSROOT/initrd-stock.img" ]; then
+			IRN="$OSROOT/initrd-stock.img"
+		elif [ -e "$OSROOT/initrd.img" ]; then
+			IRN="$OSROOT/initrd.img"
+		fi
+	fi
+
+	# Verify again ramdisk
+		## Seconday
+		if is_old_gl; then
+			test -e "$OSROOT/ramdisk.img" && SRN="$OSROOT/ramdisk.img" || endjob "++++ Failed to retrieve ramdisk.img ..."
+		fi
+		## Initial
+		test ! -e "$IRN" && endjob "++++ Failed to retrieve initrd.img ...";
+
+	geco "Done"
+}
+
+function extract_ramdisk() {
+	function main() {
+		local inputImg="$1"
+		local imgType="$(toybox file "$inputImg")"
+		if [[ "$imgType" =~ .*cpio.* ]]; then
+			(cpio -iud; cpio -iud) < "$inputImg" > /dev/null 2>&1
+		elif [[ "$imgType" =~ .*gzip.* ]]; then
+			zcat "$inputImg" | (cpio -iud; cpio -iud) > /dev/null 2>&1
+		else
+			endjob "++++ PatchRamdisk error: Unknown format : $(basename "$inputImg")"
+		fi
+	}
+
+	geco "\n+ Extracting ramdisks : \c"; sleep 0.5
+	ckdirex "$IMGT/initram"; if is_old_gl; then ckdirex "$IMGT/secram"; fi
+	cd "$IMGT/initram" && main "$IRN"; [ -z "$(ls -A "$IMGT/initram")" ] && endjob "++++ Failed to extract initial ramdisk ...."
+	if is_old_gl; then cd "$IMGT/secram" && main "$SRN"; [ -z "$(ls -A "$IMGT/secram")" ] && endjob "++++ Failed to extract secondary ramdisk ...."; fi
+	test -e "$IMGT/initram/kernel" && rm -r "$IMGT/initram/kernel"
+	geco "Done"
+}
+
+function patch_ramdisk() {
+	# Ensure we cleanup any depreciated versions of gearlock
+	if [ -d "$IMGT/initram/gearlock" ]; then
+		geco "\n++ An earlier ${BBLUE}GearLock${RC} detected!"
+		sleep 1
+		rm -rf "$IMGT/initram/gearlock"
+	fi
+	if is_old_gl; then
+		if [ -d "$IMGT/secram/gearlock" ]; then
+			geco "\n++ An earlier ${BBLUE}GearLock${RC} detected!"
+			sleep 1
+			rm -rf "$IMGT/secram/gearlock"
+		fi
+	fi
+
+	# Patch Initial ramdisk
+	geco "\n+ Patching Initial Ramdisk : \c"; sleep 1
+	#     gslr "$IMGT/initram/init" "mount_sdcard; hook_gearinit" "mount_sdcard" # To revert back 6.0 change
+	#     gslr "$IMGT/initram/init" "setup_dpi" "setup_dpi; hook_gearinit" # Currently for 6.1
+	[ ! -e "$IMGT/initram/init" ] && endjob "++++ Failed to patch Initial Ramdisk ..."
+	gslr "$IMGT/initram/init" "mount_sdcard" "mount_sdcard; hook_gearinit"
+	cp "$BD/hook" "$IMGT/initram/scripts/0-hook" && chmod 644 "$IMGT/initram/scripts/0-hook"
+	geco "Done"
+
+    # Secondary ramdisk
+	if is_old_gl; then
+		geco "\n+ Reverting $(cat /gearlock/core/version 2>/dev/null || echo "(>6.3)") secondary ramdisk old patches : \c"; sleep 1
+		# Patch initialization
+		INITRC="$IMGT/secram/$(get_hw_initrc)"; test ! -e "$INITRC" && endjob "-- Something is wrong with your secondary ramdisk .."
+		
+		# Clear old patches
+		for l in {1..4}; do sed -i "/\/gearlock\/bin\/gearboot s${l}/d" "$INITRC"; done
+	
+		# Patch environment (clear old patches >6.3)
+		sed -i -e '/TERM xterm-256color/d' \
+			-e '/export TERM linux/d' \
+			-e '/export PATH \/sbin:\/bin:\/system\/bin:\/system\/xbin:\/system\/vendor\/bin:\/gearlock\/bin/d' "$BD/imgtmp/secram/init.environ.rc"
+		geco "Done"
+	fi
+}
+
+function gen_rep_ramdisk() {
+	test ! -e "$IRN.old" && mv "$IRN" "$IRN.old"
+	is_old_gl && test ! -e "$SRN.old" && mv "$SRN" "$SRN.old"
+	geco "\n+ Generating new ramdisks : \c"
+	(
+		cd "$IMGT/initram"; find . | cpio -o -H newc | gzip > "$IRN"
+		if is_old_gl; then
+			cd "$IMGT/secram"; find . | cpio -o -H newc | gzip > "$SRN"
+		else
+			true
+		fi
+	)> /dev/null 2>&1; check_endjob "| Failed to generate new ramdisk"
+	cp "$BD/gearlock" "$OSROOT" || endjob "Failed to place gearlock boot image in OSROOT"
+	test -e "$BD/gearlock.img" && rm -f "$BD/gearlock.img"
+	nout chmod 777 "$OSROOT"/*img "$OSROOT/gearlock"
+	for prog in sync fsync; do
+		$prog "$IRN" "$OSROOT/gearlock"
+		is_old_gl && $prog "$SRN"
+	done
+	geco "Done"
+}
+
+function merge_ghome() {
+	test ! -d "/system/ghome" && TER="/data" || TER="/system"
+	mountpoint -q $TER && cp -ar "$BD/ghome" $TER && chown root:root -hR $TER/ghome && chmod -R 755 $TER/ghome
+}
+
+function install_apps() {
+	if [ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ]; then
+		geco "\n+ Installing ${WHITE}fx File-Manager${RC} : \c"
+		for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do nout pm uninstall $app; done
+		pm install -r "$BD/fx.apk"
+	fi
+}
+
+function cleanup() {
+	if [ -z "$GDEBUG" ]; then
+		test -e "$IMGT" && rm -rf "$IMGT" > /dev/null 2>&1
+		test -e "/system/bin/bash" && nout rm -f /system/bin/bash
+		test -e "/system/bin/.gearlock" && geco "Old system integrated GearLock has been renamed to ${GREEN}gearlock.old${RC}" && \
+		nout mv /system/bin/gearlock /system/bin/gearlock.old
+		test -e "$OSROOT/.___header___." && rm -f "$OSROOT/.___header___." # Remove old header file naming
+		nout rm -rf "$BD"
+		PATH="$OLDPATH"
+		:
+	fi
+}
+
+function do_job() {
+	get_ramdisk
+	extract_ramdisk
+	patch_ramdisk
+	gen_rep_ramdisk
+	merge_ghome
+	install_apps
+}
+
+for s in SIGINT SIGHUP INT SIGTSTP; do
+	trap "clear; cleanup; exit 110" "${s}";
+done
+
+while true; do
+    # Check if is being run from gearlock-updater or initrd.img-installer
+	if test -z "$GRROOT"; then
+	
+		umount_gmount; play_ani; mount_osroot; get_osroot
+		if is_old_gl; then chkFile="ramdisk.img"; else chkFile="system"; fi
+		if [ -z "$OSROOT" ] || [ -z "$(find "$OSROOT" -maxdepth 1 -name "*$chkFile*" 2>/dev/null)" ]; then
+			geco "\n+ Could not detect any android-x86 files like ${GREEN}$chkFile${RC}"; sleep 1
+			geco "\n+ Are you sure you selected the right partition?"; sleep 1
+			geco "\n+ Please try again ..."; sleep 3; umount_gmount
+	
+		else
+	
+			do_job
+			geco "\n++ Your system is now ${BLUE}GearLocked${RC}!\n"
+			geco "+++ Press [${GREEN}Enter${RC}] to reboot ...\c"; read -r readEnterKey; greboot
+		fi
+	
+	else
+	
+		OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GRROOT")"
+		test -z "$BIMGVAR" && BIMGVAR="$BOOT_IMAGE" # For when initrd.img-installer is used
+		play_ani; geco '\n\n'; do_job
+		geco "\n++ GearLock successfully installed/updated\n"
+		greboot
+	fi
+
+done

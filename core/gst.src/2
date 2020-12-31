@@ -1,0 +1,24 @@
+# Define vars
+TDIR="$DEPDIR/GoogleLess-Assets"
+SDIR="/system/priv-app"
+test -e "$SDIR/PrebuiltGmsCore" && G_P_S="$SDIR/PrebuiltGmsCore" || G_P_S="$SDIR/GmsCore"
+
+if [ ! -e "$TDIR" ] && [ -e "$G_P_S" ]; then
+	geco "\n+ Activating permanent GoogleLess mode ..."
+	mkdir -p "$TDIR"; mv /data/app/*com.android.vending*/base.apk "$TDIR/external-gp.apk"> /dev/null 2>&1
+	mv "$G_P_S" "$TDIR"
+	mv "$SDIR/Phonesky" "$TDIR"
+	touch $STATDIR/goolm
+	geco "\n+ Activated!"
+	geco "\n+ Trigger this function again to deactivate it"
+	greboot
+elif [ -e "$TDIR" ]; then
+	geco "\n+ Deactivating GoogleLess mode..."
+	mv "$TDIR/"* "$SDIR"
+	mv "$SDIR/external-gp.apk" "$SDIR/Phonesky/Phonesky.apk"> /dev/null 2>&1
+	rm -r "$TDIR" && rm "$STATDIR/goolm"
+	geco "\n+ Deactivated!"
+	geco "\n+ Reboot to apply changes"
+else
+	geco "\n++++ Your system does not contain any google apps"
+fi

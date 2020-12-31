@@ -1,0 +1,7 @@
+#!/gearlock/bin/bash
+# Define Variable
+RECOVERY_LOADER="$GRROOT/___header___" KERNEL_VERSION="$(uname -r)"; KERNEL_MODULES_PATH="/system/lib/modules/${KERNEL_VERSION}/kernel/drivers"
+# Define functions
+get_dev(){ echo "while read dev; do case \$dev in $(grep -E "$1" /lib/modules/$(uname -r)/modules.alias | sed -n 's/^alias  *\([^ ]*\)  *\(.*\)/\1)echo -n \"\2 \";;/p'| sed -e '/brcmfmac/d' -e 's|))|)|g' -e 's|(||g') esac; done" > ${tmp:=/gearlock/tmp/getdev} && chmod 777 $tmp && cat /sys/bus/*/devices/*/uevent | grep MODALIAS | sed 's/^MODALIAS=//' | awk '!seen[$0]++' | $tmp && rm -f $tmp; }
+(if [[ "$(get_dev 'atkbd|hid_apple')" =~ .*atkbd.* ]]; then cp "${KERNEL_MODULES_PATH}/input/keyboard/atkbd.ko" "$RECOVERY_LOADER"
+else cp "${KERNEL_MODULES_PATH}/hid/hid-apple.ko" "$RECOVERY_LOADER"; fi)>/dev/null 2>&1

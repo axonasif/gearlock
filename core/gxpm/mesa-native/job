@@ -1,0 +1,41 @@
+# Define vars and arrays
+_job="${1:-"backup"}"
+_myRoot="$CORE/gxpm/mesa-native"
+_buildDir="${2:-"$STATDIR/mesaBuildDir"}"
+file_list=($(awk 'NF' "$_myRoot/file_list" | sed '/#.*/d'))
+dir_list=($(awk 'NF' "$_myRoot/dir_list" | sed '/#.*/d'))
+
+# Define functions
+function is_backup(){
+	test "$_job" == 'backup' && true || false
+}
+
+is_backup && rm -rf "$_buildDir/system" && mkdir -p "$_buildDir/system" && chmod 755 "$_buildDir/system"; i=1
+
+tput civis
+for _file in "${file_list[@]}"; do
+	for _dir in "${dir_list[@]}"; do
+		if ls -A "/$_dir/$_file" >/dev/null 2>&1; then
+			echo -ne "xyzzyxyzzy\r$(tput el)"
+			echo -n ">> >> $(echo "${_job^}" | sed 's|up||g')ing up : "; printf "%s\r" "$_file"
+			if  is_backup; then
+				mkdir -p "$_buildDir/$_dir"; 
+				rsync -a "/$_dir/$_file" "$_buildDir/$_dir" || echo -n " :: Failed to $_job $_file" && sleep 0.2
+			else
+				rm "/$_dir/$_file" || echo -n " :: Failed to $_job $_file" && sleep 0.1
+			fi
+			total_files=$((i++))
+		fi
+	done
+done
+tput cnorm
+
+if is_backup; then
+    for _dir in $(find "$_buildDir/system" -mindepth 1 -type d | sed "s|$_buildDir/system/||g"); do
+        chmod --reference="/system/$_dir" "$_buildDir/system/$_dir"; chown --reference="/system/$_dir" "$_buildDir/system/$_dir"
+    done
+else
+    for _dir in "${dir_list[@]}"; do rmdir --ignore-fail-on-non-empty "/$_dir" 2>/dev/null; done
+fi
+
+geco ">>>>>> ${_job^}ed up ${YELLOW}$total_files${RC} files in total"

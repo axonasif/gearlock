@@ -1,0 +1,189 @@
+test -z "$ME" && clear && exit 1
+test ! -f "$GXPM_LOG" && touch "$GXPM_LOG" # Ensure GXPM_LOG exists
+clear_grlt
+input="$1"
+
+# Define functions
+function run_job(){
+	divBar
+	install_comm
+	do_mk_unins
+	merge_pkg_status
+	check_arch_struct
+	check_sync_req
+	check_reboot_req
+	unset NAME TYPE AUTHOR VERSION SHORTDESC REQSYNC REQREBOOT GEN_UNINS SHOW_PROG DEF_HEADER
+}
+
+function divBar(){
+    cols="$(tput cols)"
+	while IFS= read -r line; do
+		printf "%*s\n" $(( (${#line} + cols) / 2)) "$line"
+	done < <(geco "\n========================================\n")
+	return 0
+}
+
+function resolveZygote(){
+	function m(){
+		test -e "$2" && {
+			sleep 0.5
+			echo -n "$3"
+			xargs -L1 $(eval echo "$1") < "$2" > /dev/null 2>&1
+		}
+	}
+	geco "\033[3A" && echo -n "+ Successfully Loaded" && (
+		cd "$GRLT"
+		m "chmod" '.!zygote/mode' " + Resolve mode"
+		m "ln -srf" '.!zygote/link' " & symlink"
+	)
+	geco "\n"
+	return 0
+}
+
+function do_mk_unins(){
+		function merge_header(){
+			geco "# ${_phrase_gen_unins_meta_}\n" > "$UNINSDIR/${NAME}_${VERSION}"
+			cat "$GRLT"/'!zygote.sh' >> "${UNINSDIR}/${NAME}_${VERSION}"
+		}
+
+	function merge_auto_gen(){
+		if [ -d "${GRLT}/system" ] || [ -d "${GRLT}/data" ] || [ -d "${GRLT}/${GCOMM}/dependencies" ]; then
+			echo "do_unins(){" >> "$UNINSDIR/${NAME}_${VERSION}"
+			echo "# GXPM AutoGen" >> "${UNINSDIR}/${NAME}_${VERSION}"
+
+			cd "${GRLT}" && {
+				for gen in system data; do
+					test -d "${GRLT}/$gen" && find $gen -type f | awk '{print "rm -f \"/"$0"\""}' >> "${UNINSDIR}/${NAME}_${VERSION}"
+				done
+			}
+			test -d "${GRLT}/${GCOMM}/dependencies" && {
+				cd "${GRLT}/${GCOMM}" && find dependencies -type f | awk '{print "rm -f \"$GHOME/"$0"\""}' >> "${UNINSDIR}/${NAME}_${VERSION}"
+			}
+
+			echo "}" >> "${UNINSDIR}/${NAME}_${VERSION}"
+		fi
+	}
+
+	function merge_custom_gen(){
+		echo "do_unins_custom(){" >> "${UNINSDIR}/${NAME}_${VERSION}"
+		cat "$GRLT/uninstall.sh" >> "${UNINSDIR}/${NAME}_${VERSION}"
+		echo "}" >> "${UNINSDIR}/${NAME}_${VERSION}"
+	}
+
+	if [ "$GEN_UNINS" = "yes" ] && [ -f "${GRLT}/uninstall.sh" ]; then
+		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_HEADER"
+		(merge_auto_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_AUTO_GEN"
+		(merge_custom_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_CUSTOM_GEN" "GEN_UNINS"
+
+	elif [ ! "$GEN_UNINS" = "yes" ] && [ -f "${GRLT}/uninstall.sh" ]; then
+		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_HEADER"
+		(merge_custom_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_CUSTOM_GEN" "GEN_UNINS"
+
+	elif [ "$GEN_UNINS" = "yes" ] && [ ! -f "${GRLT}/uninstall.sh" ]; then
+		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_HEADER"
+		(merge_auto_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_AUTO_GEN" "GEN_UNINS"
+	fi
+
+}
+
+function install_comm(){
+	# Extension
+	if nout ls "${GRLT}/${GCOMM}/extension"*; then
+		(rsync -a "${GRLT}/${GCOMM}/extension"* "${EXTDIR}/${C_EXTNAME:="$NAME"}"; sleep 2.5) &
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: INSTALL_EXTENSION" "INSTALL_EXTENSION"
+	fi
+
+	# GearBoot
+	if nout ls "${cGBe:="${GRLT}/${GCOMM}/gearboot"}/post-fs"* \
+	|| nout ls "$cGBe/post-fs-data"* \
+	|| nout ls "$cGBe/boot-post"* \
+	|| nout ls "$cGBe/boot-comp"*; then
+		for gbex in init post-fs post-fs-data boot-post boot-comp; do
+			if ls "$cGBe/$gbex"*>/dev/null 2>&1; then
+				(sleep 1.5 && rsync -a "$cGBe/$gbex"* "${GBDIR}/$gbex/${NAME}") &
+				gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEARBOOT_EXECUTABLE:: $gbex"
+			fi
+		done
+	JOBS+="INSTALL_GEARBOOT_EXEC "
+	fi
+
+	# Dependencies
+	if [ -d "${GRLT}/${GCOMM}/dependencies" ]; then
+		(rsync -a "${GRLT}/${GCOMM}/dependencies" "$GHOME"; sleep 2) &
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_COMMON_DEPENDENCIES" "MERGE_COM_DEP"
+	fi
+}
+
+function signal_failed(){
+	mk_sync async
+	clear_grlt
+	geco && pause "${RED}${_phrase_installation_failed_}${RC} | "
+	exit 1
+}; export -f signal_failed
+
+function merge_pkg_status(){
+	# Define pkg log-merge functions
+	(
+		function get_line_num(){
+			L1="$(grep -n "${NAME}" "$GXPM_LOG" | grep "${AUTHOR}" | cut -d : -f1 | head -n1)"
+		}
+		
+		function merge_line(){
+			LR1=">>>> ${NAME} <|> ${VERSION} <|> By ${AUTHOR} <|> ${SHORTDESC}"; sed -i "${L1}s/.*/${LR1}/" "$GXPM_LOG"
+		}
+		
+		if [ -z "$(grep "${NAME}" "$GXPM_LOG" | grep "${AUTHOR}")" ]; then
+			geco "\n>>>> ${NAME} <|> ${VERSION} <|> By ${AUTHOR} <|> ${SHORTDESC}" >> "$GXPM_LOG"
+		else
+			get_line_num && merge_line
+		fi
+		sleep 1.5
+	) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_GXPM_LOG"
+}
+
+function check_arch_struct(){
+	(
+		if [ "$HOST_ARCH" = "x86" ]; then
+			if [ -d "/system/lib64" ] || [ -d "/system/vendor/lib64" ]; then
+				nout rm -r /system/lib64 /system/vendor/lib64
+			fi
+		fi
+		sleep 1.5
+	) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: CHECK_ARCH_STRUCT"
+}
+
+
+# Zygote
+{
+	garca x -o"${GRLT}" -aoa -p'2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w' "$input" '!zygote.sh' > /dev/null 2>&1
+	if [ ! -e "${GRLT}"/'!zygote.sh' ]; then
+		geco "This file is either corrupted or not supported ..."
+		signal_failed
+	else
+		chmod 755 "${GRLT}"/'!zygote.sh' && source "${GRLT}"/'!zygote.sh'
+		[ "$DEF_HEADER" = "yes" ] && show_zygote_header
+		if [ "$SHOW_PROG" = "yes" ]; then
+			geco "${_phrase_gxpm_header_credit_} \c" && {
+				garca x -o"${GRLT}" -aoa -p'2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w' "$input"
+				resolveZygote
+			}
+		else
+			geco "\nLoading "$(basename "$input")" ...\n" && {
+				garca x -o"${GRLT}" -aoa -p'2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w' "$input" > /dev/null 2>&1
+				resolveZygote
+			}
+		fi
+		if [ -e "${GRLT}/install.sh" ]; then
+			chmod 755 "${GRLT}"/install.sh
+			export NAME TYPE AUTHOR VERSION SHORTDESC REQSYNC REQREBOOT GEN_UNINS SHOW_PROG DEF_HEADER
+			if "${GRLT}/install.sh"; then
+				test -d "${GRROOT}/data" && chown system:system -h "${GRROOT}/data"
+				run_job
+			else
+				signal_failed
+			fi
+		else
+			signal_failed
+		fi
+	fi
+}

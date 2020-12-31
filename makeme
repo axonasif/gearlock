@@ -41,7 +41,7 @@ function main ()
 	local _buildVariant="$1"
 	local _compressionLevel="$2"
 	local _execDir="$(dirname "$(readlink -f "$0")")"
-	local _buildCacheRoot="${_execDir}/.build_cache"
+	local _buildCacheRoot="${_execDir}/out"
 	local _buildCache="${_buildCacheRoot}/gearlock"
 	local _buildCacheInstallerDir="${_buildCacheRoot}/gri"
 	local _buildInstallerOut="${_buildCacheRoot}/build_installer_out"

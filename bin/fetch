@@ -25,12 +25,7 @@ else
 	ANDROID_ROOT="/gearlock" ANDROID_DATA="/gearload/tmp"
 fi
 
-# Initialize terminal
-LC_ALL="en_US.UTF-8"
-TERM="screen-256color"
-TERMINFO="$GRLBASE/share/terminfo"
-DIALOGRC="$GRLBASE/etc/dialogrc"
-: ${GSUDO:="yes"} # To skip invoking su again while being called by gsudo
+
 
 # Set PATH
 PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
@@ -86,11 +81,39 @@ fi
 
 # Initialize extra core variables
 if test -n "$GRROOT"; then
+
+	## Detect architecture
+	grep -owq 'lm' /proc/cpuinfo && CPU_ARCH="x86_64" || CPU_ARCH="x86"
+	HOST_ARCH="$CPU_ARCH" # FIXME: Needs revision
+	if test -e "/system/build.prop"; then
+		SDK="$(sed -n "s/^ro.build.version.sdk=//p" '/system/build.prop' 2>/dev/null | head -n 1)"
+		case "$SDK" in
+			22) v="5.1" ;;
+			23) v="6.0" ;;
+			24) v="7.0" ;;
+			25) v="7.1" ;;
+			26) v="8.0" ;;
+			27) v="8.1" ;;
+			28) v="9.0" ;;
+			29) v="10.0" ;;
+			30) v="11.0" ;;
+		esac
+		ANDROID_VER="$v"
+		unset v
+	else
+		echo "[!!!] Warning: could not detect SDK, maybe system is missing, assuming SDK as 25" && sleep 2
+		SDK="25"
+		ANDROID_VER="7.1" # FIXME: Needs betterment
+	fi
+	
 	{
 		mkdir -p "$GHOME/dependencies" "$GHOME/extensions" "$GHOME/status" "$GHOME/unins" "$GHOME/.local/bin"
 		chmod -f 755 "$GHOME/"*
 	} 2>>/dev/null
+	
 	ME="AXON"
+	DATA_DIR="/data"
+	SYSTEM_DIR="/system"
 	CORE="$GRLBASE/core"
 	DEPDIR="$GHOME/dependencies"
 	STATDIR="$GHOME/status"
@@ -113,33 +136,23 @@ if test -n "$GRROOT"; then
 	test -e "/sbin/magisk" && MAGISK_COREV="$(magisk -v)"
 	test -e "$GTMP/boot-comp" && BOOTCOMP="yes" || BOOTCOMP="no"
 	GEARLOCK_VER="$(< "$CORE/version")"
-	ps -fA 2>/dev/null | grep -q "$GAPPID" && GEARLOCK_APP="yes" || GEARLOCK_APP="no" # Detect gearlock app
+	
+	ps -fA 2>/dev/null | grep -q "$GAPPID" && GEARLOCK_APP="yes" \
+		|| GEARLOCK_APP="no" # Detect gearlock app
+	
 	test "$(fgconsole 2>/dev/null)" == "$(test "$SDK" -gt 29 && echo 1 || echo 7)" \
-		&& test "$BOOTCOMP" == "yes" && TERMINAL_EMULATOR="yes" || TERMINAL_EMULATOR="no"
+		&& test "$BOOTCOMP" == "yes" && TERMINAL_EMULATOR="yes" || TERMINAL_EMULATOR="no" # Detect termemu
+	
+	grep -q 'SC_SIZE=' /proc/cmdline && SC_SIZE="$(($(cmdline SC_SIZE) * 1048576))" \
+		|| SC_SIZE="5000" # SuperCharge expansion size
 fi
 
-# HOST VARIABLES
-grep -owq 'lm' /proc/cpuinfo && CPU_ARCH="x86_64" || CPU_ARCH="x86"
-HOST_ARCH="$CPU_ARCH" # FIXME: Needs revision
-if test -e "/system/build.prop"; then
-	SDK="$(sed -n "s/^ro.build.version.sdk=//p" '/system/build.prop' 2>/dev/null | head -n 1)"
-	case "$SDK" in
-		22) v="5.1" ;;
-		23) v="6.0" ;;
-		24) v="7.0" ;;
-		25) v="7.1" ;;
-		26) v="8.0" ;;
-		27) v="8.1" ;;
-		28) v="9.0" ;;
-		29) v="10.0" ;;
-		30) v="11.0" ;;
-	esac
-	ANDROID_VER="$v"
-	unset v
-fi
-SYSTEM_DIR="/system"
-DATA_DIR="/data"
-grep -q 'SC_SIZE=' /proc/cmdline && SC_SIZE="$(($(cmdline SC_SIZE) * 1048576))" || SC_SIZE="5000" # SuperCharge expansion size
+# Initialize terminal
+LC_ALL="en_US.UTF-8"
+TERM="screen-256color"
+TERMINFO="$GRLBASE/share/terminfo"
+DIALOGRC="$GRLBASE/etc/dialogrc"
+: ${GSUDO:="yes"} # To skip invoking su again while being called by gsudo
 
 # Load .gearlockrc
 test ! -e "${GEARLOCK_RC:="$GHOME/.gearlockrc"}" \

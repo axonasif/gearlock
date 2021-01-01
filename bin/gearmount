@@ -1,0 +1,86 @@
+#!/gearlock/bin/bash
+
+PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+EFIROOT="/gearlock/efiroot"
+
+function mount.init(){
+	# REMOUNT
+	{
+		for mp in /android/system /android/data /mnt; do
+			mount -o rw,remount "$mp"
+		done
+	}>/dev/null 2>&1
+	
+	# BIND
+	test ! -e /s && mv /system /s
+	! mountpoint -q /gearlock/gearroot && mount --bind /mnt /gearlock/gearroot
+	! mountpoint -q /data && mkdir -p /data && mount --bind /android/data /data
+	! mountpoint -q /system && mkdir -p /system && mount --bind /android/system /system
+
+	# EFIROOT
+	if grep -iq "efi" /proc/cmdline && test ! -d "$EFIROOT"; then
+		mkdir "$EFIROOT"
+		for guess in /dev/[hms][dmr][a-z] /dev/mmcblk[0-9] /dev/nvme[0-9]n[0-9]; do
+			for device in "${guess[@]}"; do
+				test -e "$device" && WV="$(parted "$device" print)" && echo -e "$WV" | grep -Iq "gpt" \
+				&& NO="$(echo -e "$WV" | grep -I "boot" | awk '{print $1}')" && test "0$NO" -gt "0" \
+				&& mount -o rw,noatime "$device$NO" "$EFIROOT" && chmod 755 "$EFIROOT" && break
+			done
+		done
+	fi
+}
+
+function mount.android(){
+	# Load vendor data & sdcard mount functions
+	source /scripts/*mount*
+
+	# Define functions
+	function remount_rw()
+	{
+		mount -o remount,rw foo /mnt
+	}
+
+	# Remount
+	if test -e "$OROOT/ramdisk.img"; then
+
+		cd /android # For below android-10
+		if [ -e /mnt/$SRC/system.sfs ]; then
+			mount -o loop,noatime /mnt/$SRC/system.sfs /sfs; mount -o loop,noatime /sfs/system.img system
+		elif [ -e /mnt/$SRC/system.img ]; then
+			remount_rw; mount -o loop,noatime /mnt/$SRC/system.img system
+		elif [ -d /mnt/$SRC/system ]; then
+			remount_rw; mount --bind /mnt/$SRC/system system
+		elif [ -e /mnt/build.prop ]; then
+			mount --bind /mnt system
+		fi
+
+	else
+
+		cd / # For android-10 and above
+		if [ -e /mnt/$SRC/system.sfs ]; then
+			mount -o loop,noatime /mnt/$SRC/system.sfs android
+			if [ -e android/system.img ]; then
+				mount --move android /sfs
+				mount -o loop,noatime /sfs/system.img android
+			fi
+		elif [ -e /mnt/$SRC/system.img ]; then
+			remount_rw; mount -o loop,noatime /mnt/$SRC/system.img android
+		elif [ -s /mnt/$SRC/system/default.prop ]; then
+			remount_rw; mount --bind /mnt/$SRC/system android
+		elif [ -z "$SRC" -a -s /mnt/default.prop ]; then
+			mount --bind /mnt android
+		fi
+
+	fi
+
+	cd "$origPWD"; { mount_data; mount_sdcard; }>/dev/null 2>&1; cd /; mount.init;:
+}
+
+test -n "$RECOVERY" && {
+	case "$1" in
+		"--init") mount.init
+		;;
+		"--android") mount.android
+		;;
+	esac
+}

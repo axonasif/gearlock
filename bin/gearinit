@@ -9,8 +9,8 @@ export OROOT="$(readlink -m "/mnt/$SRC")"
 RECOVERY_LOADER="$OROOT/___header___"
 : "${SC_SIZE:="5000"}"
 
-# Execute remount_fs
-remount_fs
+# Initialize required mountpoints
+gearmount --init
 
 # Define functions
 function get_dev(){

@@ -64,7 +64,7 @@ extend_img(){
 	watchgrow "$inputImg"; if test "$(cat "$GTMP/.extimg_retc")" != 0; then false; handleError "Something went wrong, operation failed"; fi
 	e2fsck -fy "$inputImg">/dev/null 2>&1
 	resize2fs "$inputImg">/dev/null 2>&1; handleError "\n Failed to extend ${inputImg##*/}, you ${inputImg##*/} is broken now ..."
-	do_sync && remount_android && echo -e "\n\n%% ${inputImg##*/} has been successfully extended to $((origSize + megs2Add))MB"
+	do_sync && gearmount --android && echo -e "\n\n%% ${inputImg##*/} has been successfully extended to $((origSize + megs2Add))MB"
 
 }
 

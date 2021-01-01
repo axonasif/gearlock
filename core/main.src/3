@@ -17,7 +17,7 @@ decom_sys(){
 		for mp in /system /data /android/system /android/data /sfs; do mountpoint -q $mp && umount $mp; done
 	)
 	geco "\n- ${_removing_sys_img_} ..."
-	rm -f "${GRROOT}/system.img" "$GRROOT/system.sfs" && sleep 0.7 && remount_android && do_sync
+	rm -f "${GRROOT}/system.img" "$GRROOT/system.sfs" && sleep 0.7 && gearmount --android && do_sync
 	geco "\n+ ${_decompression_successful_} ... !"
 }
 

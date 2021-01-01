@@ -63,7 +63,7 @@ runJob(){
 	fi
 	
 	reMount;
-	remount_android;
+	gearmount --android;
 	
 }
 

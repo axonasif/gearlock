@@ -71,20 +71,24 @@ else
 fi
 
 
-# Ensure ghome dir existence
-if test ! -d "$GHOME"; then
-	{
+# Ensure ghome file hierarchy
+test ! -d "$GHOME" && {
 		test -e "${vG:="/system/vendor/ghome"}" && garca x -aoa -o"$GHOME" "$vG" || mkdir -p "$GHOME"
 		chmod -Rf 755 "$GHOME"
-	} 2>>/dev/null
-fi
+} 2>>/dev/null
+{
+	mkdir -p "$GHOME/dependencies" "$GHOME/extensions" "$GHOME/status" "$GHOME/unins" "$GHOME/.local/bin"
+	chmod -f 755 "$GHOME/"* "$GHOME/.local/"*
+} 2>>/dev/null
+
+
 
 # Initialize extra core variables
 if test -n "$GRROOT"; then
 
 	## Detect architecture
 	grep -owq 'lm' /proc/cpuinfo && CPU_ARCH="x86_64" || CPU_ARCH="x86"
-	HOST_ARCH="$CPU_ARCH" # FIXME: Needs revision
+	HOST_ARCH="$(test -e '/system/lib64' && echo 'x86_64' || echo 'x86')" # FIXME: Any better way ?
 	if test -e "/system/build.prop"; then
 		SDK="$(sed -n "s/^ro.build.version.sdk=//p" '/system/build.prop' 2>/dev/null | head -n 1)"
 		case "$SDK" in
@@ -105,11 +109,6 @@ if test -n "$GRROOT"; then
 		SDK="25"
 		ANDROID_VER="7.1" # FIXME: Needs betterment
 	fi
-	
-	{
-		mkdir -p "$GHOME/dependencies" "$GHOME/extensions" "$GHOME/status" "$GHOME/unins" "$GHOME/.local/bin"
-		chmod -f 755 "$GHOME/"*
-	} 2>>/dev/null
 	
 	ME="AXON"
 	DATA_DIR="/data"

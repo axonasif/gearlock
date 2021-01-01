@@ -1,7 +1,7 @@
 #!/gearlock/bin/bash
 
 # Define vars
-export TERM="screen-256color" \
+export TERM="linux" \
 	LC_ALL="en_US.UTF-8" \
 	DIALOGRC="/gearlock/etc/dialogrc" \
 	PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin";

@@ -1,5 +1,5 @@
 on post-fs
-    export TERM screen-256color
+    export TERM linux
     export TERMINFO /gearlock/share/terminfo
     export PATH /sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin:/gearlock/bin:ghome_dir:/apex/com.android.runtime/bin:/apex/com.android.art/bin
     exec - root root -- /gearlock/bin/bash /gearlock/bin/gearboot s1

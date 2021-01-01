@@ -149,7 +149,7 @@ fi
 
 # Initialize terminal
 LC_ALL="en_US.UTF-8"
-TERM="screen-256color"
+TERM="linux"
 TERMINFO="$GRLBASE/share/terminfo"
 DIALOGRC="$GRLBASE/etc/dialogrc"
 : ${GSUDO:="yes"} # To skip invoking su again while being called by gsudo

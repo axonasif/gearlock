@@ -175,19 +175,15 @@ function check_compat() {
 }
 
 # Metro IT specific
-MIN_HEIGHT=10 MIN_WIDTH=40
-MAX_HEIGHT=$MIN_HEIGHT
-MAX_WIDTH=$MIN_WIDTH RECMD_HEIGHT=10 RECMD_WIDTH=40
-TEST_STRING=""
-
-function updateDialogMaxSize() {
+function calcTextDialogSize() {
+	MIN_HEIGHT=10
+	MIN_WIDTH=40
 	MAX_HEIGHT=$(( $(tput lines) / 2 ))
 	MAX_WIDTH=$(( $(tput cols) * 3 / 4 ))
-}
-
-function calcTextDialogSize() {
-	updateDialogMaxSize
+	
+	: "${TEST_STRING:="$1"}"
 	CHARS=${#TEST_STRING}
+	
 	RECMD_HEIGHT=$((CHARS / MIN_WIDTH))
 	RECMD_WIDTH=$((CHARS / MIN_HEIGHT))
 	if [ "$RECMD_HEIGHT" -gt "$MAX_HEIGHT" ]; then
@@ -195,27 +191,29 @@ function calcTextDialogSize() {
 	elif [ "$RECMD_HEIGHT" -lt "$MIN_HEIGHT" ]; then
 		RECMD_HEIGHT=$MIN_HEIGHT
 	fi
-	if [ "$RECMD_WIDTH" -gt "$MAX_WIDTH" ]; then RECMD_WIDTH=$MAX_WIDTH; elif [ "$RECMD_WIDTH" -lt "$MIN_WIDTH" ]; then RECMD_WIDTH=$MIN_WIDTH; fi; TEST_STRING=""
+	if [ "$RECMD_WIDTH" -gt "$MAX_WIDTH" ]; then
+		RECMD_WIDTH=$MAX_WIDTH
+	elif [ "$RECMD_WIDTH" -lt "$MIN_WIDTH" ]; then
+		RECMD_WIDTH=$MIN_WIDTH
+	fi
 }
 
 function msgbox() {
-	TEST_STRING="$3"
-	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize
+	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize "$1"
 	dialog --clear --colors --backtitle "$1" --title "$2" --msgbox "$3" $RECMD_HEIGHT $RECMD_WIDTH
+	return
 }
 
 function displayFile() {
-	TEST_STRING="$(< "$3")"
-	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize
+	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize "$(< "$3")"
 	dialog --clear --colors --backtitle "$1" --title "$2" --textbox "$3" $RECMD_HEIGHT $RECMD_WIDTH
+	return
 }
 
 function yesno() {
-	TEST_STRING="$3"
-	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize
+	test -n "$4" && test -n "$5" && RECMD_HEIGHT="$4" && RECMD_WIDTH="$5" || calcTextDialogSize "$3"
 	dialog --clear --colors --backtitle "$1" --title "$2" --yesno "$3" $RECMD_HEIGHT $RECMD_WIDTH
-	answer=$?
-	return $answer
+	return
 }
 
 # GXPM specific
@@ -246,7 +244,7 @@ function gxpmJob() {
 
 function mk_sync() {
 	for mp in "$SYSTEM_DIR" "$DATA_DIR"; do
-		mount -o rw,remount,$(test $1 == 'sync' && echo 'atime,diratime,relatime' || echo 'noatime') $mp> /dev/null 2>&1
+		mount -o rw,remount,$(test $1 == 'sync' && echo 'atime,diratime,relatime' || echo 'noatime') "$mp"> /dev/null 2>&1
 	done
 	return 0
 }
@@ -262,7 +260,7 @@ function check_sync_req() {
 }
 
 function check_reboot_req() {
-	callName="$(basename "$0")"
+	callName="${0##*/}"
 	geco "\$\$ ${_phrase_gxpm_com_public_jobs_}: ${YELLOW}$(echo "${JOBS}"|xargs|sed "s| |, |g")${RC}" # Print total completed gxpm public jobs
 	if [ "$REQREBOOT" == "yes" ]; then
 		geco "\n\$\$ ${_phrase_X_is_requesting_reboot_/@DUMMY@/$TYPE} :\c" && sleep 1
@@ -273,13 +271,15 @@ function check_reboot_req() {
 						geco "\n\n\n++ ${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | \c"
 						greboot
 						break
-				;;
+						;;
 				[Nn]* ) 
 						touch "$GTMP/reboot"
 						geco "\n" && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
 						break
-				;;
-				* ) geco "\c " ;;
+						;;
+				* )
+						geco "\c "
+						;;
 			esac
 		done
 	else

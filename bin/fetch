@@ -4,7 +4,7 @@ test -z "$RECOVERY" && test ! -d "/home/axon" && test "$(whoami)" != "root" && e
 
 # Define functions
 function cmdline(){
-	awk -F"${1}=" '{print $2}' < /proc/cmdline | cut -d' ' -f1 2>/dev/null
+	awk -F"${1}=" '{print $2}' /proc/cmdline | cut -d' ' -f1 2>/dev/null
 }
 
 function fetch_bootimage(){
@@ -25,13 +25,17 @@ else
 	ANDROID_ROOT="/gearlock" ANDROID_DATA="/gearload/tmp"
 fi
 
-
-
 # Set PATH
 PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
 
 # Set GHOME
-test -d "/system/ghome" && GHOME="/system/ghome" || GHOME="/data/ghome"
+GHOME="$(
+	if test -d "/system/ghome"; then
+		echo "/system/ghome"
+	else
+		echo "/data/ghome"
+	fi
+)"
 HOME="$GHOME"
 
 # Start Initializing core variables
@@ -41,14 +45,14 @@ EFIROOT="/gearlock/efiroot"
 GRLBASE="/gearlock"
 GTMP="$GRLBASE/tmp"
 GRROOT_DIR="${GRLBASE}/gearroot"
-
-if test -z "$SRCVAR" && test -n "$BIMGVAR"; then
-	GRROOT="$(readlink -m "$GRROOT_DIR/${BIMGVAR%/*}")"
-else
-	GRROOT="$(readlink -m "$GRROOT_DIR/$SRCVAR")"
-fi
-
-test -n "$GRROOT" && ckdirex "$GRROOT/gearload" 777 # Ensure gearload dir existence
+GRROOT="$(
+	if test -z "$SRCVAR" && test -n "$BIMGVAR"; then
+		echo "$(readlink -m "$GRROOT_DIR/${BIMGVAR%/*}")"
+	else
+		echo "$(readlink -m "$GRROOT_DIR/$SRCVAR")"
+	fi
+)"
+ckdirex "$GRROOT/gearload" 777 # Ensure gearload dir existence
 
 # Detect boot_image
 if test -e "$GTMP/kernel_image"; then
@@ -68,8 +72,8 @@ else
 	fi
 	KERNEL_IMAGE="$(readlink -m "$KERNEL_IMAGE")"
 	echo "$KERNEL_IMAGE" > "$GTMP/kernel_image"
+	
 fi
-
 
 # Ensure ghome file hierarchy
 test ! -d "$GHOME" && {
@@ -87,8 +91,26 @@ test ! -d "$GHOME" && {
 if test -n "$GRROOT"; then
 
 	## Detect architecture
-	grep -owq 'lm' /proc/cpuinfo && CPU_ARCH="x86_64" || CPU_ARCH="x86"
-	HOST_ARCH="$(test -e '/system/lib64' && echo 'x86_64' || echo 'x86')" # FIXME: Any better way ?
+	CPU_ARCH="$(
+		if test -e "$GTMP/cpu_arch"; then
+			echo "$(< "$GTMP/cpu_arch")"
+		else
+			grep -owq 'lm' /proc/cpuinfo && CPU_ARCH="x86_64" || CPU_ARCH="x86"
+			echo "$CPU_ARCH" > "$GTMP/cpu_arch"
+			echo "$CPU_ARCH"
+		fi
+	)"
+
+	HOST_ARCH="$(
+		if test -e '/system/lib64'; then
+			echo 'x86_64'
+		elif test -e '/system/lib'; then
+			echo 'x86'
+		else
+			echo "$CPU_ARCH"
+		fi
+    )" # FIXME: Any better way ?
+    
 	if test -e "/system/build.prop"; then
 		SDK="$(sed -n "s/^ro.build.version.sdk=//p" '/system/build.prop' 2>/dev/null | head -n 1)"
 		case "$SDK" in
@@ -105,9 +127,9 @@ if test -n "$GRROOT"; then
 		ANDROID_VER="$v"
 		unset v
 	else
-		echo "[!!!] Warning: could not detect SDK, maybe system is missing, assuming SDK as 25" && sleep 2
-		SDK="25"
-		ANDROID_VER="7.1" # FIXME: Needs betterment
+		SDK="26"
+		echo "[!!!] Warning: could not detect SDK, maybe system is missing, assuming SDK as $SDK"
+		ANDROID_VER="8.0" # FIXME: Needs betterment
 	fi
 	
 	ME="AXON"
@@ -127,23 +149,30 @@ if test -n "$GRROOT"; then
 	YEAR="$(date '+%Y')"
 	DATE="$(date '+%dd-%mmo-%Yy_%Ss-%Mm-%Hh')"
 	GXPM_LOG="$STATDIR/gxpm.log"
-	mount | grep "$GRROOT_DIR" | grep -q ext4 && GRLT="$GRROOT/.gxpm" || GRLT="$GHOME/.gxpm"
-	DISKMPATH="/mnt/runtime/default"
-	DATADIR="$GRROOT/data"
-	BLOCKRPATH="/dev/block"
+	GRLT="$(
+		mount | grep "$GRROOT_DIR" | grep -q ext4 && echo "$GRROOT/.gxpm" \
+			|| echo "$GHOME/.gxpm"
+	)"
 	KMODDIR="/system/lib/modules"
 	test -e "/sbin/magisk" && MAGISK_COREV="$(magisk -v)"
-	test -e "$GTMP/boot-comp" && BOOTCOMP="yes" || BOOTCOMP="no"
+	BOOTCOMP="$(
+		test -e "$GTMP/boot-comp" && echo "yes" \
+			|| echo "no"
+	)"
 	GEARLOCK_VER="$(< "$CORE/version")"
 	
-	ps -fA 2>/dev/null | grep -q "$GAPPID" && GEARLOCK_APP="yes" \
-		|| GEARLOCK_APP="no" # Detect gearlock app
-	
-	test "$(fgconsole 2>/dev/null)" == "$(test "$SDK" -gt 29 && echo 1 || echo 7)" \
-		&& test "$BOOTCOMP" == "yes" && TERMINAL_EMULATOR="yes" || TERMINAL_EMULATOR="no" # Detect termemu
-	
-	grep -q 'SC_SIZE=' /proc/cmdline && SC_SIZE="$(($(cmdline SC_SIZE) * 1048576))" \
-		|| SC_SIZE="5000" # SuperCharge expansion size
+	GEARLOCK_APP="$(
+		ps -fA 2>/dev/null | grep -q "$GAPPID" && echo "yes" \
+			|| echo "no"
+	)" # Detect gearlock app
+	TERMINAL_EMULATOR="$(
+		test "$(fgconsole 2>/dev/null)" == "$(test "$SDK" -gt 29 && echo 1 || echo 7)" \
+			&& test "$BOOTCOMP" == "yes" && echo "yes" || echo "no"
+	)" # Detect termemu
+	SC_SIZE="$(
+		grep -q 'SC_SIZE=' /proc/cmdline && echo "$(($(cmdline SC_SIZE) * 1048576))" \
+			|| echo "5000"
+	)" # SuperCharge expansion size
 fi
 
 # Initialize terminal

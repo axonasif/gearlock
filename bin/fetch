@@ -188,3 +188,4 @@ test ! -e "${GEARLOCK_RC:="$GHOME/.gearlockrc"}" \
 test -e "$GEARLOCK_RC" && source "$GEARLOCK_RC"
 
 set +a
+:

@@ -285,15 +285,16 @@ function check_reboot_req() {
 			done
 	}
 	
-	if [ "${REQREBOOT%%,*}" == "yes" ] && [ "${REQREBOOT##*, }" != "no" ]; then
-		test -z "$RECOVERY" && job
-	elif [ "${REQREBOOT%%,*}" != "yes" ] && [ "${REQREBOOT##*, }" == "yes" ]; then
-		test -n "$RECOVERY" && job
-	elif [ "$REQREBOOT" == "yes" ]; then
+	if [ "$REQREBOOT" == "yes" ] || [ "${REQREBOOT%%,*}" == "yes" ] && [ "${REQREBOOT##*, }" == "yes" ]; then
+		job
+	elif [ "${REQREBOOT%%,*}" == "yes" ] && [ "${REQREBOOT##*, }" != "yes" ] && test -z "$RECOVERY"; then
+		job
+	elif [ "${REQREBOOT%%,*}" != "yes" ] && [ "${REQREBOOT##*, }" == "yes" ] && test -n "$RECOVERY"; then
 		job
 	else
-		geco && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
-	fi
+		geco "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
+	fi 
+
 }
 
 function show_zygote_header() {

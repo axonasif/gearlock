@@ -125,8 +125,9 @@ function disabled() {
 }
 
 if test "$IT" == "metro"; then
-	function struct_interface_inload() {
+	function struct_interface_inload(){
 		export src="$1"
+		export menu_src="$CORE/${src}/_lang_/_menu_${lang}"
 		metroUi_menu_body
 	}
 else
@@ -261,27 +262,35 @@ function check_sync_req() {
 
 function check_reboot_req() {
 	callName="${0##*/}"
-	geco "\$\$ ${_phrase_gxpm_com_public_jobs_}: ${YELLOW}$(echo "${JOBS}"|xargs|sed "s| |, |g")${RC}" # Print total completed gxpm public jobs
-	if [ "$REQREBOOT" == "yes" ]; then
-		geco "\n\$\$ ${_phrase_X_is_requesting_reboot_/@DUMMY@/$TYPE} :\c" && sleep 1
-		while true; do
-			read -rn1 -p "$(geco " ${_phrase_allow_to_reboot_} [${BGREEN}Y${RC}/n]") " "c"
-			case "$c" in
-				[Yy]* ) 
-						geco "\n\n\n++ ${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | \c"
-						greboot
-						break
-						;;
-				[Nn]* ) 
-						touch "$GTMP/reboot"
-						geco "\n" && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
-						break
-						;;
-				* )
-						geco "\c "
-						;;
-			esac
-		done
+	function job(){
+		geco "\$\$ ${_phrase_gxpm_com_public_jobs_}: ${YELLOW}$(echo "${JOBS}"|xargs|sed "s| |, |g")${RC}" # Print total completed gxpm public jobs
+			geco "\n\$\$ ${_phrase_X_is_requesting_reboot_/@DUMMY@/$TYPE} :\c" && sleep 1
+			while true; do
+				read -rn1 -p "$(geco " ${_phrase_allow_to_reboot_} [${BGREEN}Y${RC}/n]") " "c"
+				case "$c" in
+					[Yy]* ) 
+							geco "\n\n\n++ ${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | \c"
+							greboot
+							break
+							;;
+					[Nn]* ) 
+							touch "$GTMP/reboot"
+							geco "\n" && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
+							break
+							;;
+					* )
+							geco "\c "
+							;;
+				esac
+			done
+	}
+	
+	if [ "${REQREBOOT%%,*}" == "yes" ] && [ "${REQREBOOT##*, }" != "no" ]; then
+		test -z "$RECOVERY" && job
+	elif [ "${REQREBOOT%%,*}" != "yes" ] && [ "${REQREBOOT##*, }" == "yes" ]; then
+		test -n "$RECOVERY" && job
+	elif [ "$REQREBOOT" == "yes" ]; then
+		job
 	else
 		geco && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
 	fi
@@ -329,3 +338,4 @@ set +a
 	stty "$real"
 	stty cols "$cols" rows "$rows"
 } >/dev/null 2>&1
+:

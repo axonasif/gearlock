@@ -21,8 +21,10 @@ _net_connection_unavailable_="Your internet connection might be either down or y
 _osroot_not_located_="Failed to locate OSROOT.\nError code 110"
 _sel_interface_theme_="Select Interface Theme"
 _infinityUi_spoiler_="This will the the last & final interface theme for GearLock which will surely make you say *WoW*.\nStay tuned"
-_supercharging_notice_="Your system is not supercharged !\nYou must do it right now! Use option 3 in main-menu"
-_new_update_notice_="New Update found, you must perform the update!\nGo to *More > Updater*"
+_supercharging_notice_classicui_="Your system is not supercharged !\nYou must do it right now! Use option 3 in main-menu"
+_supercharging_notice_metroui_="Your system is not supercharged, do you want to do it now ?"
+_new_update_notice_metroui_="New Update found, do you want to perform the update ?"
+_new_update_notice_classicui="${RC}New update found, press ${BRED}u${RC} to perform the update"
 _gearrec_info_="Open Android-x86 command-terminal by pressing Alt + F1\nThen type gearrec and hit enter!"
 
 

@@ -27,9 +27,12 @@ if test -z "$ANDROID_VER"; then sleep 3 && false; handleError "Failed to get AND
 # Check if mountpoints are writable
 for mp in "$GRROOT/."; do ! touch -c "$mp">/dev/null 2>&1 && geco "[!!!] ${mp##*/} is not writable." && { greboot; exit 1; }; done
 # Check for running progs in volatile mountpoints
-for mp in /mnt /gearlock/gearroot /android /data /system; do lsof 2>/dev/null | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && sleep 2 && exit 1; done
+lsof_dump="$(lsof 2>/dev/null)"
+for mp in /mnt /gearlock/gearroot /android /data /system; do
+	echo "$lsof_dump" | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && sleep 2 && exit 1
+done
 
-geco "\n\n+ ${_checking_system_} ..." && sleep 2
+geco "\n\n+ ${_checking_system_} ..."
 
 # Main
 if ls "$OROOT/system."*>/dev/null 2>&1 && test "$(stat -L --printf="%s" "$OROOT/system."*)" -lt "$((SC_SIZE * 1048576))"; then
@@ -49,5 +52,5 @@ if ls "$OROOT/system."*>/dev/null 2>&1 && test "$(stat -L --printf="%s" "$OROOT/
     fi
     
 else
-    geco "\n+ ${_system_is_supercharged_}" && sleep 2
+    geco "\n+ ${_system_is_supercharged_}" && sleep 4
 fi

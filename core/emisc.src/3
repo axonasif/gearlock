@@ -92,7 +92,10 @@ done
 test -n "$RECOVERY"; handleError "Only available in RECOVERY-MODE ..."
 
 # Check for running progs in volatile mountpoints
-for mp in /mnt /gearlock/gearroot /android /data /system; do lsof 2>/dev/null | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && exit 1; done
+lsof_dump="$(lsof 2>/dev/null)"
+for mp in /mnt /gearlock/gearroot /android /data /system; do
+	echo "$lsof_dump" | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && sleep 2 && exit 1
+done
 
 # Main
 if test -n "$*"; then

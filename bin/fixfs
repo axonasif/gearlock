@@ -1,9 +1,10 @@
 #!/gearlock/bin/bash
 
 # Check for running progs in volatile mountpoints
+lsof_dump="$(lsof 2>/dev/null)"
 for mp in /mnt /gearlock/gearroot /android /data /system; do
-	lsof 2>/dev/null | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && sleep 2 && exit 1;
-done;
+	echo "$lsof_dump" | awk '{print $9}' | grep -q "^$mp" && echo -e "[!!!] Some programs are still using $mp, can not proceed" && sleep 2 && exit 1
+done
 
 # Define vars
 targetDevice="$(mount | grep "on /mnt" | awk '{print $1}')";

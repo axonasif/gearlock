@@ -72,9 +72,15 @@ Without their openminded hardwork over years GearLock wouldn't have been the sam
 * Roumen Petrov (Better Terminal Emulator, Termoneplus)
 > https://gitlab.com/termapps/termoneplus
 
+## Also thanks to
+
 * @hmtheboy154 (Contibutor)
 * @SGNight (Contibutor)
 * Mido Fayad (Contibutor & Donator)
 * Ahmad Moemen (Contibutor)
 * Diaz (Donator)
 * rk (Donator)
+* https://github.com/opsengine/cpulimit
+* https://github.com/landley/toybox
+* https://github.com/osospeed/ttyecho
+* http://e2fsprogs.sourceforge.net

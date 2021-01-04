@@ -59,6 +59,9 @@ function do_mk_unins(){
 			test -d "${GRLT}/${GCOMM}/dependencies" && {
 				cd "${GRLT}/${GCOMM}" && find dependencies -type f | awk '{print "rm -f \"$GHOME/"$0"\""}' >> "${UNINSDIR}/${NAME}_${VERSION}"
 			}
+			test -d "${GRLT}/${GCOMM}/.local" && {
+				cd "${GRLT}/${GCOMM}" && find '.local' -type f | awk '{print "rm -f \"$GHOME/"$0"\""}' >> "${UNINSDIR}/${NAME}_${VERSION}"
+			}
 
 			echo "}" >> "${UNINSDIR}/${NAME}_${VERSION}"
 		fi
@@ -111,6 +114,12 @@ function install_comm(){
 	if [ -d "${GRLT}/${GCOMM}/dependencies" ]; then
 		(rsync -a "${GRLT}/${GCOMM}/dependencies" "$GHOME"; sleep 2) &
 		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_COMMON_DEPENDENCIES" "MERGE_COM_DEP"
+	fi
+	
+	# .local
+	if [ -d "${GRLT}/${GCOMM}/.local" ]; then
+		(rsync -a "${GRLT}/${GCOMM}/.local" "$GHOME"; sleep 2) &
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_LOCAL_FILES" "MERGE_LOC_FILES"
 	fi
 }
 

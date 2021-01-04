@@ -23,7 +23,6 @@ This repo is only used for development and issue tracking.
 GearLock is being proudly integrated in the following reputated distros:
 
 * BlissOS-x86
-
 * PhoenixOS DarkMatter
 
 If you're working on a remarkable distro and want to bring gearlock into it then you're welcome :)
@@ -41,3 +40,11 @@ git clone https://github.com/AXIM0S/gearlock && cd gearlock && chmod +x makeme &
 Then you should find the outputs at `out/build_installer_out`
 
 For working over sources for the core files, take a look at `core/` and `core/_external_bin/`
+
+# Additional Links
+
+* GearLock Dev-Kit: https://github.com/AXIM0S/gearlock-dev-kit
+* GearLock core-pkg: https://github.com/AXIM0S/gearlock-core-pkg
+* GearLock mesa-pkg: https://github.com/AXIM0S/gearlock-core-pkg
+* GearLock kernel-pkg: https://github.com/AXIM0S/gearlock-kernel-pkg
+* GearLock Integration with distro: https://gitlab.com/AXIM0S/vendor-gearlock

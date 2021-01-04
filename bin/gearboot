@@ -5,7 +5,7 @@ VERSION="1.3"
 # Runtime Functions
 function play_bootsound(){
 	test -n "$BOOTSOUND" && test -e "$BOOTSOUND" \
-	&& alsa_aplay "$BOOTSOUND" </dev/null &>/dev/null & disown
+		&& alsa_aplay "$BOOTSOUND" </dev/null &>/dev/null & disown
 }
 
 function check_app(){
@@ -15,8 +15,8 @@ function check_app(){
 
 function make_bashls(){
 	test -e "${mk:="/gearlock/tmp/.mkbashls"}" && test ! -e "${lk:="/gearlock/tmp/.bashls"}" \
-	&& touch "$lk" && rm "$mk" && openvt -c $1 gbash -l && setfont "$GRLBASE/share/terminfo/c/cons16-asm" -C /dev/tty$1 \
-	&& setterm --linewrap on > /dev/tty$1
+		&& touch "$lk" && rm "$mk" && openvt -c $1 gbash -l && setfont "$GRLBASE/share/terminfo/c/cons16-asm" -C /dev/tty$1 \
+		&& setterm --linewrap on > /dev/tty$1
 }
 
 function bind_grload(){
@@ -33,7 +33,7 @@ function chmod_mnt(){
 }
 
 function hook_boot(){
-	export GBRUNTIME="yes" && source /gearlock/bin/fetch
+	export GBRUNTIME="yes" && source /gearlock/bin/fetch || exit
 }
 
 function do_zygote_job(){
@@ -76,28 +76,30 @@ function gbjob(){
 }
 
 function write_gblog(){
-	SL="$(/gearlock/bin/grep -nA500 "# Start of $GBSTAGE stage" "$GTMP/gearboot.log" | /gearlock/bin/grep "$(/gearlock/bin/basename "$0")" | /gearlock/bin/head -n1)"
-	/gearlock/bin/sed -i "$(echo "$SL" | /gearlock/bin/cut -d "-" -f1)s/.*/ $(echo "$SL" | /gearlock/bin/cut -d " " -f2-)  :  $@/" "$GTMP/gearboot.log"
+	local PATH
+	PATH="/gearlock/bin"
+	SL="$(grep -nA500 "# Start of $GBSTAGE stage" "$GTMP/gearboot.log" | grep "$(basename "$0")" | head -n1)"
+	sed -i "$(echo "$SL" | cut -d "-" -f1)s/.*/ $(echo "$SL" | cut -d " " -f2-)  :  $@/" "$GTMP/gearboot.log"
 }; export -f write_gblog
 
 case "$1" in
 	s0)
 		do_zygote_job
 		gbjob init
-	;;
+		;;
 	s1)
 		hook_boot
 		gbjob post-fs
-	;;
+		;;
 	s2)
 		hook_boot
 		gbjob post-fs-data
-	;;
+		;;
 	s3)
 		make_bashls 8
 		hook_boot
 		gbjob boot-post
-	;;
+		;;
 	s4)
 		hook_boot
 		play_bootsound
@@ -106,7 +108,7 @@ case "$1" in
 		chmod_mnt
 		touch "$GTMP/boot-comp"
 		check_app
-	;;
+		;;
 	-h|--help) echo -e "
 GearBoot $VERSION | Copyright (c) $(date '+%Y') AXON | supreme-gamers.com
 GearBoot is a very simple program which run executables during boot dynamically
@@ -133,14 +135,14 @@ The logging file is /gearlock/tmp/gearboot.log
 GearBoot is a part of GearLock. Init stage is not available for manual triggering
 GearBoot auto runs during boot, you may only manually trigger it for reloading purposes
 For more information & bugreports visit https://supreme-gamers.com/gearlock"
-	;;
+		;;
 	-v|--version)
 		echo "$VERSION"
-	;;
+		;;
 *)
 	echo "gearboot: No boot-stage specified.
 You must specify one of s1|2|3|4 stage.
 
 Try \`gearboot -h' or \`gearboot --help' for more information."
-	;;
+		;;
 esac

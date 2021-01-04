@@ -1,7 +1,6 @@
 #!/gearlock/bin/bash
-test ! -e "/gearlock/bin/fetch" -o ! -e "/gearlock/bin/fetch.in" && exit 1
-source /gearlock/bin/fetch
-source /gearlock/bin/fetch.in
+source /gearlock/bin/fetch || exit
+source /gearlock/bin/fetch.in || exit
 lock
 
 # Check if the app window size is small
@@ -15,21 +14,16 @@ if [ "$TERMINAL_EMULATOR" == "yes" ]; then
 	done
 fi
 
-# Check if GEARROOT was not defined
-test -z "$GRROOT" && echo -e "${_osroot_not_located_}" && exit 110
-
 # Load Theme
 if [ "$DEFAULT_THEME" == "metro" ] || [ "$DEFAULT_THEME" == "classic" ]; then
 	source "$CORE/interface/$DEFAULT_THEME"
 else
 	while true; do
-		cmd=(dialog --keep-tite --cancel-label Exit --menu "${_sel_interface_theme_}" 10 30 10)
-		options=(
-					1 "Metro"
-					2 "Classic" 
-					3 "Infinity (Upcoming)"
-				)
-		choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+		cmd=(dialog --keep-tite --cancel-label Exit --menu "${_sel_interface_theme_}" 10 45 10)
+		choices=$("${cmd[@]}" \
+					1 "Metro" \
+					2 "Classic" \
+					3 "Infinity (Upcoming)" 2>&1 >/dev/tty)
 		test "$?" == 1 && exit_grl
 		for choice in $choices; do
 			case $choice in

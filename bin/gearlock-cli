@@ -20,15 +20,11 @@ Note: You have to call \`gearlock-cli\` through \`gsudo\` to ensure optimal envi
 }
 
 function loadCore(){
-	if test -e "${s1:="/gearlock/bin/fetch"}" && test -e "${s2:="/gearlock/bin/fetch.in"}"; then
-		IT="${DEFAULT_THEME:="metro"}" && {
-			source $s1
-			source $s2
-			lock
-		}
-	else
-		exit 1
-	fi
+	IT="${DEFAULT_THEME:="metro"}" && {
+		source "/gearlock/bin/fetch" || exit
+		source "/gearlock/bin/fetch.in" || exit
+		lock
+	}
 }
 
 case "$argv" in

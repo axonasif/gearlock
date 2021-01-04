@@ -43,23 +43,24 @@ For working over sources for the core files, take a look at `core/` and `core/_e
 
 You might have noticed that there are prebuilt binaries in the repository but not their source code.
 
-I would need to setup a complete build system for them, what I've been doing was hand-comping them.
+I would need to setup a complete build system for them, what I've been doing was hand-compiling them.
 
 I will need a lot of free time to accomplish this since I'm a student, but you can surely expect this in the furture.
 
 # Additional Links
 
-* GearLock Dev-Kit: https://github.com/AXIM0S/gearlock-dev-kit
+* GearLock dev-doc: https://supreme-gamers.com/gearlock
+* GearLock dev-kit: https://github.com/AXIM0S/gearlock-dev-kit
 * GearLock core-pkg: https://github.com/AXIM0S/gearlock-core-pkg
 * GearLock mesa-pkg: https://github.com/AXIM0S/gearlock-core-pkg
 * GearLock kernel-pkg: https://github.com/AXIM0S/gearlock-kernel-pkg
-* GearLock Integration with distro: https://gitlab.com/AXIM0S/vendor-gearlock
+* GearLock integration with distro: https://gitlab.com/AXIM0S/vendor-gearlock
 
 # Credits and thanks
 
-Here I'm trying to list all of the remarkable works by others which has been used to enrich GearLock.
+Here I'm trying to list all of the remarkable work by others which has been used to enrich GearLock.
 
-Without their openminded hardwork over years GearLock wouldn't have been the same.
+Without their open-minded years of hardwork GearLock wouldn't have been the same.
 
 * The great legendary GNU communtiy for their free and opensource softwares.
 > https://www.gnu.org/software
@@ -76,6 +77,7 @@ Without their openminded hardwork over years GearLock wouldn't have been the sam
 
 * @hmtheboy154 (Contibutor)
 * @SGNight (Contibutor)
+* @electrikjesus (Contributor)
 * Mido Fayad (Contibutor & Donator)
 * Ahmad Moemen (Contibutor)
 * Diaz (Donator)

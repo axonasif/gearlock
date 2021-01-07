@@ -80,7 +80,8 @@ function main ()
 	for f in "${file_list[@]}"; do
 		echo "\"${_buildCache}/$f\"" >> "${_buildCacheRoot}/.source_files"
 	done
-	bashbox $(xargs < "${_buildCacheRoot}/.source_files")
+	chmod +x "${_execDir}/bin/bashbox"
+	bash "${_execDir}/bin/bashbox" $(xargs < "${_buildCacheRoot}/.source_files")
 	readarray -d '' optim_gen_list < <(find "${_buildCache}" -name '*.bb.sh' -print0)
 	for gen_list in "${optim_gen_list[@]}"; do
 		mv "$gen_list" "${gen_list%.bb.sh}"

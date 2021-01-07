@@ -73,6 +73,19 @@ function main ()
 		gslr "$f" "#\!/bin/bash" "#\!\/gearlock\/bin\/bash" || handleError "Failed to replace shebangs with gslr"
 	done;
 		
+	
+	# Optimize bash source
+	echo -e "Optimizing source code"
+	file_list=($(awk 'NF' "${_execDir}/source_files" | sed '/#.*/d')) || handleError "Failed to read source_files"
+	for f in "${file_list[@]}"; do
+		echo "\"${_buildCache}/$f\"" >> "${_buildCacheRoot}/.source_files"
+	done
+	bashbox $(xargs < "${_buildCacheRoot}/.source_files")
+	readarray -d '' optim_gen_list < <(find "${_buildCache}" -name '*.bb.sh' -print0)
+	for gen_list in "${optim_gen_list[@]}"; do
+		mv "$gen_list" "${gen_list%.bb.sh}"
+	done
+	
 	# Recursive Chmod 755 _buildCache
 	echo -e "Setting permissions to 755 recursively for cpio image"
 	chmod -R 755 "${_buildCache}" || handleError "Failed to \'chmod -R 755 ${_buildCache}\'"

@@ -55,7 +55,7 @@ GRROOT="$(
 ckdirex "$GRROOT/gearload" 777 # Ensure gearload dir existence
 
 # Detect boot_image
-if test -e "$GTMP/kernel_image"; then
+if test -s "$GTMP/kernel_image"; then
 	KERNEL_IMAGE="$(< "$GTMP/kernel_image")"
 else
 	test -z "$BIMGVAR" && fetch_bootimage # Try to blindly define boot_image when no cmdline is available
@@ -92,22 +92,28 @@ if test -n "$GRROOT"; then
 
 	## Detect architecture
 	CPU_ARCH="$(
-		if test -e "$GTMP/cpu_arch"; then
+		if test -s "$GTMP/cpu_arch"; then
 			echo "$(< "$GTMP/cpu_arch")"
 		else
 			grep -owq 'lm' /proc/cpuinfo && CPU_ARCH="x86_64" || CPU_ARCH="x86"
-			echo "$CPU_ARCH" > "$GTMP/cpu_arch"
-			echo "$CPU_ARCH"
+			echo "$CPU_ARCH" | tee "$GTMP/cpu_arch"
 		fi
 	)"
 
 	HOST_ARCH="$(
-		if test -e '/system/lib64'; then
-			echo 'x86_64'
-		elif test -e '/system/lib'; then
-			echo 'x86'
+		if test -s "$GTMP/host_arch"; then
+			echo "$(< "$GTMP/host_arch")"
 		else
-			echo "$CPU_ARCH"
+			if test "$CPU_ARCH" == "x86"; then
+				HOST_ARCH="x86"
+			elif test -e '/system/lib64'; then
+				HOST_ARCH="x86_64"
+			elif test -e '/system/lib'; then
+				HOST_ARCH="x86"
+			else
+				HOST_ARCH="$CPU_ARCH"
+			fi
+			echo "$HOST_ARCH" | tee "$GTMP/host_arch"
 		fi
     )" # FIXME: Any better way ?
     

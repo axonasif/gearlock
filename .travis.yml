@@ -5,10 +5,7 @@ language: generic
 #addons:
   #apt:
     #packages:
-      #- libcurl4-openssl-dev
-      #- libelf-dev
-      #- libdw-dev
-      #- cmake
+      #- libbruh
 
 after_success: |
   bash makeme

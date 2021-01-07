@@ -81,7 +81,7 @@ function main ()
 		echo "\"${_buildCache}/$f\"" >> "${_buildCacheRoot}/.source_files"
 	done
 	chmod +x "${_execDir}/bin/bashbox"
-	bash "${_execDir}/bin/bashbox" $(xargs < "${_buildCacheRoot}/.source_files")
+	STRICT="true" bash "${_execDir}/bin/bashbox" $(xargs < "${_buildCacheRoot}/.source_files") || handleError "Syntax errors found, can not continue"
 	readarray -d '' optim_gen_list < <(find "${_buildCache}/bin" "${_buildCache}/core" -name '*.bb.sh' -print0)
 	for gen_list in "${optim_gen_list[@]}"; do
 		#mv "$gen_list" "${gen_list%.bb.sh}"

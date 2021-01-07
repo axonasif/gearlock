@@ -35,7 +35,8 @@ mkdir -p "$TMP_DIR" > /dev/null 2>&1 || error_exit_bb "Failed to initialize temp
 			# Sourcing stage
 			SOURCE_CHECK="$(source "$TMP_SCRIPT" 2>&1)"; r=$?
 				if [ "$r" != 0 ]; then
-					error_break_bb $r "$ivar   :   Syntax error at$(echo -e "$SOURCE_CHECK" | head -n1 | cut -d ':' -f2)"; continue
+					error_break_bb $r "$ivar   :   Syntax error at$(echo -e "$SOURCE_CHECK" | head -n1 | cut -d ':' -f2)"
+					test "$STRICT" != "true" && continue || exit 1
 				fi
 
 			# Continue on success 0

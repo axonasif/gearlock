@@ -26,8 +26,8 @@ mkdir -p "$TMP_DIR" > /dev/null 2>&1 || error_exit_bb "Failed to initialize temp
 			test_func_tail="}"
 			footer_credits="# $(test -z "$MINIFY"&&echo "${BEAUTIFIED^}"||echo "${MINIFIED^}") & optimized for bash by BashBox ---- I know you are gonna remove me  :P"
 			# Create the test script
-			CACHE_SHEBANG="$(grep "#.*\!.*" "$ivar" | head -n1)"
-			(echo "${test_func_head}(){" > "$TMP_SCRIPT" && sed -e "s|#\!.*||" -e "s|$footer_credits||" < "$ivar" >> "$TMP_SCRIPT" && echo "${test_func_tail}" >> "$TMP_SCRIPT"); r=$?
+			CACHE_SHEBANG="$(grep "#\!/.*" "$ivar" | head -n1)"
+			(echo "${test_func_head}(){" > "$TMP_SCRIPT" && sed -e "s|#\!/.*||" -e "s|$footer_credits||" < "$ivar" >> "$TMP_SCRIPT" && echo "${test_func_tail}" >> "$TMP_SCRIPT"); r=$?
 				if [ "$r" != 0 ]; then
 					error_break_bb $r "Read/Write error in $ivar"; continue
 				fi
@@ -44,7 +44,7 @@ mkdir -p "$TMP_DIR" > /dev/null 2>&1 || error_exit_bb "Failed to initialize temp
 
 			# Apply custom formatting
 			type $test_func_head | tail -n+4 | sed -e '1h;1!H;$!d;g;s/\(.*\)}/\1/' | sed 's|^};|};\n|g' > "${outPut}"
-			awk '
+			awk '                       # Awk script by @markp-fuso at stackoveflow :)
 /^    / { if ( qtcnt % 2 == 0 )         # if current line starts with 4 spaces and we
                                         # have seen an even number of double quotes
                                         # prior to this line (ie, we are outside

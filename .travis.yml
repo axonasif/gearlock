@@ -1,11 +1,2 @@
-language: generic
-
-#sudo: required
-
-#addons:
-  #apt:
-    #packages:
-      #- libbruh
-
-after_success: |
-  bash makeme
+language: bash
+script: installer/packer-engine/bash makeme

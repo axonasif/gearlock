@@ -45,21 +45,21 @@ mkdir -p "$TMP_DIR" > /dev/null 2>&1 || error_exit_bb "Failed to initialize temp
 
 			# Apply custom formatting
 			type $test_func_head | tail -n+4 | sed -e '1h;1!H;$!d;g;s/\(.*\)}/\1/' | sed 's|^};|};\n|g' > "${outPut}"
-			awk '                       # Awk script by @markp-fuso at stackoveflow :)
-/^    / { if ( qtcnt % 2 == 0 )         # if current line starts with 4 spaces and we
-                                        # have seen an even number of double quotes
-                                        # prior to this line (ie, we are outside
-                                        # of a double quoted string) then ...
-             $0=substr($0,5)            # remove the 4 spaces from the current line
-        }
-        { print $0 }                    # print the current line
-        { n=split($0,arr,"\"")          # split the current line on double quotes and
-                                        # get a count of the number of fields
-          if ( n >=1 )                  # if number of fields >= 1 (ie, line contains
-                                        # at least one double quote) then ...
-             qtcnt += n - 1             # increment our quote counter
-        }
-' "${outPut}" > "${outPut}.tmp" && mv "${outPut}.tmp" "${outPut}"
+# 			awk '                       # Awk script by @markp-fuso at stackoveflow :)
+# /^    / { if ( qtcnt % 2 == 0 )         # if current line starts with 4 spaces and we
+#                                         # have seen an even number of double quotes
+#                                         # prior to this line (ie, we are outside
+#                                         # of a double quoted string) then ...
+#              $0=substr($0,5)            # remove the 4 spaces from the current line
+#         }
+#         { print $0 }                    # print the current line
+#         { n=split($0,arr,"\"")          # split the current line on double quotes and
+#                                         # get a count of the number of fields
+#           if ( n >=1 )                  # if number of fields >= 1 (ie, line contains
+#                                         # at least one double quote) then ...
+#              qtcnt += n - 1             # increment our quote counter
+#         }
+# ' "${outPut}" > "${outPut}.tmp" && mv "${outPut}.tmp" "${outPut}"
 			
 			
 			# If minify
@@ -74,9 +74,14 @@ mkdir -p "$TMP_DIR" > /dev/null 2>&1 || error_exit_bb "Failed to initialize temp
 			chmod -f 777 "${outPut}"
 			baseIvar="${ivar##*/}"
 			gapVar="$(for t in $(seq $((30 - ${#baseIvar} )) ); do echo -n " "; done)"
-			echo -n "$EXEC_NAME:              ${baseIvar}:${gapVar}" && echo -n "$(test -z "$MINIFY"&&echo "${BEAUTIFIED,}"||echo "${MINIFIED,}") + " \
-			&& sleep 0.1 && echo -e "optimized + \c" && sleep 0.1 && echo "syntax checked"; (rm -f "$TMP_SCRIPT"; rmdir --ignore-fail-on-non-empty "$TMP_DIR")>/dev/null 2>&1
-			
+			echo -n "$EXEC_NAME:              ${baseIvar}:${gapVar}" \
+				&& echo -n "$(test -z "$MINIFY" && echo "${BEAUTIFIED,}" || echo "${MINIFIED,}") + " \
+				&& sleep 0.1 && echo -e "optimized + \c" && sleep 0.1 && echo "syntax checked"
+			{
+				rm -f "$TMP_SCRIPT"
+				test "$TMP_DIR" != "/tmp" && rmdir --ignore-fail-on-non-empty "$TMP_DIR"
+			}> /dev/null 2>&1
+			:
 		else
 			error_break_bb 255 "$ivar file not found."
 		fi

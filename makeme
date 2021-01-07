@@ -64,7 +64,7 @@ function main ()
 	# Re-configure/fix shebangs in bin & remove `gearlock/bin`
 	echo -e "Removing ${cExternal:=core/_external_}"
 	rm -r ${cExternal}; test "$?" != "0" && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
-	rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
+	#rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
 	
 	echo -e "Fixing shebangs"
 	# Look for `#/bin/bash`
@@ -75,16 +75,17 @@ function main ()
 		
 	
 	# Optimize bash source
-	echo -e "Optimizing source code"
+	echo -e "Checkig source code syntax"
 	file_list=($(awk 'NF' "${_execDir}/source_files" | sed '/#.*/d')) || handleError "Failed to read source_files"
 	for f in "${file_list[@]}"; do
 		echo "\"${_buildCache}/$f\"" >> "${_buildCacheRoot}/.source_files"
 	done
 	chmod +x "${_execDir}/bin/bashbox"
 	bash "${_execDir}/bin/bashbox" $(xargs < "${_buildCacheRoot}/.source_files")
-	readarray -d '' optim_gen_list < <(find "${_buildCache}" -name '*.bb.sh' -print0)
+	readarray -d '' optim_gen_list < <(find "${_buildCache}/bin" "${_buildCache}/core" -name '*.bb.sh' -print0)
 	for gen_list in "${optim_gen_list[@]}"; do
-		mv "$gen_list" "${gen_list%.bb.sh}"
+		#mv "$gen_list" "${gen_list%.bb.sh}"
+		rm "$gen_list"
 	done
 	
 	# Recursive Chmod 755 _buildCache

@@ -282,8 +282,10 @@ function gen_rep_ramdisk() {
 	test -e "$BD/gearlock.img" && rm -f "$BD/gearlock.img"
 	nout chmod 777 "$OSROOT"/*img "$OSROOT/gearlock"
 	for prog in sync fsync; do
-		$prog "$IRN" "$OSROOT/gearlock"
-		is_old_gl && $prog "$SRN"
+		{
+			$prog "$IRN" "$OSROOT/gearlock"
+			is_old_gl && $prog "$SRN"
+		} 2>/dev/null
 	done
 	geco "Done"
 }

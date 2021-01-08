@@ -25,6 +25,7 @@ function bind_grload(){
 		mount --bind "$GRROOT/gearload" "/mnt/gearload"
 	fi
 }
+
 function chmod_mnt(){
 	chmod 777 "$GRROOT_DIR" && test -d "/mnt/runtime" && chmod 777 "/mnt/runtime"
 	test -e "/mnt/runtime/default" && {
@@ -45,6 +46,17 @@ function do_zygote_job(){
 	chmod -f 755 "$GBDIR/"*>/dev/null 2>&1
 }
 
+function loadFromFs.create() {
+	test -n "$LOAD_FROMFS" && test -n "$RECOVERY" && {
+		mkdir -p "$LOAD_FROMFS" && chmod 755 "$LOAD_FROMFS" 2>/dev/null && {
+			test "$GEARLOCK_VER" != "$(cat "$LOAD_FROMFS/core/version" 2>/dev/null)" && {
+				echo -e "==== Creating ${FUNCNAME%.create} instance: \c"
+				find "$LOAD_FROMFS" -mindepth 1 -maxdepth 1 | xargs rm -r
+				( cd "$LOAD_FROMFS" && cpio -iudF "$GRROOT/gearlock" )
+			}
+		}
+	}
+}
 
 function gbjob(){
 	export GBSTAGE="$1"
@@ -85,6 +97,7 @@ function write_gblog(){
 case "$1" in
 	s0)
 		do_zygote_job
+		loadFromFs.create
 		gbjob init
 		;;
 	s1)

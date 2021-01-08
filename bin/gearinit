@@ -5,8 +5,10 @@ export TERM="linux" \
 	LC_ALL="en_US.UTF-8" \
 	DIALOGRC="/gearlock/etc/dialogrc" \
 	PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin";
-export OROOT="$(readlink -m "/mnt/$SRC")"
-RECOVERY_LOADER="$OROOT/___header___"
+export OROOT="$(readlink -m "/mnt/$SRC")" \
+	RECOVERY_LOADER="$OROOT/___header___"
+	LOAD_FROMFS="/system/.loadfromfs"
+	SWITCH_DIR="/android/gearlock"
 : "${SC_SIZE:="5000"}"
 
 # Initialize required mountpoints
@@ -92,12 +94,28 @@ function boot_os(){
 				sed -i 's|^import /init.\${ro.hardware}.rc|import /init.\${ro.hardware}.rc\nimport /gearlock/etc/gearinit.rc|' "$initrc"
 				sed -i "s|ghome_dir|$(test -e '/system/ghome' && echo '/system/ghome' || echo '/data/ghome')/.local/bin|g" '/gearlock/etc/gearinit.rc'
 			}
+			
 			! grep -q 'pcspkr' /system/etc/modules.bl* && {
 				for f in /system/etc/modules.bl*; do
 					echo "${f##*.} pcspkr" >> "$f"
 				done
 			}
-			mkdir -p /android/gearlock && exec /bin/mount --move /gearlock /android/gearlock
+			
+			# Switch gearlock mountpoints
+			mkdir -p "$SWITCH_DIR" 2>/dev/null && {
+				if test -e "$LOAD_FROMFS"; then
+					#find "$LOAD_FROMFS/tmp" -mindepth 1 -maxdepth 1 | xargs rm -r
+					rm -r "$LOAD_FROMFS/tmp"
+					mv "/gearlock/tmp " "$LOAD_FROMFS"
+					mount --bind "$LOAD_FROMFS" "$SWITCH_DIR"
+					mount --make-slave "$SWITCH_DIR"
+					for mp in gearroot efiroot; do
+						mount --move "/gearlock/$mp" "$SWITCH_DIR/$mp"
+					done
+				else
+					exec /bin/mount --move /gearlock "$SWITCH_DIR"
+				fi
+			}
 		fi
 	} >/dev/null 2>&1
 	exit 0

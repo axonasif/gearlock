@@ -47,15 +47,21 @@ function do_zygote_job(){
 }
 
 function loadFromFs.create() {
-	test -n "$LOAD_FROMFS" && test -n "$RECOVERY" && {
-		mkdir -p "$LOAD_FROMFS" && chmod 755 "$LOAD_FROMFS" 2>/dev/null && {
-			test "$GEARLOCK_VER" != "$(cat "$LOAD_FROMFS/core/version" 2>/dev/null)" && {
+	if test "$LOAD_FROMFS" == "yes" && test -n "$RECOVERY"; then
+		touch -c "$LOAD_FROMFS_ROOT" 2>/dev/null && {
+			test "$GEARLOCK_VER" != "$(cat "$LOAD_FROMFS_ROOT/core/version" 2>/dev/null)" && {
 				echo -e "==== Creating ${FUNCNAME%.create} instance: \c"
-				find "$LOAD_FROMFS" -mindepth 1 -maxdepth 1 | xargs rm -r
-				( cd "$LOAD_FROMFS" && cpio -iudF "$GRROOT/gearlock" )
+				(
+					rm -rf "$LOAD_FROMFS_ROOT"
+					cd "$SYSTEM_DIR/usr"
+					cpio -iudF "$GRROOT/gearlock"
+					mv "$SYSTEM_DIR/usr/gearlock" "$LOAD_FROMFS_ROOT"
+				)
 			}
 		}
-	}
+	else
+		rm -rf "$LOAD_FROMFS_ROOT"
+	fi
 }
 
 function gbjob(){

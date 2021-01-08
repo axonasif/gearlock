@@ -293,6 +293,7 @@ _settings_update_info_="Whether to check for GearLock updates and being notifed"
 _settings_default_theme_info_="Whether to set the current interface theme as default"
 _settings_norecovery_info_="When enabled, it bypasses the recovery screen countdown prompt"
 _settings_fixfs_info_="When enabled, it quick checks & repairs your ExtFS / .img on each boot"
+_settings_loadfromfs_info_="When enabled, it will make GearLock to be loaded from /system instead of RAM"
 
 _ui_about_msg_="
 GearLock is a GUI & Recovery program developed with with lots of time, patience and love by SupremeGamers.

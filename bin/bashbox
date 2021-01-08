@@ -76,7 +76,7 @@ mkdir -p "$TMP_DIR" > /dev/null 2>&1 || error_exit_bb "Failed to initialize temp
 			gapVar="$(for t in $(seq $((30 - ${#baseIvar} )) ); do echo -n " "; done)"
 			echo -n "$EXEC_NAME:              ${baseIvar}:${gapVar}" \
 				&& echo -n "$(test -z "$MINIFY" && echo "${BEAUTIFIED,}" || echo "${MINIFIED,}") + " \
-				&& sleep 0.1 && echo -e "optimized + \c" && sleep 0.1 && echo "syntax checked"
+				&& echo -e "optimized + \c" && echo "syntax checked"
 			{
 				rm -f "$TMP_SCRIPT"
 				test "$TMP_DIR" != "/tmp" && rmdir --ignore-fail-on-non-empty "$TMP_DIR"

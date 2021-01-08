@@ -6,8 +6,8 @@ export TERM="linux" \
 	DIALOGRC="/gearlock/etc/dialogrc" \
 	PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin";
 export OROOT="$(readlink -m "/mnt/$SRC")" \
-	RECOVERY_LOADER="$OROOT/___header___"
-	LOAD_FROMFS="/system/.loadfromfs"
+	RECOVERY_LOADER="$OROOT/___header___" \
+	LOAD_FROMFS_ROOT="/android/system/.loadfromfs" \
 	SWITCH_DIR="/android/gearlock"
 : "${SC_SIZE:="5000"}"
 
@@ -78,7 +78,7 @@ function boot_os(){
 	# Check for supercharge
 	test ! -e "$OROOT/isolinux" && test -z "$NOSC" && test ! -e "$OROOT/nosc" && ls "$OROOT/system."*>/dev/null 2>&1 \
 		&& test "$(stat -L --printf="%s" "$(ls "$OROOT/system."* | head -n1)")" -lt "$((SC_SIZE * 1048576))" \
-		&& gsudo gearlock-cli main.src/3 2>&1
+			&& gsudo gearlock-cli main.src/supercharge 2>&1
 	
 	# Start gearboot and android init hooking
 	gearboot s0 2>&1
@@ -101,19 +101,30 @@ function boot_os(){
 				done
 			}
 			
+			# Safely unmount /system and /data
+			for mp in "system" "data"; do
+				umount -df "/$mp" || umount -l "/$mp"
+			done
+			
 			# Switch gearlock mountpoints
 			mkdir -p "$SWITCH_DIR" 2>/dev/null && {
-				if test -e "$LOAD_FROMFS"; then
-					#find "$LOAD_FROMFS/tmp" -mindepth 1 -maxdepth 1 | xargs rm -r
-					rm -r "$LOAD_FROMFS/tmp"
-					mv "/gearlock/tmp " "$LOAD_FROMFS"
-					mount --bind "$LOAD_FROMFS" "$SWITCH_DIR"
+				if test -e "$LOAD_FROMFS_ROOT"; then
+					#find "$LOAD_FROMFS_ROOT/tmp" -mindepth 1 -maxdepth 1 | xargs rm -r
+					rm -rf "$LOAD_FROMFS_ROOT/tmp"
+					mv "/gearlock/tmp" "$LOAD_FROMFS_ROOT"
+					mount --bind "$LOAD_FROMFS_ROOT" "$SWITCH_DIR"
 					mount --make-slave "$SWITCH_DIR"
+					i=0
 					for mp in gearroot efiroot; do
-						mount --move "/gearlock/$mp" "$SWITCH_DIR/$mp"
+						mountpoint -q "/gearlock/$mp" \
+							&& mount --move "/gearlock/$mp" "$SWITCH_DIR/$mp"
+						i=$(( i + $? ))
 					done
+					test "$i" == 0 && {
+						exec /busybox sh -c '/bin/busybox rm -rf /gearlock/*; /bin/busybox umount -df /gearlock'
+					}
 				else
-					exec /bin/mount --move /gearlock "$SWITCH_DIR"
+					exec /bin/busybox mount --move /gearlock "$SWITCH_DIR"
 				fi
 			}
 		fi

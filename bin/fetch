@@ -154,6 +154,7 @@ if test -n "$GRROOT"; then
 	GCOMM="gearlock"
 	YEAR="$(date '+%Y')"
 	DATE="$(date '+%dd-%mmo-%Yy_%Ss-%Mm-%Hh')"
+	LOAD_FROMFS_ROOT="$SYSTEM_DIR/.loadfromfs"
 	GXPM_LOG="$STATDIR/gxpm.log"
 	GRLT="$(
 		mount | grep "$GRROOT_DIR" | grep -q ext4 && echo "$GRROOT/.gxpm" \

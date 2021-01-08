@@ -1,7 +1,6 @@
 #!/gearlock/bin/bash
 # Setup tempdir
-test ! -e /gearlock/bin/fetch && exit 1
-source /gearlock/bin/fetch
+source /gearlock/bin/fetch || exit
 DUMP_DIR="$GTMP/dumpDebug"
 DUMP_ARCHIVE_TARGET="/data/dumpDebug.7z"
 mkdir -p "$DUMP_DIR"
@@ -21,7 +20,7 @@ echo -e "+ Dumping status directory" && sleep 0.7
 test -n "$STATDIR" && rsync -a "$STATDIR/" "$DUMP_DIR/status_dump" 2>/dev/null
 
 # Dump GSTATUS
-echo -e "+ Dumping gstatus output" && sleep 0.7
+echo -e "+ Dumping gstatus output"
 gstatus > "$DUMP_DIR/gstatus_dump.log" 2>&1
 
 # Dump boot params
@@ -33,10 +32,14 @@ echo -e "+ Dumping mountpoint status" && sleep 0.7
 mount > "$DUMP_DIR/mountpoints.log"
 
 # Dump various kernel stuff
-echo -e "+ Dumping kernel related info and directory trees: "
-for _util in demsg lsmod lsusb; do
+echo -e "+ Dumping kernel related info and directory trees: \n==== \c"
+for _util in dmesg lsmod lsusb; do
     echo -n "$_util "
-    $_util > "$DUMP_DIR/${_util}.log" 2>&1
+    if test "$_util" == "dmesg"; then
+	$_util -Hk > "$DUMP_DIR/${_util}.log" 2>&1
+    else
+	$_util > "$DUMP_DIR/${_util}.log" 2>&1
+    fi
 done
 for _dir in "/proc" "/sys" "/dev"; do
     echo -n "$_dir "
@@ -45,12 +48,18 @@ done
 
 # Dump logcat
 if test -z "$RECOVERY"; then
-    echo -e "+ Dumping logcat for 10 seconds"
-    ( sleep 10 && gkillapp "logcat -f $DUMP_DIR/logcat.log" ) &
-    logcat -f "$DUMP_DIR/logcat.log"
+    echo -e "+ Dumping logcat for 10 seconds: \c"
+    ( sleep 10 && gkillapp "logcat -f $DUMP_DIR/logcat.log" >/dev/null 2>&1) &
+    logcat -f "$DUMP_DIR/logcat.log" > /dev/null 2>&1
 fi
     
 # Pack the dump
-echo -e "+ Packing your dumpDebug" && sleep 0.7
-garca a -m0=zstd "$DUMP_ARCHIVE_TARGET" "$DUMP_DIR"/* > /dev/null 2>&1 && rm -rf "$DUMP_DIR"
-echo -e "\n++++ ${DUMP_ARCHIVE_TARGET##*/} saved at ${DUMP_ARCHIVE_TARGET%/*}, kindy upload it to @AXON for debugging" && sleep 5 && exit
+echo -e "+ Packing your dumpDebug"
+rm -f "$DUMP_ARCHIVE_TARGET" "$GRROOT/${DUMP_ARCHIVE_TARGET##*/}"
+garca a "$DUMP_ARCHIVE_TARGET" "$DUMP_DIR"/* > /dev/null 2>&1
+rsync "$DUMP_ARCHIVE_TARGET" "$GRROOT/${DUMP_ARCHIVE_TARGET##*/}"
+rm -rf "$DUMP_DIR"
+chmod -f 777 "$DUMP_ARCHIVE_TARGET" "$GRROOT/${DUMP_ARCHIVE_TARGET##*/}"
+echo -e "
+++++ ${DUMP_ARCHIVE_TARGET##*/} saved at ${DUMP_ARCHIVE_TARGET%/*} and at your OS-PARTITION-ROOT.
+++++ Kindy upload it to whoever asked you for debugging perposes" && exit

@@ -28,6 +28,10 @@ bin/mkrecovery
 bin/nout
 bin/sudo 
 
+# core/_lang_
+core/_lang_/en
+core/_lang_/vn
+
 # core/emisc.src
 core/emisc.src/1
 core/emisc.src/2

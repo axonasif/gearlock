@@ -3,47 +3,49 @@ mount -o rw,remount / 2>/dev/null
 VERSION="1.3"
 
 # Runtime Functions
-function play_bootsound(){
+function play_bootsound() {
 	test -n "$BOOTSOUND" && test -e "$BOOTSOUND" \
 		&& alsa_aplay "$BOOTSOUND" </dev/null &>/dev/null & disown
 }
 
-function check_app(){
+function check_app() {
 	test ! -d "/data/data/$GAPPID" && pm install "$GRLBASE/share/gearlock/app.apk" > /dev/null 2>&1
 	return 0
 }
 
-function make_bashls(){
+function make_bashls() {
 	test -e "${mk:="/gearlock/tmp/.mkbashls"}" && test ! -e "${lk:="/gearlock/tmp/.bashls"}" \
 		&& touch "$lk" && rm "$mk" && openvt -c $1 gbash -l && setfont "$GRLBASE/share/terminfo/c/cons16-asm" -C /dev/tty$1 \
 		&& setterm --linewrap on > /dev/tty$1
 }
 
-function bind_grload(){
+function bind_grload() {
 	if ! mountpoint -q "/mnt/gearload"; then
 		ckdirex "/mnt/gearload" 777
 		mount --bind "$GRROOT/gearload" "/mnt/gearload"
 	fi
 }
 
-function chmod_mnt(){
+function chmod_mnt() {
 	chmod 777 "$GRROOT_DIR" && test -d "/mnt/runtime" && chmod 777 "/mnt/runtime"
 	test -e "/mnt/runtime/default" && {
 		test -z "$(find "/mnt/runtime/default" -maxdepth 0 -empty)" && chmod -f 777 /mnt/runtime/default/*
 	}
 }
 
-function hook_boot(){
+function hook_boot() {
 	export GBRUNTIME="yes" && source /gearlock/bin/fetch || exit
 }
 
-function do_zygote_job(){
+function do_zygote_job() {
 	test -e /system/bin && test -e /system/xbin && chmod 777 /system/*bin/su>/dev/null 2>&1
 	test -e /sbin/su && chmod 777 /sbin/su
 	hook_boot
 	test "$SECOND_GTTY" != "no" && touch "$GTMP/.mkbashls"
-	mkdir -p "$GBDIR/init" "$GBDIR/post-fs" "$GBDIR/post-fs-data" "$GBDIR/boot-post" "$GBDIR/boot-comp">/dev/null 2>&1
-	chmod -f 755 "$GBDIR/"*>/dev/null 2>&1
+	for _dir in "init" "post-fs" "post-fs-data" "boot-post" "boot-comp"; do
+		mkdir -p "$GBDIR/$_dir" "$OVERLAYDIR/$_dir" >/dev/null 2>&1
+	done
+	chmod -f 755 "$GBDIR/"* "$OVERLAYDIR/"* >/dev/null 2>&1
 }
 
 function loadFromFs.create() {
@@ -53,7 +55,7 @@ function loadFromFs.create() {
 				echo -e "==== Creating ${FUNCNAME%.create} instance: \c"
 				(
 					rm -rf "$LOAD_FROMFS_ROOT"
-					cd "$SYSTEM_DIR/usr"
+					cd "$SYSTEM_DIR/usr" || return 1
 					cpio -iudF "$GRROOT/gearlock"
 					mv "$SYSTEM_DIR/usr/gearlock" "$LOAD_FROMFS_ROOT"
 				)
@@ -64,27 +66,59 @@ function loadFromFs.create() {
 	fi
 }
 
-function gbjob(){
+function overlay.set() {
+	local LOG_FILE="$GTMP/gearboot.overlay.log"
+	for _dir in "$OVERLAYDIR/"*"/$GBSTAGE"; do
+		local WORKDIR="$OVERLAYDIR/$_dir"
+		if test -z "$(find "$WORKDIR" -maxdepth 0 -empty)"; then
+		
+			# Read both empty dir and files to process
+			readarray -d '' overlay_empty_dirs < <(find "$WORKDIR" -type d -empty -print0)
+			readarray -d '' overlay_files < <(find "$WORKDIR" -mindepth 1 -type f -print0)
+			
+			# Lets start with empty dirs to process
+			for empty_dir in "${overlay_empty_dirs[@]}"; do
+				local_dir="${empty_dir##$WORKDIR}"
+				test -e "$local_dir" && mount --bind "$empty_dir" "$local_dir" && echo -e "$local_dir" >> "$LOG_FILE"
+			done
+			
+			# Now lets deal with file type instead
+			for file_type in "${overlay_files[@]}"; do
+				local_file="${file_type##$WORKDIR}"
+				test -e "$local_file" && mount --bind "$file_type" "$local_file" && echo -e "$local_file" >> "$LOG_FILE"
+			done
+		
+		fi
+	done
+}
+
+# FIXME: Guess we need to do something with it ?
+# function overlay.unset() {
+# 	
+# }
+
+function gbjob() {
 	export GBSTAGE="$1"
+	local LOG_FILE="$GTMP/gearboot.log"
 	if test -d "$GBDIR/init" && test -d "$GBDIR/post-fs" && test -d "$GBDIR/post-fs-data" && test -d "$GBDIR/boot-post" && test -d "$GBDIR/boot-comp"; then
-		if test -n "$1" && test -z "$(find "$GBDIR/$1" -maxdepth 0 -empty)"; then
+		if test -n "$GBSTAGE" && test -z "$(find "$GBDIR/$1" -maxdepth 0 -empty)"; then
 			cd "$GBDIR/$1" || return 1
 			test "$1" == "init" && echo -e "\n++ Running GearBoot init executables ...\n"
 			if test ! -e "$GTMP/gearboot.log"; then
-				echo -e "# Start of $1 stage @ $(date)" > "$GTMP/gearboot.log"
+				echo -e "# Start of $1 stage @ $(date)" > "$LOG_FILE"
 			else
-				echo -e "\n\n\n# Start of $1 stage @ $(date)" >> "$GTMP/gearboot.log"
+				echo -e "\n\n\n# Start of $1 stage @ $(date)" >> "$LOG_FILE"
 			fi
 			shopt -s globstar
 			for f in **/*; do
 				if test -f "$f"; then
-					echo "  $(date '+%T:%N')  :  $1  :  $f" >> "$GTMP/gearboot.log"; chmod 755 "$f"
+					echo "  $(date '+%T:%N')  :  $1  :  $f" >> "$GTMP/gearboot.log" && chmod 755 "$f"
 					if test "$1" == "init"; then
 						echo -e "\n===== $f" && "$GBDIR/$GBSTAGE/$f"
 					elif [[ "$1" =~ .*post-fs.* ]]; then
-						"$GBDIR/$GBSTAGE/$f" >> "$GTMP/gearboot.raw.log" 2>&1
+						"$GBDIR/$GBSTAGE/$f" >> "${LOG_FILE/.log/.raw.log}" 2>&1
 					else
-						"$GBDIR/$GBSTAGE/$f" >> "$GTMP/gearboot.raw.log" 2>&1 & disown
+						"$GBDIR/$GBSTAGE/$f" >> "${LOG_FILE/.log/.raw.log}" 2>&1 & disown
 					fi
 				fi
 			done
@@ -93,7 +127,7 @@ function gbjob(){
 	fi
 }
 
-function write_gblog(){
+function write_gblog() {
 	local PATH
 	PATH="/gearlock/bin"
 	SL="$(grep -nA500 "# Start of $GBSTAGE stage" "$GTMP/gearboot.log" | grep "$(basename "$0")" | head -n1)"

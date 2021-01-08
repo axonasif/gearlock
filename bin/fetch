@@ -148,6 +148,7 @@ if test -n "$GRROOT"; then
 	UNINSDIR="$GHOME/unins"
 	GAPPID="com.supremegamers.gearlock"
 	GBDIR="$GHOME/gearboot"
+	OVERLAYDIR="$GBDIR/overlay"
 	EXTDIR="$GHOME/extensions"
 	HOOKDIR="$GHOME/hook"
 	WORKDIR="$GHOME/workdir"

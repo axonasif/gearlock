@@ -1,0 +1,86 @@
+From c564ccf8abb01b8c472bfa7de4fa47b930ee65ec Mon Sep 17 00:00:00 2001
+From: AXIM0S <aminurfisa3@gmail.com>
+Date: Sat, 8 Aug 2020 15:31:04 -0400
+Subject: [PATCH] Add in Gearlock recovery
+
+---
+ Android.mk                         |  2 +-
+ initrd/init                        |  2 +-
+ initrd/scripts/0-hook              |  1 +
+ install/grub2/efi/boot/android.cfg | 19 +++++++++++--------
+ install/scripts/1-install          |  1 +
+ 5 files changed, 15 insertions(+), 10 deletions(-)
+ create mode 100644 initrd/scripts/0-hook
+
+diff --git a/Android.mk b/Android.mk
+index 3b5a521e..4a556e85 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -83,7 +83,7 @@ $(boot_dir): $(shell find $(LOCAL_PATH)/boot -type f | sort -r) $(isolinux_files
+ 	mkdosfs -n EFI $$img; mmd -i $$img ::boot; \
+ 	mcopy -si $$img $@/efi ::; mdel -i $$img ::efi/boot/*.cfg
+ 
+-BUILT_IMG := $(addprefix $(PRODUCT_OUT)/,ramdisk.img initrd.img install.img Androidx86-Installv26.0003.exe) $(systemimg)
++BUILT_IMG := $(addprefix $(PRODUCT_OUT)/,ramdisk.img initrd.img install.img gearlock Androidx86-Installv26.0003.exe) $(systemimg)
+ BUILT_IMG += $(if $(TARGET_PREBUILT_KERNEL),$(TARGET_PREBUILT_KERNEL),$(PRODUCT_OUT)/kernel)
+ 
+ ifeq ($(BOARD_SLOT_AB_ENABLE),true)
+diff --git a/initrd/init b/initrd/init
+index 36b8e2be..c1a4b529 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -220,7 +220,7 @@ fi
+ [ -n "$INSTALL" ] && do_install
+ 
+ load_modules
+-mount_data
++mount_data; hook_gearinit
+ mount_sdcard
+ setup_tslib
+ setup_dpi
+diff --git a/install/grub2/efi/boot/android.cfg b/install/grub2/efi/boot/android.cfg
+index 7c2e515e..b9492587 100644
+--- a/install/grub2/efi/boot/android.cfg
++++ b/install/grub2/efi/boot/android.cfg
+@@ -83,15 +83,18 @@ search --no-floppy --set android -f $kdir/kernel
+ export android bootefi grub kdir live src
+ 
+ # Create main menu
+-add_entry "$live" quiet
++
++add_entry "$live" quiet NORECOVERY=0
++add_entry "$live (GearLock Recovery Mode)" quiet
+ add_entry "$live - Debug" DEBUG=2
+-add_entry "$autoload_old" AUTO_LOAD=old
+-add_entry "$live - Debug gralloc.gbm" DEBUG=2 GRALLOC=gbm
+-add_entry "$live - Debug drmfb-composer" DEBUG=2 HWC=drmfb GRALLOC=gbm
+-add_entry "$live - Debug hwcomposer.drm" DEBUG=2 HWC=drm GRALLOC=gbm
+-add_entry "$live - Debug gralloc.minigbm" DEBUG=2 GRALLOC=minigbm
+-add_entry "$live - Debug hwcomposer.drm_minigbm" DEBUG=2 HWC=drm_minigbm GRALLOC=minigbm
+-add_entry "$live - Debug hwcomposer.intel" DEBUG=2 HWC=intel GRALLOC=intel
++add_entry "$live - old modprobe mode" AUTO_LOAD=old NOGFX=1
++add_entry "$live - vulkan and old modprobe mode" VULKAN=1 AUTO_LOAD=old NOGFX=1
++add_entry "$live - Debug gralloc.gbm" DEBUG=2 GRALLOC=gbm NOGFX=1
++add_entry "$live - Debug drmfb-composer" DEBUG=2 HWC=drmfb GRALLOC=gbm NOGFX=1
++add_entry "$live - Debug hwcomposer.drm" DEBUG=2 HWC=drm GRALLOC=gbm NOGFX=1
++add_entry "$live - Debug gralloc.minigbm" DEBUG=2 GRALLOC=minigbm NOGFX=1
++add_entry "$live - Debug hwcomposer.drm_minigbm" DEBUG=2 HWC=drm_minigbm GRALLOC=minigbm NOGFX=1
++add_entry "$live - Debug hwcomposer.intel" DEBUG=2 HWC=intel GRALLOC=intel NOGFX=1
+ if [ -s ($android)$kdir/install.img ]; then
+ 	add_entry "Installation" INSTALL=1
+ fi
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index 69550188..8838f4e2 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -551,6 +551,7 @@ install_to()
+ 
+ 	mkdir -p hd/$asrc
+ 	cd hd/$asrc
++	test -e "/mnt/$SRC/gearlock" && cp "/mnt/$SRC/gearlock" . 
+ 	rm -rf system*
+ 	( ( cd /; find $files | $CPIO -H newc -o ) | pv -ns ${size}k | ( $CPIO -iud > /dev/null; echo $? > /tmp/result )) 2>&1 \
+ 		| progress_bar "Installing $OS_TITLE to $1" "Expect to write $size KB..."
+-- 
+2.17.1
+

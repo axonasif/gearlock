@@ -20,9 +20,8 @@ private_utils_dir="$tutils_dir/private"
 private_patch_dir="$private_utils_dir/patches/google_diff/$TARGET_PRODUCT"
 
 # Device type selection
-if ! ANDROID_MAJOR_VERSION="android-$(grep 'PLATFORM_VERSION :=' "$top_dir/build/core/version_defaults.mk" \
-									| sed 's|.*=||' \
-									| cut -d '.' -f1 2>/dev/null)"; then
+if ! ANDROID_MAJOR_VERSION="android-$(sed -n "s/^ *PLATFORM_VERSION :=//p" "$top_dir/build/core/version_defaults.mk" \
+									| xargs | cut -d '.' -f1 2>/dev/null)"; then
 	PS3='Which Android version are you building?: '
 	options=("Android 7"
 			"Android 8"

@@ -14,44 +14,47 @@
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
 # more details.
 
-top_dir=`pwd`
+top_dir="$(pwd)"
 utils_dir="$top_dir/vendor/gearlock"
 private_utils_dir="$tutils_dir/private"
 private_patch_dir="$private_utils_dir/patches/google_diff/$TARGET_PRODUCT"
 
 # Device type selection
-PS3='Which Android version are you building?: '
-options=("Android 7"
-		 "Android 8"
-		 "Android 9"
-		 "Android 10")
-select opt in "${options[@]}"
-do
-	case $opt in
-		"Android 7")
-			echo "you chose choice $REPLY which is $opt"
-			ANDROID_MAJOR_VERSION="android-7"
-			break
-			;;
-		"Android 8")
-			echo "you chose choice $REPLY which is $opt"
-			ANDROID_MAJOR_VERSION="android-8"
-			break
-			;;
-		"Android 9")
-			echo "you chose choice $REPLY which is $opt"
-			ANDROID_MAJOR_VERSION="android-9"
-			break
-			;;
-		"Android 10")
-			echo "you chose choice $REPLY which is $opt"
-			ANDROID_MAJOR_VERSION="android-10"
-			break
-			;;
-		*) echo "invalid option $REPLY";;
-	esac
-done
-
+if ! ANDROID_MAJOR_VERSION="android-$(grep 'PLATFORM_VERSION :=' "$top_dir/build/core/version_defaults.mk" \
+									| sed 's|.*=||' \
+									| cut -d '.' -f1 2>/dev/null)"; then
+	PS3='Which Android version are you building?: '
+	options=("Android 7"
+			"Android 8"
+			"Android 9"
+			"Android 10")
+	select opt in "${options[@]}"
+	do
+		case $opt in
+			"Android 7")
+				echo "you chose choice $REPLY which is $opt"
+				ANDROID_MAJOR_VERSION="android-7"
+				break
+				;;
+			"Android 8")
+				echo "you chose choice $REPLY which is $opt"
+				ANDROID_MAJOR_VERSION="android-8"
+				break
+				;;
+			"Android 9")
+				echo "you chose choice $REPLY which is $opt"
+				ANDROID_MAJOR_VERSION="android-9"
+				break
+				;;
+			"Android 10")
+				echo "you chose choice $REPLY which is $opt"
+				ANDROID_MAJOR_VERSION="android-10"
+				break
+				;;
+			*) echo "invalid option $REPLY";;
+		esac
+	done
+fi
 
 patch_dir="$utils_dir/patches/$ANDROID_MAJOR_VERSION"
 

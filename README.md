@@ -10,6 +10,8 @@ GearLock and everything within it are standalone programs and does not need to r
 
 It can be used both GUI and TTY in a user-friendly manner, including advanced CLI usage.
 
+
+
 # Features
 
 I mainly post updates at https://supreme-gamers.com/r/gearlock-custom-recovery-replacement-for-android-x86.40
@@ -17,6 +19,8 @@ I mainly post updates at https://supreme-gamers.com/r/gearlock-custom-recovery-r
 So, check there.
 
 This repo is only used for development and issue tracking.
+
+
 
 # Pre-baked GearLock
 
@@ -26,6 +30,8 @@ GearLock is being proudly integrated with the following reputed distros:
 * PhoenixOS DarkMatter
 
 If you're working on a remarkable distro and want to bring GearLock into it then you're welcome :)
+
+
 
 # Development and Contributing
 
@@ -47,6 +53,8 @@ I would need to setup a complete build system for them, what I've been doing was
 
 I will need a lot of free time to accomplish this since I'm a student, but you can surely expect this in the future.
 
+
+
 # Additional Links
 
 * GearLock dev-doc: https://supreme-gamers.com/gearlock
@@ -54,7 +62,42 @@ I will need a lot of free time to accomplish this since I'm a student, but you c
 * GearLock core-pkg: https://github.com/AXIM0S/gearlock-core-pkg
 * GearLock mesa-pkg: https://github.com/AXIM0S/gearlock-core-pkg
 * GearLock kernel-pkg: https://github.com/AXIM0S/gearlock-kernel-pkg
-* GearLock integration with distro: https://gitlab.com/AXIM0S/vendor-gearlock
+
+
+
+# GearLock integration with Android-x86 source
+
+Currently patches are only available for nougat, oreo, pie and q.
+Although other versions are supported by the `executable-gearlock-installer`.
+Patch files for murshmellow and lolipop will be included later on.
+
+Adaptation for Android-Generic Project and improvements by: @electrikjesus
+
+* First clone the repo into `vendor/` from your aosp project root.
+
+> ```bash
+> git clone https://gitlab.com/AXIM0S/vendor-gearlock vendor/gearlock
+> ```
+
+* Now apply the patches:
+
+> ```bash
+> . build/envsetup.sh
+> apply-gearlock-patches
+> ```
+
+* Then build ISO.
+
+> Android-Generic (x86/PC):
+`build-x86 android_x86_64-userdebug`
+
+> BlissOS 11.x:
+`build-x86.sh android_x86_64-userdebug`
+
+> Android-x86:
+`lunch android_x86_64-userdebug && make iso_img`
+
+
 
 # Credits and thanks
 
@@ -86,6 +129,8 @@ Without their open-minded years of hard work, GearLock wouldn't have been the sa
 * https://github.com/landley/toybox
 * https://github.com/osospeed/ttyecho
 * http://e2fsprogs.sourceforge.net
+
+
 
 # Copyright and License
 

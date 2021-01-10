@@ -70,9 +70,9 @@ function greboot() {
 }
 
 function gslr() { 
-	LII=$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)
+	LII="$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)"
 	if [ -n "$LII" ]; then
-		LI=$(geco $LII | awk '{print $1}')
+		LI="$(geco $LII | awk '{print $1}')"
 		sed -i "${LI}s/.*/${3}/" "$1"
 	else
 		geco "~ Error [gslr:1], could not find any line containing ${RED}$2${RC}"

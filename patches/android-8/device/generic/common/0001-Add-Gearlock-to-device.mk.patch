@@ -18,7 +18,7 @@ index f16cba2..868b417 100644
 +    
 +# Gearlock
 +PRODUCT_COPY_FILES += \
-+    bootable/gearlock/gearlock:gearlock
++    vendor/gearlock/out/gri/gearlock:gearlock
  
  # WIDEVINE OVERRIDES
  # PRODUCT_COPY_FILES += \

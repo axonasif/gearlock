@@ -18,7 +18,7 @@ index d6ea112..4d06b87 100644
  
 +# Gearlock 
 +PRODUCT_COPY_FILES += \
-+    vendor/gearlock/gearlock:gearlock
++    vendor/gearlock/out/gri/gearlock:gearlock
 +
 +
  PRODUCT_TAGS += dalvik.gc.type-precise

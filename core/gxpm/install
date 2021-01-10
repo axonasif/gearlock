@@ -112,7 +112,7 @@ function install_comm(){
 
 	# GearBoot/overlay
 	if [ -d "${GRLT}/${GCOMM}/gearboot/overlay" ]; then
-		(sleep 1 && rm -rf "$OVERLAYDIR/${NAME}"; mkdir -p "$OVERLAYDIR/${NAME}" && rsync -a "${GRLT}/${GCOMM}/gearboot/overlay/") &
+		(sleep 1 && rm -rf "$OVERLAYDIR/${NAME}"; mkdir -p "$OVERLAYDIR/${NAME}" && rsync -a "${GRLT}/${GCOMM}/gearboot/overlay/" "$OVERLAYDIR/${NAME}") &
 		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEARBOOT_OVERLAY:: CREATE" "GEARBOOT_OVERLAY_CREATE"
 	fi
 

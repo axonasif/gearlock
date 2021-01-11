@@ -60,10 +60,15 @@ extend_img(){
 
 # The main process
 	geco "\n\$\$ Extending ${inputImg##*/} size to ${inputSize}MB by adding ${megs2Add}MB more, wait patiently\n"
-	(dd if=/dev/zero bs=1M count="$megs2Add" >> "$inputImg"; echo $? > "$GTMP/.extimg_retc")>/dev/null 2>&1 &
-	watchgrow "$inputImg"; if test "$(cat "$GTMP/.extimg_retc")" != 0; then false; handleError "Something went wrong, operation failed"; fi
-	e2fsck -fy "$inputImg">/dev/null 2>&1
-	resize2fs "$inputImg">/dev/null 2>&1; handleError "\n Failed to extend ${inputImg##*/}, you ${inputImg##*/} is broken now ..."
+	(dd if=/dev/zero bs=1M count="$megs2Add" >> "$inputImg"; echo $? > "$GTMP/.extimg_retc") 1>/dev/null &
+	watchgrow "$inputImg"
+	if test "$(cat "$GTMP/.extimg_retc")" != 0; then
+		false
+		handleError "Something went wrong, operation failed"
+	fi
+	e2fsck -fy "$inputImg" 1>/dev/null
+	resize2fs "$inputImg" 1>/dev/null
+	handleError "\n Error detected while extending ${inputImg##*/}, you ${inputImg##*/} is broken now ..."
 	do_sync && gearmount --android && echo -e "\n\n%% ${inputImg##*/} has been successfully extended to $((origSize + megs2Add))MB"
 
 }

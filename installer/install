@@ -69,15 +69,22 @@ function greboot() {
 	fi
 }
 
-function gslr() { 
-	LII="$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)"
-	if [ -n "$LII" ]; then
-		LI="$(geco $LII | awk '{print $1}')"
-		sed -i "${LI}s/.*/${3}/" "$1"
+function gslr() {
+	if test -n "$1" && test -n "$2" && test -n "$3"; then
+		LII="$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)";
+		if test -n "$LII"; then
+			LI="$(echo -e "$LII" | awk '{print $1}')";
+			sed -i "${LI}s/.*/${3}/" "$1";
+		else
+			RETC=$?
+			echo -e "~ Error [gslr:$RETC], could not find any line containing ${RED}$2${RC}" && return $RETC
+		fi;
 	else
-		geco "~ Error [gslr:1], could not find any line containing ${RED}$2${RC}"
+		if test -z "$NPUT"; then
+			echo -e "~ Error [gslr:3], lack of input" && return 1
+		fi;
 	fi
-}
+};
 
 function endjob() { 
 	if [ "$1" = "-b" ]; then

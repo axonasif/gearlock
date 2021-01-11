@@ -71,19 +71,12 @@ Currently patches are only available for nougat, oreo, pie and q.
 Although other versions are supported by the `executable-gearlock-installer`.
 Patch files for murshmellow and lolipop will be included later on.
 
-Adaptation for Android-Generic Project and improvements by: @electrikjesus
+Initial adaptation for Android-Generic Project and improvements by: @electrikjesus
 
-* First clone the repo into `vendor/` from your aosp project root.
-
-> ```bash
-> git clone https://gitlab.com/AXIM0S/vendor-gearlock vendor/gearlock
-> ```
-
-* Now apply the patches:
+* First clone the repo into `bootable/` from your aosp project root.
 
 > ```bash
-> . build/envsetup.sh
-> apply-gearlock-patches
+> git clone https://github.com/AXIM0S/gearlock bootable/gearlock
 > ```
 
 * Then build ISO.
@@ -95,7 +88,7 @@ Adaptation for Android-Generic Project and improvements by: @electrikjesus
 `build-x86.sh android_x86_64-userdebug`
 
 > Android-x86:
-`lunch android_x86_64-userdebug && make iso_img`
+`lunch android_x86_64-userdebug && make -j4 iso_img`
 
 
 

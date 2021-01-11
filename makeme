@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
 
+# Define variables
+_execDir="$(dirname "$(readlink -f "$0")")"
+_buildCacheRoot="${_execDir}/out"
+_buildCache="${_buildCacheRoot}/gearlock"
+_buildCacheInstallerDir="${_buildCacheRoot}/gri"
+_buildInstallerOut="${_buildCacheRoot}/build_installer_out"
+_installerSrc="${_execDir}/installer"
+
 # Define functions
-function gslr ()
-{
-	if [ ! -z "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
-		LII=$(grep -n "$2" "$1" | head -n1 | cut -d : -f1);
-		if [ ! -z "$LII" ]; then
-			LI=$(echo -e $LII | awk '{print $1}');
+function gslr() {
+	if test -n "$1" && test -n "$2" && test -n "$3"; then
+		LII="$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)";
+		if test -n "$LII"; then
+			LI="$(echo -e "$LII" | awk '{print $1}')";
 			sed -i "${LI}s/.*/${3}/" "$1";
 		else
-			echo -e "~ Error [gslr:2], could not find any line containing ${RED}$2${RC}" && return $?
+			RETC=$?
+			echo -e "~ Error [gslr:$RETC], could not find any line containing ${RED}$2${RC}" && return $RETC
 		fi;
 	else
-		if [ -z "$NPUT" ]; then
-			echo -e "~ Error [gslr:3], lack of input" && return $?
+		if test -z "$NPUT"; then
+			echo -e "~ Error [gslr:3], lack of input" && return 1
 		fi;
 	fi
 };
@@ -40,12 +48,6 @@ function main ()
 	# Define core vars
 	local _buildVariant="$1"
 	local _compressionLevel="$2"
-	local _execDir="$(dirname "$(readlink -f "$0")")"
-	local _buildCacheRoot="${_execDir}/out"
-	local _buildCache="${_buildCacheRoot}/gearlock"
-	local _buildCacheInstallerDir="${_buildCacheRoot}/gri"
-	local _buildInstallerOut="${_buildCacheRoot}/build_installer_out"
-	local _installerSrc="${_execDir}/installer"
 		
 	echo -e "Start of GearLock $(cat "${_execDir}"/core/version) build\n"
 		
@@ -74,7 +76,7 @@ function main ()
 	done;
 		
 	
-	# Optimize bash source
+	# Optimize/Syntax-check source code
 	echo -e "Checkig source code syntax"
 	file_list=($(awk 'NF' "${_execDir}/source_files" | sed '/#.*/d')) || handleError "Failed to read source_files"
 	for f in "${file_list[@]}"; do
@@ -124,9 +126,7 @@ function main ()
 		
 	# Create self executable gearlock installer
 	echo -e "Making executable GearLock Installer: \c"
-	mkInstaller "${_buildInstallerOut}"/gearlock gri "${_compressionLevel}" > /dev/null 2>&1
-	local retCode=$?
-	test "$retCode" != "0" && handleError "Making of gearlock installer failed" $retCode
+	! mkInstaller "${_buildInstallerOut}"/gearlock gri "${_compressionLevel}" > /dev/null 2>&1 && handleError "Making of gearlock installer failed"
 	ls -lh "${_buildInstallerOut}" | grep gearlock | awk '{print $5}'
 		
 	# Make bootinstall-initrd.img
@@ -134,4 +134,82 @@ function main ()
 	"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/bootinstall-initrd.img"
 };
 
-main ${1:-"-mx23"} ${2:-""}
+function patch.aosp_root() {
+	local aosp_root
+	aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
+	files_to_patch=(
+		"device/generic/common/device.mk"
+		"bootable/newinstaller/Android.mk"
+		"bootable/newinstaller/initrd/init"
+		"bootable/newinstaller/install/scripts/1-install"
+		"bootable/newinstaller/install/grub2/efi/boot/android.cfg"
+	)
+	
+	function patch.apply() {
+		local FILE="$1"
+		echo -e "==== Applying GearLock patches to $FILE"
+		case "$FILE" in
+			"${files_to_patch[0]}")
+				gslr "$aosp_root/$FILE" \
+					'PRODUCT_COPY_FILES := \\' \
+					'PRODUCT_COPY_FILES := \\\n    bootable\/gearlock\/out\/gri\/gearlock:gearlock \\' \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[1]}")
+				line="$(grep -n 'BUILT_IMG.*:=.*$(.*)' "$aosp_root/$FILE" | head -n1 \
+						| sed 's|/|\\/|g; s|initrd.img|initrd.img gearlock|')"
+						
+				sed -i "${line%%:*}s/.*/${line#*:}/" "$aosp_root/$FILE" \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[2]}")
+				gslr "$aosp_root/$FILE" "mount_sdcard" "mount_sdcard; hook_gearinit" \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[3]}")
+				line="$(grep -n 'files=.*".*initrd.img.*"' "$aosp_root/$FILE" | head -n1 \
+						| sed 's|initrd.img|initrd.img /mnt/$SRC/gearlock|; s|/|\\/|g')"
+						
+				sed -i "${line%%:*}s/.*/${line#*:}/" "$aosp_root/$FILE" \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[4]}")
+				sed -i 's/add_entry.*$/& NORECOVERY=1/g' "$aosp_root/$FILE"
+				sed -i 's|submenu "Advanced options -> " {|submenu "Advanced options -> " {\
+	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
+	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
+	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=0|' "$aosp_root/$FILE"
+				;;
+		esac
+		(
+			cd "$aosp_root/${FILE%/*}" || handleError "Failed to change dir to $aosp_root/${FILE%/*}"
+			git commit -a -m "Update/apply GearLock patches for $FILE" --author="AXON <axonasif@gmail.com>" 1>/dev/null
+		)
+	}
+	
+	# Start with updating/placing hook script
+	local HOOK_PATH="$aosp_root/bootable/newinstaller/initrd/scripts/0-hook"
+	rsync "$_execDir/installer/hook" "$HOOK_PATH" || handleError "Failed to copy hook into $HOOK_PATH"
+	
+	# Now let's find which files we need to patch
+	for _file in "${files_to_patch[@]}"; do
+		! grep -i -E -q 'gearlock|gearinit' "$aosp_root/$_file" \
+			&& patch.apply "$_file"
+	done
+}
+
+case "$1" in
+
+	--aosp)
+		patch.aosp_root
+		main "-mx23" ""
+		;;
+	*)
+		main ${1:-"-mx23"} ${2:-""}
+		;;
+
+esac

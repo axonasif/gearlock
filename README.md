@@ -79,6 +79,11 @@ Initial adaptation for Android-Generic Project and improvements by: @electrikjes
 > git clone https://github.com/AXIM0S/gearlock bootable/gearlock
 > ```
 
+* Now apply the patches
+> ```bash
+> source build/envsetup.sh && lunch android_x86_64-userdebug && make -j4 gearlock
+> ```
+
 * Then build ISO.
 
 > Android-Generic (x86/PC):

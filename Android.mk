@@ -1,7 +1,5 @@
 GEARLOCK_ROOT:= "$(call my-dir)"
 
 gearlock: 
-	@$(GEARLOCK_ROOT)/makeme --aosp
-
-all: 
-	$(gearlock)
+	@chmod +x $(GEARLOCK_ROOT)/makeme
+	@$(GEARLOCK_ROOT)/makeme --aosp-project-makefile

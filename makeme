@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 
-# Define variables
-_execDir="$(dirname "$(readlink -f "$0")")"
-_buildCacheRoot="${_execDir}/out"
-_buildCache="${_buildCacheRoot}/gearlock"
-_buildCacheInstallerDir="${_buildCacheRoot}/gri"
-_buildInstallerOut="${_buildCacheRoot}/build_installer_out"
-_installerSrc="${_execDir}/installer"
+
+# Check if sourced
+! echo "$0" | grep -q "makeme" && echo -e 'makeme should not be sourced!' && exit 1
 
 # Define functions
 function gslr() {
@@ -33,7 +29,7 @@ function handleError ()
 
 };
 
-function mkInstaller ()
+function build.mkInstaller ()
 {
 	rm -rf "${_buildInstallerOut}"; mkdir -p "${_buildInstallerOut}"
 	local GARCA="${_installerSrc}/packer-engine/garca"
@@ -42,8 +38,18 @@ function mkInstaller ()
 	return $?
 };
 
-function main ()
-{
+function build.setVars() {
+	# Define variables
+	_execDir="$(dirname "$(readlink -f "$0")")"
+	_buildCacheRoot="${_execDir}/out"
+	_buildCache="${_buildCacheRoot}/gearlock"
+	_buildCacheInstallerDir="${_buildCacheRoot}/gri"
+	_buildInstallerOut="${_buildCacheRoot}/build_installer_out"
+	_installerSrc="${_execDir}/installer"
+}
+
+
+function build.main() {
 		
 	# Define core vars
 	local _buildVariant="$1"
@@ -101,42 +107,43 @@ function main ()
 	mkdir -p "${_buildCacheInstallerDir}" || handleError "Failed to mkdir ${_buildCacheInstallerDir}"
 	find gearlock | cpio --owner=root:root -o -H newc -O "${_buildCacheInstallerDir}/gearlock"
 		
-	# Merge files from _installerSrc into _buildCacheInstallerDir
-	echo -e "Merging files from ${_installerSrc} into ${_buildCacheInstallerDir}"
-	local installerSrcFiles=(
-	"${_installerSrc}/bin"
-	"${_installerSrc}/hook"
-	"${_installerSrc}/sp"
-	"${_installerSrc}/fx.apk"
-	"${_installerSrc}/install"
-	"${_execDir}/core/version"
-    )
-    
-	for files in "${installerSrcFiles[@]}"; do
-		rsync -a "${files}" "${_buildCacheInstallerDir}"
-	done
+	if test -z "$AOSP_PROJECT"; then
+		# Merge files from _installerSrc into _buildCacheInstallerDir
+		echo -e "Merging files from ${_installerSrc} into ${_buildCacheInstallerDir}"
+		local installerSrcFiles=(
+		"${_installerSrc}/bin"
+		"${_installerSrc}/hook"
+		"${_installerSrc}/sp"
+		"${_installerSrc}/fx.apk"
+		"${_installerSrc}/install"
+		"${_execDir}/core/version"
+		)
+		
+		for files in "${installerSrcFiles[@]}"; do
+			rsync -a "${files}" "${_buildCacheInstallerDir}"
+		done
 
-		
-	# Make ghome empty dirs
-	for folders in ghome ghome/dependencies ghome/extensions ghome/status ghome/unins ghome/gearboot \
-	${gd:=ghome/gearboot}/boot-comp $gd/boot-post $gd/init $gd/post-fs $gd/post-fs-data; do mkdir -p "${_buildCacheInstallerDir}/$folders"; done
-	# Copy extra ghome subdirs
-# 	rsync -a "${_installerSrc}/extensions" "${_installerSrc}/.config" "${_installerSrc}/.local" "${_buildCacheInstallerDir}/ghome"
-	chmod -R 755 "${_buildCacheInstallerDir}" 
-		
-	# Create self executable gearlock installer
-	echo -e "Making executable GearLock Installer: \c"
-	! mkInstaller "${_buildInstallerOut}"/gearlock gri "${_compressionLevel}" > /dev/null 2>&1 && handleError "Making of gearlock installer failed"
-	ls -lh "${_buildInstallerOut}" | grep gearlock | awk '{print $5}'
-		
-	# Make bootinstall-initrd.img
-	echo -e "Making initrd.img-bootinstall image: \c"
-	"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/bootinstall-initrd.img"
+			
+		# Make ghome empty dirs
+		for folders in ghome ghome/dependencies ghome/extensions ghome/status ghome/unins ghome/gearboot \
+		${gd:=ghome/gearboot}/boot-comp $gd/boot-post $gd/init $gd/post-fs $gd/post-fs-data; do mkdir -p "${_buildCacheInstallerDir}/$folders"; done
+		# Copy extra ghome subdirs
+	# 	rsync -a "${_installerSrc}/extensions" "${_installerSrc}/.config" "${_installerSrc}/.local" "${_buildCacheInstallerDir}/ghome"
+		chmod -R 755 "${_buildCacheInstallerDir}" 
+			
+		# Create self executable gearlock installer
+		echo -e "Making executable GearLock Installer: \c"
+		! build.mkInstaller "${_buildInstallerOut}"/gearlock gri "${_compressionLevel}" > /dev/null 2>&1 \
+			&& handleError "Making of gearlock installer failed"
+		ls -lh "${_buildInstallerOut}" | grep gearlock | awk '{print $5}'
+			
+		# Make bootinstall-initrd.img
+		echo -e "Making initrd.img-bootinstall image: \c"
+		"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/bootinstall-initrd.img"
+	fi
 };
 
 function patch.aosp_root() {
-	local aosp_root
-	aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
 	files_to_patch=(
 		"device/generic/common/device.mk"
 		"bootable/newinstaller/Android.mk"
@@ -183,6 +190,10 @@ function patch.aosp_root() {
 	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
 	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
 	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=0|' "$aosp_root/$FILE"
+				sed -i 's|submenu "Advanced options -> " --class forward {|submenu "Advanced options -> " --class forward {\
+	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
+	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
+	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=0|' "$aosp_root/$FILE"
 				;;
 		esac
 		(
@@ -202,14 +213,29 @@ function patch.aosp_root() {
 	done
 }
 
+
 case "$1" in
-
-	--aosp)
+	--aosp-project-makefile)
+		aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
+		AOSP_PROJECT=true
+		build.setVars
 		patch.aosp_root
-		main "-mx23" ""
+		build.main "-mx23" ""
 		;;
+	
+	--aosp-project-vendorsetup)
+		shift
+		test -z "$1" && handleError "Failed to locate \$aosp_root"
+		aosp_root="$1"
+		AOSP_PROJECT=true
+		build.setVars
+		patch.aosp_root
+		build.main "-mx23" ""
+		;;
+	
 	*)
-		main ${1:-"-mx23"} ${2:-""}
+		build.setVars
+		build.main ${1:-"-mx23"} ${2:-""}
 		;;
-
 esac
+

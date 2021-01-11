@@ -73,18 +73,32 @@ Patch files for murshmellow and lolipop will be included later on.
 
 Initial adaptation for Android-Generic Project and improvements by: @electrikjesus
 
-* First clone the repo into `bootable/` from your aosp project root.
+You can either clone into `bootable/` or `vendor/`(recommended).
+
+### vendor/ Method
+
+* Clone the repo into `vendor/` from your aosp project root.
+
+> ```bash
+> git clone https://github.com/AXIM0S/gearlock vendor/gearlock
+> ```
+
+
+### bootable/ Method
+
+* Clone the repo into `bootable/` from your aosp project root.
 
 > ```bash
 > git clone https://github.com/AXIM0S/gearlock bootable/gearlock
 > ```
 
-* Now apply the patches
+* Now manually apply the patches
 > ```bash
 > source build/envsetup.sh && lunch android_x86_64-userdebug && make -j4 gearlock
 > ```
 
-* Then build ISO.
+
+## Lastly, build ISO (Doesn't matter what method you picked)
 
 > Android-Generic (x86/PC):
 `build-x86 android_x86_64-userdebug`

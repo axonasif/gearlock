@@ -74,7 +74,7 @@ Adaptation for Android-Generic Project was done by: @electrikjesus
 
 You can either clone into `bootable/` or `vendor/`(recommended).
 
-### vendor/ Method
+#### vendor/ Method
 
 * Clone the repo into `vendor/` from your aosp project root.
 
@@ -85,7 +85,7 @@ You can either clone into `bootable/` or `vendor/`(recommended).
 * Thats it. (ignore bootable/ Method)
 
 
-### bootable/ Method
+#### bootable/ Method
 
 * Clone the repo into `bootable/` from your aosp project root.
 

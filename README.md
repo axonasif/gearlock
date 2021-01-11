@@ -65,13 +65,12 @@ I will need a lot of free time to accomplish this since I'm a student, but you c
 
 
 
-# GearLock integration with Android-x86 source
+# Integration with Android-x86 source
 
 Currently patches are only available for nougat, oreo, pie and q.
 Although other versions are supported by the `executable-gearlock-installer`.
 Patch files for murshmellow and lolipop will be included later on.
-
-Initial adaptation for Android-Generic Project and improvements by: @electrikjesus
+Adaptation for Android-Generic Project was done by: @electrikjesus
 
 You can either clone into `bootable/` or `vendor/`(recommended).
 
@@ -82,6 +81,8 @@ You can either clone into `bootable/` or `vendor/`(recommended).
 > ```bash
 > git clone https://github.com/AXIM0S/gearlock vendor/gearlock
 > ```
+
+* Thats it. (ignore bootable/ Method)
 
 
 ### bootable/ Method

@@ -52,8 +52,8 @@ function build.setVars() {
 function build.main() {
 		
 	# Define core vars
-	local _buildVariant="$1"
-	local _compressionLevel="$2"
+# 	local _buildVariant="$1"
+	local _compressionLevel="$1"
 		
 	echo -e "Start of GearLock $(cat "${_execDir}"/core/version) build\n"
 		
@@ -101,7 +101,6 @@ function build.main() {
 	chmod -R 755 "${_buildCache}" || handleError "Failed to \'chmod -R 755 ${_buildCache}\'"
 		
 	# Make cpio archive of `gearlock` ~~ cd into _buildCacheRoot
-	test "$2" == '-p' && read -p "Press [Enter] to continue" readEnterKey
 	echo -e "Making cpio archive of gearlock directory: \c"
 	cd "${_buildCacheRoot}" || handleError "Failed to cd ${_buildCacheRoot}"
 	mkdir -p "${_buildCacheInstallerDir}" || handleError "Failed to mkdir ${_buildCacheInstallerDir}"
@@ -220,7 +219,7 @@ case "$1" in
 		AOSP_PROJECT=true
 		build.setVars
 		patch.aosp_root
-		build.main "-mx23" ""
+		build.main "-mx23"
 		;;
 	
 	--aosp-project-vendorsetup)
@@ -230,12 +229,12 @@ case "$1" in
 		AOSP_PROJECT=true
 		build.setVars
 		patch.aosp_root
-		build.main "-mx23" ""
+		build.main "-mx23"
 		;;
 	
 	*)
 		build.setVars
-		build.main ${1:-"-mx23"} ${2:-""}
+		build.main ${1:-"-mx23"}
 		;;
 esac
 

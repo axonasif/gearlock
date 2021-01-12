@@ -305,7 +305,9 @@ function merge_ghome() {
 function install_apps() {
 	if [ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ]; then
 		geco "\n+ Installing ${WHITE}fx File-Manager${RC} : \c"
-		for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do nout pm uninstall $app; done
+		for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do
+			nout pm uninstall $app
+		done
 		pm install -r "$BD/fx.apk"
 	else
 		GHOME="$(
@@ -315,11 +317,14 @@ function install_apps() {
 		test -z "$GHOME" && return 1
 		cp -ar "$BD/fx.apk" "$GHOME/status"
 		echo -e '#!/gearlock/bin/bash
+for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do
+	nout pm uninstall $app
+done
 APK="$STATDIR/fx.apk"
 pm install "$APK"
 rm -f "$APK" "$0"
 exit
-' > "$GHOME/gearboot/boot-comp/InstallFX.sh"
+' > "$GHOME/gearboot/boot-comp/DealWithApp.sh"
 	fi
 }
 

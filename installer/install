@@ -299,7 +299,7 @@ function gen_rep_ramdisk() {
 
 function merge_ghome() {
 	test ! -d "/system/ghome" && TER="/data" || TER="/system"
-	mountpoint -q $TER && cp -ar "$BD/ghome" $TER && chown root:root -hR $TER/ghome && chmod -R 755 $TER/ghome
+	mountpoint -q "$TER" && cp -ar "$BD/ghome" "$TER" && chown root:root -hR "$TER/ghome" && chmod -R 755 "$TER/ghome"
 }
 
 function install_apps() {
@@ -307,6 +307,19 @@ function install_apps() {
 		geco "\n+ Installing ${WHITE}fx File-Manager${RC} : \c"
 		for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do nout pm uninstall $app; done
 		pm install -r "$BD/fx.apk"
+	else
+		GHOME="$(
+			test -e '/data/ghome' && echo '/data/ghome'
+			test -e '/system/ghome' && echo '/system/ghome'
+		)"
+		test -z "$GHOME" && return 1
+		cp -ar "$BD/fx.apk" "$GHOME/status"
+		echo -e '#!/gearlock/bin/bash
+APK="$STATDIR/fx.apk"
+pm install "$APK"
+rm -f "$APK" "$0"
+exit
+' > "$GHOME/gearboot/boot-comp/InstallFX.sh"
 	fi
 }
 

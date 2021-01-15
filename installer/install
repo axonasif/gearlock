@@ -111,8 +111,8 @@ function get_osroot() {
 	BIMGVAR="$(cmdline BOOT_IMAGE)"
 	SRCVAR="$(cmdline SRC)"
 	test -z "$SRCVAR" && test -n "$BIMGVAR" \
-	&& OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GMOUNT/$(dirname "$BIMGVAR")")" \
-	|| OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GMOUNT/$SRCVAR")"
+	&& OSROOT="$(coreutils --coreutils-prog=readlink -m "$GMOUNT/$(dirname "$BIMGVAR")")" \
+	|| OSROOT="$(coreutils --coreutils-prog=readlink -m "$GMOUNT/$SRCVAR")"
 }
 
 
@@ -374,7 +374,7 @@ while true; do
 	
 	else
 	
-		OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GRROOT")"
+		OSROOT="$(coreutils --coreutils-prog=readlink -m "$GRROOT")"
 		test -z "$BIMGVAR" && BIMGVAR="$BOOT_IMAGE" # For when initrd.img-installer is used
 		play_ani; geco '\n\n'; do_job
 		geco "\n++ GearLock successfully installed/updated\n"

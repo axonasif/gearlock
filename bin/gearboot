@@ -9,14 +9,15 @@ function play_bootsound() {
 }
 
 function check_app() {
-	test ! -d "/data/data/$GAPPID" && pm install "$GRLBASE/share/gearlock/app.apk" > /dev/null 2>&1
+	! grep -q "$GAPPID" '/data/system/packages.list' 2>/dev/null \
+		&& pm install "$GRLBASE/share/gearlock/app.apk" > /dev/null 2>&1
 	return 0
 }
 
 function make_bashls() {
 	test -e "${mk:="/gearlock/tmp/.mkbashls"}" && test ! -e "${lk:="/gearlock/tmp/.bashls"}" \
 		&& touch "$lk" && rm "$mk" && openvt -c $1 gbash -l && setfont "$GRLBASE/share/terminfo/c/cons16-asm" -C /dev/tty$1 \
-		&& setterm --linewrap on > /dev/tty$1
+			&& setterm --linewrap on > /dev/tty$1
 }
 
 function bind_grload() {
@@ -28,7 +29,7 @@ function bind_grload() {
 
 function chmod_mnt() {
 	chmod 777 "$GRROOT_DIR" && test -d "/mnt/runtime" && chmod 777 "/mnt/runtime"
-	test -e "/mnt/runtime/default" && {
+	test -e "/mnt/runtime/default" && grep -qiE 'phoenix.*version|phoenix.*os' && {
 		test -z "$(find "/mnt/runtime/default" -maxdepth 0 -empty)" && chmod -f 777 /mnt/runtime/default/*
 	}
 }

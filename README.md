@@ -67,9 +67,6 @@ I will need a lot of free time to accomplish this since I'm a student, but you c
 
 # Integration with Android-x86 source
 
-Currently patches are only available for nougat, oreo, pie and q.
-Although other versions are supported by the `executable-gearlock-installer`.
-Patch files for murshmellow and lolipop will be included later on.
 Adaptation for Android-Generic Project was done by: @electrikjesus
 
 You can either clone into `bootable/` or `vendor/`(recommended).

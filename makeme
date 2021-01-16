@@ -156,9 +156,10 @@ function patch.aosp_root() {
 		echo -e "==== Applying GearLock patches to $FILE"
 		case "$FILE" in
 			"${files_to_patch[0]}")
+				local _dir="$(echo "$0" | grep -q 'vendor' && echo 'vendor' || echo 'bootable')"
 				gslr "$aosp_root/$FILE" \
 					'PRODUCT_COPY_FILES := \\' \
-					'PRODUCT_COPY_FILES := \\\n    bootable\/gearlock\/out\/gri\/gearlock:gearlock \\' \
+					"PRODUCT_COPY_FILES := \\\n    $_dir\/gearlock\/out\/gri\/gearlock:gearlock \\" \
 				|| handleError "Failed to patch $aosp_root/$FILE"
 				;;
 				

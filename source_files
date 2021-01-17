@@ -1,4 +1,4 @@
-# bin/
+# bin
 bin/ckdirex
 bin/fetch
 bin/fetch.in
@@ -97,3 +97,9 @@ core/smask.src/3
 core/smask.src/4
 core/smask.src/5
 core/smask.src/6
+
+# installer
+installer/install
+
+# installer/boot-installer
+installer/boot-installer/init

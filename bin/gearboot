@@ -44,9 +44,10 @@ function do_zygote_job() {
 	hook_boot
 	test "$SECOND_GTTY" != "no" && touch "$GTMP/.mkbashls"
 	for _dir in "init" "post-fs" "post-fs-data" "boot-post" "boot-comp"; do
-		mkdir -p "$GBDIR/$_dir" "$OVERLAYDIR/$_dir" >/dev/null 2>&1
+		mkdir -p "$GBDIR/$_dir" >/dev/null 2>&1
 	done
-	chmod -f 755 "$GBDIR/"* "$OVERLAYDIR/"* >/dev/null 2>&1
+	mkdir -p "$OVERLAYDIR"
+	chmod -f 755 "$GBDIR/"* "$OVERLAYDIR" "$OVERLAYDIR/"* >/dev/null 2>&1
 }
 
 function loadFromFs.create() {
@@ -69,8 +70,8 @@ function loadFromFs.create() {
 
 function overlay.set() {
 	local LOG_FILE="$GTMP/gearboot.overlay.log"
-	for _dir in "$OVERLAYDIR/"*"/$GBSTAGE"; do
-		local WORKDIR="$OVERLAYDIR/$_dir"
+	for WORKDIR in "$OVERLAYDIR/"*"/$GBSTAGE"; do
+		local ROOT="$(test "$GBSTAGE" == "init" && echo '/android')"
 		if test -z "$(find "$WORKDIR" -maxdepth 0 -empty)"; then
 		
 			# Read both empty dir and files to process
@@ -79,13 +80,19 @@ function overlay.set() {
 			
 			# Lets start with empty dirs to process
 			for empty_dir in "${overlay_empty_dirs[@]}"; do
-				local_dir="${empty_dir##$WORKDIR}"
+				local local_dir="${ROOT}${empty_dir##$WORKDIR}"
+				local empty_dir="${ROOT}${empty_dir}"
+				grep -q "$local_dir" "$LOG_FILE" && mount | grep -q "on $local_dir" \
+					&& { umount -fd "$local_dir" || umount -fld "$local_dir"; } 2>/dev/null
 				test -e "$local_dir" && mount --bind "$empty_dir" "$local_dir" && echo -e "$local_dir" >> "$LOG_FILE"
 			done
 			
 			# Now lets deal with file type instead
 			for file_type in "${overlay_files[@]}"; do
-				local_file="${file_type##$WORKDIR}"
+				local local_file="${ROOT}${file_type##$WORKDIR}"
+				local file_type="${ROOT}${file_type}"
+				grep -q "$local_file" "$LOG_FILE" && mount | grep -q "on $local_file" \
+					&& { umount -fd "$local_file" || umount -fld "$local_file"; } 2>/dev/null
 				test -e "$local_file" && mount --bind "$file_type" "$local_file" && echo -e "$local_file" >> "$LOG_FILE"
 			done
 		
@@ -101,6 +108,11 @@ function overlay.set() {
 function gbjob() {
 	export GBSTAGE="$1"
 	local LOG_FILE="$GTMP/gearboot.log"
+	
+	# Initialize overlays
+	overlay.set
+	
+	# Run boot executables
 	if test -d "$GBDIR/init" && test -d "$GBDIR/post-fs" && test -d "$GBDIR/post-fs-data" && test -d "$GBDIR/boot-post" && test -d "$GBDIR/boot-comp"; then
 		if test -n "$GBSTAGE" && test -z "$(find "$GBDIR/$1" -maxdepth 0 -empty)"; then
 			cd "$GBDIR/$1" || return 1
@@ -113,14 +125,14 @@ function gbjob() {
 			shopt -s globstar
 			for f in **/*; do
 				if test -f "$f"; then
-					echo "  $(date '+%T:%N')  :  $1  :  $f" >> "$GTMP/gearboot.log" && chmod 755 "$f"
-					if test "$1" == "init"; then
+					echo "  $(date '+%T:%N')  :  $GBSTAGE  :  $f" >> "$GTMP/gearboot.log" && chmod 755 "$f"
+					if test "$GBSTAGE" == "init"; then
 						echo -e "\n===== $f" && "$GBDIR/$GBSTAGE/$f"
-					elif [[ "$1" =~ .*post-fs.* ]]; then
-						echo -e "\n===== $f ___(${STAGE})___" >> "${LOG_FILE/.log/.raw.log}"
+					elif [[ "$GBSTAGE" =~ .*post-fs.* ]]; then
+						echo -e "\n===== $f ___(${GBSTAGE})___" >> "${LOG_FILE/.log/.raw.log}"
 						"$GBDIR/$GBSTAGE/$f" >> "${LOG_FILE/.log/.raw.log}" 2>&1
 					else
-						echo -e "\n===== $f ___(${STAGE})___" >> "${LOG_FILE/.log/.raw.log}"
+						echo -e "\n===== $f ___(${GBSTAGE})___" >> "${LOG_FILE/.log/.raw.log}"
 						"$GBDIR/$GBSTAGE/$f" >> "${LOG_FILE/.log/.raw.log}" 2>&1 & disown
 					fi
 				fi

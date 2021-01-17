@@ -1,4 +1,3 @@
 #!/gearlock/bin/bash
 echo -e "============= ${GREEN}Progress${RC} = ${ORANGE}Speed${RC} ========================================"
-rsync -a --info=progress2 "$@"
-exit $?
+rsync -ah --info=progress2 "$@"

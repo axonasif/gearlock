@@ -2,13 +2,13 @@ on post-fs
     export TERM linux
     export TERMINFO /gearlock/share/terminfo
     export PATH /sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin:/gearlock/bin:ghome_dir:/apex/com.android.runtime/bin:/apex/com.android.art/bin
-    exec - root root -- /gearlock/bin/bash /gearlock/bin/gearboot s1
+    exec - root root -- /system/bin/logwrapper /gearlock/bin/bash /gearlock/bin/gearboot s1
 
 on post-fs-data
-    exec - root root -- /gearlock/bin/bash /gearlock/bin/gearboot s2
+    exec - root root -- /system/bin/logwrapper /gearlock/bin/bash /gearlock/bin/gearboot s2
 
 on boot
-    exec - root root -- /gearlock/bin/bash /gearlock/bin/gearboot s3
+    exec - root root -- /system/bin/logwrapper /gearlock/bin/bash /gearlock/bin/gearboot s3
 
 on property:sys.boot_completed=1
-    exec - root root -- /gearlock/bin/bash /gearlock/bin/gearboot s4
+    exec - root root -- /system/bin/logwrapper /gearlock/bin/bash /gearlock/bin/gearboot s4

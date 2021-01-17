@@ -117,8 +117,10 @@ function gbjob() {
 					if test "$1" == "init"; then
 						echo -e "\n===== $f" && "$GBDIR/$GBSTAGE/$f"
 					elif [[ "$1" =~ .*post-fs.* ]]; then
+						echo -e "\n===== $f ___(${STAGE})___" >> "${LOG_FILE/.log/.raw.log}"
 						"$GBDIR/$GBSTAGE/$f" >> "${LOG_FILE/.log/.raw.log}" 2>&1
 					else
+						echo -e "\n===== $f ___(${STAGE})___" >> "${LOG_FILE/.log/.raw.log}"
 						"$GBDIR/$GBSTAGE/$f" >> "${LOG_FILE/.log/.raw.log}" 2>&1 & disown
 					fi
 				fi

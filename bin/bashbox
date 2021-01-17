@@ -54,7 +54,8 @@ jobBeautify(){
 
 			# Merge Shebang
 			if test -n "$CACHE_SHEBANG"; then
-				CACHE_SHEBANG="$(echo "$CACHE_SHEBANG" | sed -e 's|/|\\/|g' -e 's|#\!|#\\!|g')"; sed -i "1 { x; s/^.*/$CACHE_SHEBANG/; G; }" "${outPut}"
+				CACHE_SHEBANG="$(echo "$CACHE_SHEBANG" | sed -e 's|/|\\/|g' -e 's|#\!|#\\!|g')"
+				sed -i "1 { x; s/^.*/$CACHE_SHEBANG/; G; }" "${outPut}"
 			fi
 
 			chmod -f 777 "${outPut}"
@@ -65,6 +66,7 @@ jobBeautify(){
 				&& echo -n "optimized + " && sleep 0.01 && echo "syntax checked"
 			{
 				rm -f "$TMP_SCRIPT"
+				test -n "$NO_CREATE" && rm "${outPut}"
 				test "$TMP_DIR" != "/tmp" && rmdir --ignore-fail-on-non-empty "$TMP_DIR"
 			}> /dev/null 2>&1
 			:

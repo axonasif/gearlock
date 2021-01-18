@@ -1,6 +1,6 @@
 #!/gearlock/bin/bash
 mount -o rw,remount / 2>/dev/null
-VERSION="1.3"
+VERSION="1.4"
 
 # Runtime Functions
 function play_bootsound() {
@@ -70,7 +70,9 @@ function loadFromFs.create() {
 
 function overlay.set() {
 	local LOG_FILE="$GTMP/gearboot.overlay.log"
-	for WORKDIR in "$OVERLAYDIR/"*"/$GBSTAGE"; do
+	readarray -d '' WORKDIR_LIST < <(find "$OVERLAYDIR" -mindepth 1 -maxdepth 2 -type d -name "$GBSTAGE" -print0)
+	
+	for WORKDIR in "${WORKDIR_LIST[@]}"; do
 		local ROOT="$(test "$GBSTAGE" == "init" && echo '/android')"
 		if test -z "$(find "$WORKDIR" -maxdepth 0 -empty)"; then
 		
@@ -143,17 +145,18 @@ function gbjob() {
 }
 
 function write_gblog() {
-	local PATH
-	PATH="/gearlock/bin"
+	local PATH="/gearlock/bin"
 	SL="$(grep -nA500 "# Start of $GBSTAGE stage" "$GTMP/gearboot.log" | grep "$(basename "$0")" | head -n1)"
 	sed -i "$(echo "$SL" | cut -d "-" -f1)s/.*/ $(echo "$SL" | cut -d " " -f2-)  :  $@/" "$GTMP/gearboot.log"
 }; export -f write_gblog
 
 case "$1" in
 	s0)
-		do_zygote_job
-		loadFromFs.create
-		gbjob init
+		test -n "$RECOVERY" && {
+			do_zygote_job
+			loadFromFs.create
+			gbjob init
+		}
 		;;
 	s1)
 		hook_boot

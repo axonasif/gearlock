@@ -139,7 +139,7 @@ function build.main() {
 			
 		# Make bootinstall-initrd.img
 		echo -e "Making initrd.img-bootinstall image: \c"
-		"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/bootinstall-initrd.img"
+		"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/initrd.img"
 	fi
 };
 

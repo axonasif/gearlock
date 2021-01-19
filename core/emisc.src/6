@@ -22,13 +22,18 @@ function module.install() {
 	shift
 	
 	{
-		clear
+		fetch.magisk
+		fetch.rusty-magisk
 		mkdir -p "$DATA_BIN_DIR" || exit 1
+		
+		geco "\n+ Caching latest magisk binary and app at $DATA_BIN_DIR"
 		nout garca x -o"$GTMP/magisk" "$GTMP/magisk.zip" common/magisk.apk 'x86/magiskinit*' || { geco "Error: Failed to extract magisk.zip"; exit 1; }
 		local magisk_init="$GTMP/magisk/x86/magiskinit$(test "$HOST_ARCH" == "x86_64" && echo '64')"
 		chmod +x "$magisk_init"
 		"$magisk_init" -x magisk "$DATA_BIN_DIR/magisk" && chmod 755 "$DATA_BIN_DIR/magisk" || exit 1
 		rsync -a "$GTMP/magisk/common/magisk.apk" "$DATA_BIN_DIR" || exit 1
+		
+		geco "\n+ Creating overlay at gearboot/overlay" && sleep 0.5
 		mkdir -p "${OVERLAY_PATH%/*}" || { geco "Error: Failed to create overlay dir"; exit 1; }
 		
 		echo -e "
@@ -48,6 +53,7 @@ on property:sys.boot_completed=1
 
 " > "$OVERLAY_PATH" && chmod 750 "$OVERLAY_PATH"
 		
+		geco "\n+ Installing rusty-magisk at ~/.local/bin" && sleep 0.5
 		ckdirex "${MODULE_PATH%/*}" 755
 		case "$argv" in
 			"-string")
@@ -60,6 +66,8 @@ on property:sys.boot_completed=1
 		chmod -f 755 "$MODULE_PATH" "$2" 2>/dev/null
 	}
 	RETC=$?
+	
+	sleep 5
 	
 	if test -z "$MODULE_REMOVED"; then
 		if test "$RETC" == "0"; then
@@ -107,7 +115,7 @@ function fetch.magisk(){
 }
 
 function fetch.rusty-magisk() {
-	geco "\n+ Fetching latest rusty-magisk"
+	geco "\n+ Fetching latest ${BRED}AXIM0S/rusty-magisk${RC}"
 	
 	local LINK VERSION
 	LINK="$(curl -s https://api.github.com/repos/AXIM0S/rusty-magisk/releases/latest \
@@ -126,8 +134,6 @@ if dialog --colors --clear --backtitle " $(gecpc "$TITLE" "#") " \
 		--title " Confirm Action " --yes-label "Install" --no-label "Uninstall" $() \
 		$(module.status && echo '--defaultno') \
 		--yesno "\n Current status: ${MRED}$(module.status -p)${MRC}\n What do you wanna do ?" 8 60; then
-	fetch.magisk
-	fetch.rusty-magisk
 	module.install -file "$GTMP/$COMMON_NAME" "$MODULE_PATH"
 else
 	module.remove

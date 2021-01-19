@@ -69,34 +69,13 @@ I will need a lot of free time to accomplish this since I'm a student, but you c
 
 Adaptation for Android-Generic Project was done by: @electrikjesus
 
-You can either clone into `bootable/` or `vendor/`(recommended).
-
-#### vendor/ Method
-
-* Clone the repo into `vendor/` from your aosp project root.
+### Clone the repo into `vendor/` from your aosp project root.
 
 > ```bash
 > git clone https://github.com/AXIM0S/gearlock vendor/gearlock
 > ```
 
-* Thats it. (ignore bootable/ Method)
-
-
-#### bootable/ Method
-
-* Clone the repo into `bootable/` from your aosp project root.
-
-> ```bash
-> git clone https://github.com/AXIM0S/gearlock bootable/gearlock
-> ```
-
-* Now manually apply the patches
-> ```bash
-> source build/envsetup.sh && lunch android_x86_64-userdebug && make -j4 gearlock
-> ```
-
-
-## Lastly, build ISO (Doesn't matter what method you picked)
+### Lastly, build ISO (Doesn't matter what method you picked)
 
 > Android-Generic (x86/PC):
 `build-x86 android_x86_64-userdebug`

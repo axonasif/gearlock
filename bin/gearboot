@@ -84,8 +84,9 @@ function overlay.set() {
 			for empty_dir in "${overlay_empty_dirs[@]}"; do
 				local local_dir="${ROOT}${empty_dir##$WORKDIR}"
 				local empty_dir="${ROOT}${empty_dir}"
-				grep -q "$local_dir" "$LOG_FILE" && mount | grep -q "on $local_dir" \
-					&& { umount -fd "$local_dir" || umount -fld "$local_dir"; } 2>/dev/null
+				{ grep -q "$local_dir" "$LOG_FILE" && mount | grep -q "on $local_dir" \
+					&& { umount -fd "$local_dir" || umount -fld "$local_dir"; }
+				} 2>/dev/null
 				test -e "$local_dir" && mount --bind "$empty_dir" "$local_dir" && echo -e "$local_dir" >> "$LOG_FILE"
 			done
 			
@@ -93,8 +94,9 @@ function overlay.set() {
 			for file_type in "${overlay_files[@]}"; do
 				local local_file="${ROOT}${file_type##$WORKDIR}"
 				local file_type="${ROOT}${file_type}"
-				grep -q "$local_file" "$LOG_FILE" && mount | grep -q "on $local_file" \
-					&& { umount -fd "$local_file" || umount -fld "$local_file"; } 2>/dev/null
+				{ grep -q "$local_file" "$LOG_FILE" && mount | grep -q "on $local_file" \
+					&& { umount -fd "$local_file" || umount -fld "$local_file"; }
+				} 2>/dev/null
 				test -e "$local_file" && mount --bind "$file_type" "$local_file" && echo -e "$local_file" >> "$LOG_FILE"
 			done
 		

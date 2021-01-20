@@ -124,8 +124,8 @@ function fetch.rusty-magisk() {
 				)" || { geco "Error: Failed to fetch latest rusty-magisk" && exit 1; }
 	VERSION="$(echo "$LINK" | sed 's|.*/download/||; s|/.*||')"
 	
-	geco "\n+ Latest rusty-magisk version is: $VERSION" && sleep 1
-	geco "\n+ Downloading rusty-magisk_${HOST_ARCH} $VERSION"
+	geco "\n+ Latest rusty-magisk version is: ${BGREEN}$VERSION${RC}" && sleep 1
+	geco "\n+ Downloading ${BRED}rusty-magisk_${HOST_ARCH} $VERSION${RC}"
 	rm -f "$MODULE_PATH"
 	gdload "$LINK" "$GTMP/$COMMON_NAME" || { geco "${_download_was_interrupted_} ..." && exit 1; }
 }

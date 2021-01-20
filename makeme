@@ -54,48 +54,53 @@ function build.main() {
 	# Define core vars
 # 	local _buildVariant="$1"
 	local _compressionLevel="$1"
-		
-	echo -e "Start of GearLock $(cat "${_execDir}"/core/version) build\n"
-		
-	# Clean & remake _buildCacheRoot|_buildCache
-	test -e "${_buildCacheRoot}" && rm -r "${_buildCacheRoot}"
-	mkdir -p "${_buildCacheRoot}" "${_buildCache}" || handleError "Failed 'mkdir ${_buildCache}'"
-		
-	# Copy raw files into _buildCache
-	echo -e "Copying raw files into ${_buildCache}"
-	cd "${_execDir}" && rsync -ah --info=progress2 bin core etc lib libexec share usr "${_buildCache}" || handleError "Failed to copy files into ${_buildCache}\'"
-		
-	# Change dir to _buildCache
-	cd "${_buildCache}"
-	mkdir ${_extraPlaceHolderDirs=tmp gearroot} && chmod 755 ${_extraPlaceHolderDirs} || handleError "Failed \'mkdir/chmod ${_extraPlaceHolderDirs}\'"
-		
-	# Re-configure/fix shebangs in bin & remove `gearlock/bin`
-	echo -e "Removing ${cExternal:=core/_external_}"
-	rm -r ${cExternal}; test "$?" != "0" && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
-	#rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
 	
-	echo -e "Fixing shebangs"
-	# Look for `#/bin/bash`
-	for f in $(grep "#\!/bin/bash" -lr bin | xargs);
-	do
-		gslr "$f" "#\!/bin/bash" "#\!\/gearlock\/bin\/bash" || handleError "Failed to replace shebangs with gslr"
-	done;
+    # Clean & remake _buildCacheRoot|_buildCache
+    test -e "${_buildCacheRoot}" && rm -r "${_buildCacheRoot}"
+    mkdir -p "${_buildCacheRoot}" "${_buildCache}" || handleError "Failed 'mkdir ${_buildCache}'"
+		
+	if test -z "$RUN_CHECK"; then
+		echo -e "Start of GearLock $(cat "${_execDir}"/core/version) build\n"
+			
+		# Copy raw files into _buildCache
+		echo -e "Copying raw files into ${_buildCache}"
+		cd "${_execDir}" && rsync -ah --info=progress2 bin core etc lib libexec share usr "${_buildCache}" || handleError "Failed to copy files into ${_buildCache}\'"
+			
+		# Change dir to _buildCache
+		cd "${_buildCache}"
+		mkdir ${_extraPlaceHolderDirs=tmp gearroot} && chmod 755 ${_extraPlaceHolderDirs} || handleError "Failed \'mkdir/chmod ${_extraPlaceHolderDirs}\'"
+			
+		# Re-configure/fix shebangs in bin & remove `gearlock/bin`
+		echo -e "Removing ${cExternal:=core/_external_}"
+		rm -r ${cExternal}; test "$?" != "0" && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
+		#rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
+			
+		echo -e "Fixing shebangs"
+		# Look for `#/bin/bash`
+		for f in $(grep "#\!/bin/bash" -lr bin | xargs);
+		do
+			gslr "$f" "#\!/bin/bash" "#\!\/gearlock\/bin\/bash" || handleError "Failed to replace shebangs with gslr"
+		done;
+	fi
 		
 	
 	# Optimize/Syntax-check source code
 	echo -e "Checkig source code syntax"
+	local source_files_gen_list="${_buildCacheRoot}/.source_files"
+	rm -f "$source_files_gen_list"
 	file_list=($(awk 'NF' "${_execDir}/source_files" | sed '/#.*/d')) || handleError "Failed to read source_files"
 	for f in "${file_list[@]}"; do
-		echo "\"${_execDir}/$f\"" >> "${_buildCacheRoot}/.source_files"
+		echo "\"${_execDir}/$f\"" >> "$source_files_gen_list"
 	done
 	chmod +x "${_execDir}/bin/bashbox"
-	STRICT="true" NO_CREATE="true" bash "${_execDir}/bin/bashbox" $(xargs < "${_buildCacheRoot}/.source_files") \
+	STRICT="true" NO_CREATE="true" bash "${_execDir}/bin/bashbox" $(xargs < "$source_files_gen_list") \
 		|| handleError "Syntax errors found, can not continue"
 # 	readarray -d '' optim_gen_list < <(find "${_buildCache}/bin" "${_buildCache}/core" -name '*.bb.sh' -print0)
 # 	for gen_list in "${optim_gen_list[@]}"; do
 # 		#mv "$gen_list" "${gen_list%.bb.sh}"
 # 		rm "$gen_list"
 # 	done
+	test -n "$RUN_CHECK" && exit 0
 	
 	# Recursive Chmod 755 _buildCache
 	echo -e "Setting permissions to 755 recursively for cpio image"
@@ -233,7 +238,12 @@ case "$1" in
 		patch.aosp_root
 		build.main "-mx23"
 		;;
-	
+		
+	--run-check)
+		RUN_CHECK=true
+		build.setVars
+		build.main ${1:-"-mx23"}
+		;;
 	*)
 		build.setVars
 		build.main ${1:-"-mx23"}

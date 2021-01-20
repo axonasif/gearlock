@@ -27,7 +27,7 @@ function update_value(){
 }
 
 function fetch_value(){ 
-	cat "$GEARLOCK_RC" 2>/dev/null | sed -n "s|^$1=||p" | sed "s|\"||g" | head -n 1
+	 sed -n "s|^$1=||p" "$GEARLOCK_RC" | sed "s|\"||g" | head -n 1
 }
 
 function set_ui_value(){
@@ -68,7 +68,7 @@ ANSWER=( $(eval echo $ANSWER) )
 function setup_opts(){
 
 # First handle which options were unchecked.
-for allOPT in ${LIST_OPTS[@]}
+for allOPT in "${LIST_OPTS[@]}"
 do
 	
 	if [[ ! "${ANSWER[*]}" =~ .*$allOPT.* ]]; then

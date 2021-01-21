@@ -60,7 +60,7 @@ function module.remove() {
 }
 
 if dialog --colors --clear --backtitle " $(gecpc "$TITLE" "#") " \
-		--title " Confirm Action " --yes-label "Enable" --no-label "Disable" $() \
+		--title " Confirm Action " --yes-label "Enable" --no-label "Disable" \
 		$(module.is_enabled && echo '--defaultno') \
 		--yesno "\n Current status: ${MRED}$(module.is_enabled -p)${MRC}\n What do you wanna do ?" 8 60; then
 	module.install -string '#!/gearlock/bin/bash

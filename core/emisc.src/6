@@ -28,7 +28,8 @@ function module.install() {
 		
 		geco "\n+ Caching latest magisk binary and app at $DATA_BIN_DIR"
 		nout garca x -o"$GTMP/magisk" "$GTMP/magisk.zip" common/magisk.apk 'x86/magiskinit*' || { geco "Error: Failed to extract magisk.zip"; exit 1; }
-		local magisk_init="$GTMP/magisk/x86/magiskinit$(test "$HOST_ARCH" == "x86_64" && echo '64')"
+		local magisk_init
+		magisk_init="$GTMP/magisk/x86/magiskinit$(test "$HOST_ARCH" == "x86_64" && echo '64')"
 		chmod +x "$magisk_init"
 		"$magisk_init" -x magisk "$DATA_BIN_DIR/magisk" && chmod 755 "$DATA_BIN_DIR/magisk" || exit 1
 		rsync -a "$GTMP/magisk/common/magisk.apk" "$DATA_BIN_DIR" || exit 1
@@ -81,7 +82,7 @@ on property:sys.boot_completed=1
 }
 
 function module.remove() {
-	test ! -e "$MODULE_PATH" && msgbox "$TITLE" " ${_info_} " "\n This module is not enabled" 7 60 && return
+	test ! -e "$MODULE_PATH" && msgbox "$TITLE" " ${_info_} " "\n This module is not installed" 7 60 && return
 	
 	rm -rf "$MODULE_PATH" "$OVERLAY_PATH" "$DATA_BIN_DIR" 2>/dev/null
 	RETC=$?
@@ -130,13 +131,26 @@ function fetch.rusty-magisk() {
 	gdload "$LINK" "$GTMP/$COMMON_NAME" || { geco "${_download_was_interrupted_} ..." && exit 1; }
 }
 
-if dialog --colors --clear --backtitle " $(gecpc "$TITLE" "#") " \
-		--title " Confirm Action " --yes-label "Install" --no-label "Uninstall" $() \
-		$(module.status && echo '--defaultno') \
-		--yesno "\n Current status: ${MRED}$(module.status -p)${MRC}\n What do you wanna do ?" 8 60; then
-	module.install -file "$GTMP/$COMMON_NAME" "$MODULE_PATH"
-else
-	module.remove
-fi
+dialog --colors --clear --backtitle " $(gecpc "$TITLE" "#") " \
+		--title " Confirm Action " --ok-label "Install" \
+		--yes-label "Install" --no-label "Uninstall" \
+		--help-button --help-label "Exit" \
+		--yesno "\n Current status: ${MRED}$(module.status -p)${MRC}\n What do you wanna do ?" 8 60
+RETC=$?
+
+case "$RETC" in
+	# Insall button
+	"0")
+		module.install -file "$GTMP/$COMMON_NAME" "$MODULE_PATH"
+	;;
+	# Uninstall button
+	"1")
+		module.remove
+	;;
+	# Exit button
+	"2")
+		true
+	;;
+esac
 
 nopause

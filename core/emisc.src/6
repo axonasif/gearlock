@@ -132,9 +132,9 @@ function fetch.rusty-magisk() {
 }
 
 dialog --colors --clear --backtitle " $(gecpc "$TITLE" "#") " \
-		--title " Confirm Action " --ok-label "Install" \
+		--title " Confirm Action " \
 		--yes-label "Install" --no-label "Uninstall" \
-		--help-button --help-label "Exit" \
+		--help-button --help-label "Exit" $(module.is_enabled && echo '--defaultno') \
 		--yesno "\n Current status: ${MRED}$(module.status -p)${MRC}\n What do you wanna do ?" 8 60
 RETC=$?
 

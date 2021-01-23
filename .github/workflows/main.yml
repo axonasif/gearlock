@@ -25,15 +25,22 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       
-      - name: Run syntax check
+      - name: Run syntax check (linting)
         id: syntax_check
         run: |
           chmod +x makeme
           ./makeme --run-check
       
-      - name: Update core/version
+      - name: Update version code
         id: update_version
-        uses: remorses/bump-version@js
+        run: |
+          chmod +x makeme
+          ./makeme --update-version
+      
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v7
         with:
-          version_file: ./core/version
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          author_name: AXIM0S
+          author_email: axonasif@gmail.com
+          message: 'Update version code'
+          add: './core/version'

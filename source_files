@@ -28,6 +28,11 @@ bin/mkrecovery
 bin/nout
 bin/sudo
 
+# core/
+core/devz
+core/settings
+core/update
+
 # core/_lang_
 core/_lang_/en
 core/_lang_/vn
@@ -97,6 +102,9 @@ core/smask.src/3
 core/smask.src/4
 core/smask.src/5
 core/smask.src/6
+
+# etc/
+etc/bash.bashrc
 
 # installer
 installer/install

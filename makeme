@@ -46,6 +46,7 @@ function build.setVars() {
 	_buildCacheInstallerDir="${_buildCacheRoot}/gri"
 	_buildInstallerOut="${_buildCacheRoot}/build_installer_out"
 	_installerSrc="${_execDir}/installer"
+	_gearlockVersionCode="$(< "${_execDir}"/core/version)"
 }
 
 
@@ -60,7 +61,7 @@ function build.main() {
     mkdir -p "${_buildCacheRoot}" "${_buildCache}" || handleError "Failed 'mkdir ${_buildCache}'"
 		
 	if test -z "$RUN_CHECK"; then
-		echo -e "Start of GearLock $(cat "${_execDir}"/core/version) build\n"
+		echo -e "Start of GearLock ${_gearlockVersionCode} build\n"
 			
 		# Copy raw files into _buildCache
 		echo -e "Copying raw files into ${_buildCache}"
@@ -85,7 +86,7 @@ function build.main() {
 		
 	
 	# Optimize/Syntax-check source code
-	echo -e "Checkig source code syntax"
+	echo -e "Checkig source code syntax of GearLock ${_gearlockVersionCode}"
 	local source_files_gen_list="${_buildCacheRoot}/.source_files"
 	rm -f "$source_files_gen_list"
 	file_list=($(awk 'NF' "${_execDir}/source_files" | sed '/#.*/d')) || handleError "Failed to read source_files"

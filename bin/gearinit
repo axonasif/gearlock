@@ -78,7 +78,7 @@ function boot_os(){
 	# Check for supercharge
 	test ! -e "$OROOT/isolinux" && test -z "$NOSC" && test ! -e "$OROOT/nosc" && ls "$OROOT/system."*>/dev/null 2>&1 \
 		&& test "$(stat -L --printf="%s" "$(ls "$OROOT/system."* | head -n1)")" -lt "$((SC_SIZE * 1048576))" \
-			&& gsudo gearlock-cli main.src/supercharge 2>&1
+			&& gsudo gearlock-cli supercharge
 	
 	# Start gearboot and android init hooking
 	gearboot s0 2>&1
@@ -151,7 +151,7 @@ EOF
 	quote[4]="-- Some people act like know-it-all, but deep down they know what they truely are ... (AXON)"
 	quote[5]="-- As things get closer to the light, the shadows get darker ... (AXON)"
 	quote[6]="-- There are more imposters than legit things, maybe that's what helps us define the good ... (AXON)"
-	quote[7]="-- Genius is 1% inspiration, 99% perspiration ... (Thomas Edison)"
+quote[7]="-- Genius is 1% inspiration, 99% perspiration ... (Thomas Edison)"
 	quote[8]="-- Seek knowledge from cradle to the grave ... (Muhammad (PBUH))"
 	quote[9]="-- You must be the change you wish to see in the world ... (Mahatma Gandhi)"
 

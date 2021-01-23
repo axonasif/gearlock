@@ -24,6 +24,8 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       
       - name: Run syntax check (linting)
         id: syntax_check
@@ -35,7 +37,7 @@ jobs:
         id: update_version
         run: |
           chmod +x makeme
-          git log
+          ./makeme --update-version
       
       - name: Commit changes
         uses: EndBug/add-and-commit@v7

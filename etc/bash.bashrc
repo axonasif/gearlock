@@ -1,6 +1,6 @@
 # Setup env
 test -d "/system/ghome" && export HOME="/system/ghome" || export HOME="/data/ghome"
-export PATH="/gearlock/bin:$GHOME/.local/bin:/sbin:/bin:/system/bin:/system/xbin:\
+export PATH="/gearlock/bin:$HOME/.local/bin:/sbin:/bin:/system/bin:/system/xbin:\
 /system/vendor/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
 PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w$\033[0m "
 

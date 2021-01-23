@@ -42,7 +42,7 @@
 	"shellcheck.useWSL": false,
 	"files.autoGuessEncoding": true,
 	"files.associations": {
-		"/core/*": "shellscript"
+		"**/core/**": "shellscript"
 	},
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false

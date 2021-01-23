@@ -35,7 +35,7 @@ jobs:
         id: update_version
         run: |
           chmod +x makeme
-          echo "$(git log | head -n50)"
+          git log
       
       - name: Commit changes
         uses: EndBug/add-and-commit@v7

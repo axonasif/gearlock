@@ -150,7 +150,7 @@ function print_ran_header(){
 	quote[4]="-- Some people act like know-it-all, but deep down they know what they truely are ... (AXON)"
 	quote[5]="-- As things get closer to the light, the shadows get darker ... (AXON)"
 	quote[6]="-- There are more imposters than legit things, maybe that's what helps us define the good ... (AXON)"
-quote[7]="-- Genius is 1% inspiration, 99% perspiration ... (Thomas Edison)"
+	quote[7]="-- I don’t care that they stole my idea ... I care that they don’t have any of their own ... (Nikola Tesla)"
 	quote[8]="-- Seek knowledge from cradle to the grave ... (Muhammad (PBUH))"
 	quote[9]="-- You must be the change you wish to see in the world ... (Mahatma Gandhi)"
 

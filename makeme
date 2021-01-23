@@ -233,7 +233,7 @@ function gen.newVersion() {
 		LAST_SYNC_FILE="${_execDir}/.last_sync"
 		LAST_SYNC_HARSH="$(git log --all --ancestry-path ^$(< "$LAST_SYNC_FILE") --format=format:%H | tail -n 1)" || return
 		LAST_COMMIT_HARSH="$(git rev-parse HEAD)"
-		NEW_COMMITS="$(git rev-list ${LAST_SYNC_HARSH}...${LAST_COMMIT_HARSH} | wc -l)"
+		NEW_COMMITS="$(git rev-list --no-merges ${LAST_SYNC_HARSH}...${LAST_COMMIT_HARSH} | wc -l)"
 		VERSION_FILE="${_execDir}/core/version"
 
 		# Handling what we need to do

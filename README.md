@@ -1,4 +1,4 @@
-# Introduction [![Build Status](https://travis-ci.com/AXIM0S/gearlock.svg?branch=main)](https://travis-ci.com/AXIM0S/gearlock)
+# Introduction ![GearLock](https://github.com/AXIM0S/gearlock/workflows/CI/badge.svg)
 
 GearLock is a dynamically written bash program focused in performance with the intension of making modifications in android-x86 easier.
 

@@ -11,12 +11,12 @@ else
 fi
 
 # Extended bash history.
-export HISTCONTROL=ignoreboth \
-	HISTFILESIZE= \
-	HISTSIZE= \
-	HISTTIMEFORMAT="%d/%m/%y %T " \
-	HISTIGNORE='ls:pwd:date:cd *:' \
-	HISTFILE="$HOME/.bash_extended_history"
+HISTCONTROL=ignoreboth
+HISTFILESIZE=
+HISTSIZE=
+HISTTIMEFORMAT="%d/%m/%y %T "
+HISTIGNORE='ls:pwd:date:cd *:'
+HISTFILE="$HOME/.bash_extended_history"
 PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 shopt -s histappend
 

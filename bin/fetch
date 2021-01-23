@@ -26,7 +26,8 @@ else
 fi
 
 # Set PATH
-PATH="/gearlock/bin:/sbin:/bin:/system/bin:/system/xbin:/system/vendor/bin"
+PATH="/gearlock/bin:$GHOME/.local/bin:/sbin:/bin:/system/bin:/system/xbin:\
+/system/vendor/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
 
 # Set GHOME
 GHOME="$(

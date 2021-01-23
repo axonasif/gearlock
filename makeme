@@ -68,7 +68,7 @@ function build.main() {
 		cd "${_execDir}" && rsync -ah --info=progress2 bin core etc lib libexec share usr "${_buildCache}" || handleError "Failed to copy files into ${_buildCache}\'"
 			
 		# Change dir to _buildCache
-		cd "${_buildCache}"
+		cd "${_buildCache}" || exit
 		mkdir ${_extraPlaceHolderDirs=tmp gearroot} && chmod 755 ${_extraPlaceHolderDirs} || handleError "Failed \'mkdir/chmod ${_extraPlaceHolderDirs}\'"
 			
 		# Re-configure/fix shebangs in bin & remove `gearlock/bin`
@@ -231,7 +231,7 @@ function gen.newVersion() {
 		local CURRENT_VERSION PATCH_VERSION MINOR_VERSION VERSION_FILE LAST_SYNC_FILE
 
 		LAST_SYNC_FILE="${_execDir}/.last_sync"
-		LAST_SYNC_HARSH="$(< "$LAST_SYNC_FILE")" || return
+		LAST_SYNC_HARSH="$(git log --all --ancestry-path ^$(< "$LAST_SYNC_FILE") --format=format:%H | tail -n 1)" || return
 		LAST_COMMIT_HARSH="$(git rev-parse HEAD)"
 		NEW_COMMITS="$(git rev-list ${LAST_SYNC_HARSH}...${LAST_COMMIT_HARSH} | wc -l)"
 		VERSION_FILE="${_execDir}/core/version"

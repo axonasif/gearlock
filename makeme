@@ -221,6 +221,145 @@ function patch.aosp_root() {
 }
 
 
+function gen.newVersion() {
+	function semver() {
+		## From https://github.com/fsaintjacques/semver-tool
+		NAT='0|[1-9][0-9]*'
+		ALPHANUM='[0-9]*[A-Za-z-][0-9A-Za-z-]*'
+		IDENT="$NAT|$ALPHANUM"
+		FIELD='[0-9A-Za-z-]+'
+
+SEMVER_REGEX="\
+^[vV]?\
+($NAT)\\.($NAT)\\.($NAT)\
+(\\-(${IDENT})(\\.(${IDENT}))*)?\
+(\\+${FIELD}(\\.${FIELD})*)?$"
+
+		function validate_version {
+		local version=$1
+		if [[ "$version" =~ $SEMVER_REGEX ]]; then
+			# if a second argument is passed, store the result in var named by $2
+			if [ "$#" -eq "2" ]; then
+			local major=${BASH_REMATCH[1]}
+			local minor=${BASH_REMATCH[2]}
+			local patch=${BASH_REMATCH[3]}
+			local prere=${BASH_REMATCH[4]}
+			local build=${BASH_REMATCH[8]}
+			eval "$2=(\"$major\" \"$minor\" \"$patch\" \"$prere\" \"$build\")"
+			else
+			echo "$version"
+			fi
+		else
+			error "version $version does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'. See help for more information."
+		fi
+		}
+
+		function command_bump {
+		local new; local version; local sub_version; local command;
+
+		case $# in
+			2) case $1 in
+				major|minor|patch|prerel|release) command=$1; sub_version="+."; version=$2;;
+			esac ;;
+			3) case $1 in
+				prerel|build) command=$1; sub_version=$2 version=$3 ;;
+			esac ;;
+		esac
+
+		validate_version "$version" parts
+		# shellcheck disable=SC2154
+		local major="${parts[0]}"
+		local minor="${parts[1]}"
+		local patch="${parts[2]}"
+		local prere="${parts[3]}"
+		local build="${parts[4]}"
+
+		case "$command" in
+			major) new="$((major + 1)).0.0";;
+			minor) new="${major}.$((minor + 1)).0";;
+			patch) new="${major}.${minor}.$((patch + 1))";;
+			release) new="${major}.${minor}.${patch}";;
+			prerel) new=$(validate_version "${major}.${minor}.${patch}-$(bump_prerel "$sub_version" "$prere")");;
+			build) new=$(validate_version "${major}.${minor}.${patch}${prere}+${sub_version}");;
+		esac
+
+		echo "$new"
+		exit 0
+		}
+
+
+		# shellcheck disable=SC2034
+		function command_get {
+			local part version
+
+			if [[ "$#" -ne "2" ]] || [[ -z "$1" ]] || [[ -z "$2" ]]; then
+				usage_help
+				exit 0
+			fi
+
+			part="$1"
+			version="$2"
+
+			validate_version "$version" parts
+			local major="${parts[0]}"
+			local minor="${parts[1]}"
+			local patch="${parts[2]}"
+			local prerel="${parts[3]:1}"
+			local build="${parts[4]:1}"
+			local release="${major}.${minor}.${patch}"
+
+			case "$part" in
+				major|minor|patch|release|prerel|build) echo "${!part}" ;;
+			esac
+
+			exit 0
+		}
+
+		case $# in
+			0) echo "Unknown command: $*"; return;;
+		esac
+
+		case $1 in
+			--help|-h) echo -e "$USAGE"; exit 0;;
+			--version|-v) usage_version ;;
+			bump) shift; command_bump "$@";;
+			get) shift; command_get "$@";;
+			compare) shift; command_compare "$@";;
+			*) echo "Unknown arguments: $*";;
+		esac
+
+	}
+		# Gather the data we need
+		local CURRENT_VERSION PATCH_VERSION MINOR_VERSION VERSION_FILE LAST_SYNC_FILE
+
+		LAST_SYNC_FILE="${_execDir}/.last_sync"
+		LAST_SYNC_HARSH="$(< "$LAST_SYNC_FILE")" || return
+		LAST_COMMIT_HARSH="$(git rev-parse HEAD)"
+		NEW_COMMITS="$(git rev-list ${LAST_SYNC_HARSH}...${LAST_COMMIT_HARSH} | wc -l)"
+		VERSION_FILE="${_execDir}/core/version"
+
+		# Handling what we need to do
+		for times in $(seq $NEW_COMMITS); do
+			CURRENT_VERSION="$(< "$VERSION_FILE")" || return
+			PATCH_VERSION="$(semver get patch $CURRENT_VERSION)" || return
+			MINOR_VERSION="$(semver get minor $CURRENT_VERSION)" || return
+			# MAJOR_VERSION="$(semver get major $CURRENT_VERSION)" || return
+
+			# Version updating logic
+			if [ "$PATCH_VERSION" != 10 ] && [ "$PATCH_VERSION" -lt 10 ]; then
+				echo "$(semver bump patch $CURRENT_VERSION)" > "$VERSION_FILE"
+			elif [ "$MINOR_VERSION" == 10 ]; then
+				echo "$(semver bump major $CURRENT_VERSION)" > "$VERSION_FILE"			
+			elif [ "$PATCH_VERSION" == 10 ]; then
+				echo "$(semver bump minor $CURRENT_VERSION)" > "$VERSION_FILE"
+			fi
+		done
+		
+		# Update last commit hash cache file
+		echo "$LAST_COMMIT_HARSH" > "$LAST_SYNC_FILE"
+
+}
+
 case "$1" in
 	--aosp-project-makefile)
 		aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
@@ -244,6 +383,10 @@ case "$1" in
 		RUN_CHECK=true
 		build.setVars
 		build.main ${1:-"-mx23"}
+		;;
+	--update-version)
+		build.setVars
+		gen.newVersion
 		;;
 	*)
 		build.setVars

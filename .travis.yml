@@ -1,2 +1,0 @@
-language: bash
-script: installer/packer-engine/bash makeme

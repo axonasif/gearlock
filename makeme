@@ -194,14 +194,10 @@ function patch.aosp_root() {
 				
 			"${files_to_patch[4]}")
 				sed -i 's/add_entry.*$/& NORECOVERY=1/g' "$aosp_root/$FILE"
-				sed -i 's|submenu "Advanced options -> " {|submenu "Advanced options -> " {\
+				sed -i 's|submenu "Advanced options -> ".*$|& \
 	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
 	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
-	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=0|' "$aosp_root/$FILE"
-				sed -i 's|submenu "Advanced options -> " --class forward {|submenu "Advanced options -> " --class forward {\
-	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
-	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
-	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=0|' "$aosp_root/$FILE"
+	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=1|' "$aosp_root/$FILE"
 				;;
 		esac
 		(

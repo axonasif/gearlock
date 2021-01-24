@@ -44,7 +44,7 @@ function build.setVars() {
 	_buildCacheRoot="${_execDir}/out"
 	_buildCache="${_buildCacheRoot}/gearlock"
 	_buildCacheInstallerDir="${_buildCacheRoot}/gri"
-	_buildInstallerOut="${_buildCacheRoot}/build_installer_out"
+	_buildInstallerOut="${_buildCacheRoot}/installer"
 	_installerSrc="${_execDir}/installer"
 	_gearlockVersionCode="$(< "${_execDir}"/core/version)"
 }
@@ -73,26 +73,27 @@ function build.main() {
 			
 		# Re-configure/fix shebangs in bin & remove `gearlock/bin`
 		echo -e "Removing ${cExternal:=core/_external_}"
-		rm -r ${cExternal}; test "$?" != "0" && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
+		! rm -r ${cExternal} && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
+		rm -rf "core/.vscode"
 		#rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
-			
-		echo -e "Fixing shebangs"
-		# Look for `#/bin/bash`
-		for f in $(grep "#\!/bin/bash" -lr bin | xargs);
-		do
-			gslr "$f" "#\!/bin/bash" "#\!\/gearlock\/bin\/bash" || handleError "Failed to replace shebangs with gslr"
-		done;
 	fi
-		
 	
-	# Optimize/Syntax-check source code
-	echo -e "Checkig source code syntax of GearLock ${_gearlockVersionCode}"
+	# Syntax-check source code and shebangs
 	local source_files_gen_list="${_buildCacheRoot}/.source_files"
 	rm -f "$source_files_gen_list"
 	file_list=($(awk 'NF' "${_execDir}/source_files" | sed '/#.*/d')) || handleError "Failed to read source_files"
 	for f in "${file_list[@]}"; do
 		echo "\"${_execDir}/$f\"" >> "$source_files_gen_list"
 	done
+	
+	echo -e "Checking source_files shebangs"
+	# Look for `#/bin/bash`
+	for f in $(xargs < "$source_files_gen_list"); do
+		! echo "$(dirname "$f")" | grep -q -E 'gearlock/core|gearlock/bin' && continue
+		sed -i '1s|#!.*/.*bin/|#!/gearlock/bin/|' "$f" || handleError "Failed to replace shebangs with sed"
+	done
+	
+	echo -e "Checkig source code syntax of GearLock ${_gearlockVersionCode}"
 	chmod +x "${_execDir}/bin/bashbox"
 	STRICT="true" NO_CREATE="true" bash "${_execDir}/bin/bashbox" $(xargs < "$source_files_gen_list") \
 		|| handleError "Syntax errors found, can not continue"

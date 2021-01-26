@@ -240,11 +240,13 @@ function gen.newVersion() {
 			MINOR_VERSION="$(semver get minor $CURRENT_VERSION)" || return
 
 			# Version updating logic
-			if [ "$PATCH_VERSION" != 20 ] && [ "$PATCH_VERSION" -lt 20 ]; then
+			local bumpPoint="40"
+			local bumpPointMajor="10"
+			if [ "$PATCH_VERSION" != "$bumpPoint" ] && [ "$PATCH_VERSION" -lt "$bumpPoint" ]; then
 				echo "$(semver bump patch $CURRENT_VERSION)" > "$VERSION_FILE"
-			elif [ "$MINOR_VERSION" == 10 ]; then
-				echo "$(semver bump major $CURRENT_VERSION)" > "$VERSION_FILE"			
-			elif [ "$PATCH_VERSION" == 20 ]; then
+			elif [ "$MINOR_VERSION" == "$bumpPointMajor" ]; then
+				echo "$(semver bump major $CURRENT_VERSION)" > "$VERSION_FILE"
+			elif [ "$PATCH_VERSION" == "$bumpPoint" ]; then
 				echo "$(semver bump minor $CURRENT_VERSION)" > "$VERSION_FILE"
 			fi
 		done

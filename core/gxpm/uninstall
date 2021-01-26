@@ -1,4 +1,4 @@
-test -z "$ME" && clear && exit 1
+test -z "$GEARLOCK_V" && exit 1
 export UNINS_SCRIPT="$1" && clear && source "$1"
 test "$DEF_HEADER" == "yes" && show_zygote_header
 
@@ -14,6 +14,7 @@ if type do_unins > /dev/null 2>&1; then
 fi
 
 geco "\n"
+
 # Update GXPM LOG
 (
 	if [ -n "$(grep "${NAME}" "$GXPM_LOG" | grep "${AUTHOR}")" ]; then
@@ -24,14 +25,21 @@ geco "\n"
 	sleep 2
 ) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_GXPM_LOG" "MERGE_GXPM_LOG" 
 
-# Extension & GearBoot Executables
+
 if [ -n "$NAME" ]; then
+    # Extension
 	if [ -e "${EXTDIR}/${C_EXTNAME:="$NAME"}" ]; then
-		(sleep 2 && rm "${EXTDIR}/${C_EXTNAME:="$NAME"}") & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: REMOVE" "REMOVE_EXTENSION"
+		(sleep 2 && rm "${EXTDIR}/${C_EXTNAME:="$NAME"}") & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: EXTENSION:: REMOVE" "REMOVE_EXTENSION"
 	fi
+	
 	# GearBoot Scripts
 	if [ -n "$(find "$GBDIR" -name "${NAME}")" ]; then
-		(sleep 2 && find "$GBDIR" -name "${NAME}" -exec rm {} +) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: REMOVE_GEARBOOT_EXEC" "REMOVE_GEARBOOT_EXEC"
+		(sleep 2 && find "$GBDIR" -name "${NAME}" -exec rm {} +) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEARBOOT_EXECUTABLE:: REMOVE" "REMOVE_GEARBOOT_EXEC"
+	fi
+	
+	# GearBoot Overlay
+	if [ -d "$OVERLAYDIR/${NAME}" ]; then
+		(sleep 2 && rm -r "$OVERLAYDIR/${NAME}") & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEARBOOT_OVERLAY:: REMOVE" "REMOVE_GEARBOOT_OVERLAY"
 	fi
 fi
 

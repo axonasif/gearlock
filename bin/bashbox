@@ -1,0 +1,131 @@
+#!/gearlock/bin/env bash
+set +x > /dev/null 2>&1
+
+# Define variables
+VERSION="0.4"
+EXEC_NAME="${0##*/}"
+BD="${0%/*}"
+BEAUTIFIED="beautified"
+MINIFIED="minified"
+
+# Define functions
+error_break_bb(){ ERRC=$?; echo -e "$EXEC_NAME:$1:   $2"; rm -f "$TMP_SCRIPT"; }
+error_exit_bb(){ ERRC=$?; echo -e "$EXEC_NAME:$ERRC:   $@"; exit $ERRC; }
+
+jobBeautify(){
+
+	# Initialize temp dir
+	test -w /tmp && TMP_DIR=/tmp || TMP_DIR="$HOME/.bb"
+	mkdir -p "$TMP_DIR" > /dev/null 2>&1 || error_exit_bb "Failed to initialize temporary caching."
+	for ivar in "$@"
+	do
+		if [ -e "$ivar" ]; then
+			RANDOM_INT=$RANDOM
+			TMP_SCRIPT="$TMP_DIR/.bb_${RANDOM_INT}"
+			test_func_head="test_${RANDOM_INT}"
+			test_func_tail="}"
+			footer_credits="# $(test -z "$MINIFY"&&echo "${BEAUTIFIED^}"||echo "${MINIFIED^}") & optimized for bash by BashBox ---- I know you are gonna remove me  :P"
+			# Create the test script
+			CACHE_SHEBANG="$(grep "#\!/.*" "$ivar" | head -n1)"
+			(echo "${test_func_head}(){" > "$TMP_SCRIPT" && sed -e "s|#\!/.*||" -e "s|$footer_credits||" < "$ivar" >> "$TMP_SCRIPT" && echo "${test_func_tail}" >> "$TMP_SCRIPT"); r=$?
+				if [ "$r" != 0 ]; then
+					error_break_bb $r "Read/Write error in $ivar"; continue
+				fi
+
+			# Sourcing stage
+			SOURCE_CHECK="$(source "$TMP_SCRIPT" 2>&1)"; r=$?
+				if [ "$r" != 0 ]; then
+					while read -r line; do
+						error_break_bb $r "$ivar   :   Error caught: ${line#*:}"
+					done < <(echo -e "$SOURCE_CHECK" | grep -I ': line .*:')
+					test "$STRICT" != "true" && continue || exit $r
+				fi
+
+			# Continue on success 0
+			outPut="${ivar}.$(test -z "$MINIFY"&&echo 'bb'||echo 'min.tmp').sh"
+			source "$TMP_SCRIPT"
+
+			# Apply custom formatting
+			type $test_func_head | tail -n+4 | sed -e '1h;1!H;$!d;g;s/\(.*\)}/\1/' | sed 's|^};|};\n|g' > "${outPut}"
+
+			# If minify
+			test -n "$MINIFY" && jobMinify "${outPut}" "${minPut:="${ivar}".bb.min.sh}" && rm -f "${outPut}" && local outPut="$minPut"
+			echo -e "\n${footer_credits}" >> "${outPut}"
+
+			# Merge Shebang
+			if test -n "$CACHE_SHEBANG"; then
+				CACHE_SHEBANG="$(echo "$CACHE_SHEBANG" | sed -e 's|/|\\/|g' -e 's|#\!|#\\!|g')"
+				sed -i "1 { x; s/^.*/$CACHE_SHEBANG/; G; }" "${outPut}"
+			fi
+
+			chmod -f 777 "${outPut}"
+			baseIvar="${ivar##*/}"
+			gapVar="$(for t in $(seq $((30 - ${#baseIvar} )) ); do echo -n " "; done)"
+			echo -n "$EXEC_NAME:              ${baseIvar}:${gapVar}" \
+				&& sleep 0.01 && echo -n "$(test -z "$MINIFY" && echo "${BEAUTIFIED,}" || echo "${MINIFIED,}") + " && sleep 0.01 \
+				&& echo -n "optimized + " && sleep 0.01 && echo "syntax checked"
+			{
+				rm -f "$TMP_SCRIPT"
+				test -n "$NO_CREATE" && rm "${outPut}"
+				test "$TMP_DIR" != "/tmp" && rmdir --ignore-fail-on-non-empty "$TMP_DIR"
+			}> /dev/null 2>&1
+			:
+		else
+			error_break_bb 255 "$ivar file not found."
+		fi
+	done
+
+}
+
+jobMinify(){ 
+
+tr '\n' ' ' < $1 |sed -e 's| };| ;};|g' -e 's|         | |g' -e 's| ()  {      |(){ |g' -e 's| ;};  function |;};|g' \
+		-e 's|;     fi;|;fi;|g' -e 's|; do     |;do |g' -e 's|]; then         |];then |g' -e 's|]; then |];then |g' \
+		-e 's|;     if \[ |;if \[ |g' -e 's|; if \[ |;if \[ |g' -e 's|];then     |];then |g' -e 's|;     |; |g' \
+		-e 's|; else         |;else |g' -e 's|; else     |;else |g' -e 's| ()      {  |(){ |g' -e 's|(){ function |(){ |g' \
+		-e 's|;     |; |g' -e 's|; fi     ;}; |;fi;};|g' -e 's|;};  \[|;};\[|g' -e 's|; then         |;then |g' \
+		-e 's|<EOF |<EOF\n|g' -e 's|<HERE_EOF |<HERE_EOF\n|g' -e "s|<'EOF' |<'EOF'\n|g" -e "s|<\"EOF\" |<\"EOF\"\n|g" \
+		-e 's| EOF      |\nEOF\n|g' -e 's| EOF  |\nEOF\n|g' -e 's| HERE_EOF      |\nHERE_EOF\n|g' -e 's| HERE_EOF  |\nHERE_EOF\n|g' \
+		-e 's|; then     |;then |g' -e 's|; do         |;do |g' \
+		-e 's|     ;; |;;|g' -e 's|)     |)|g' -e 's|)        |)|g' -e 's| in      | in |g' \
+		-e 's|{      |{ |g' -e 's|else     if |else if |g'> $2
+}
+
+# Main
+case "$1" in
+	-h|--help)
+		echo -e "
+BashBox $VERSION | By AXON | supreme-gamers.com
+Easily beautify / minify, optimize and syntax error checking of bash scripts in pure bash
+
+Usage: $EXEC_NAME bash-script.sh
+       Note: You can specify multiple files at the same time
+       
+       -m,  --minify        Minify instead of beautification
+
+Informative output:
+
+        -v,  --version      Print the BashBox version
+        -h,  --help         Print this help message
+
+Keep in mind that bashbox does not preserve comments in output file
+For more information & bugreports visit https://github.com/AXIM0S/bashbox
+"
+		;;
+	-v|--version)
+		echo "$VERSION"
+		;;
+	
+	-m|--minify)	
+		shift; MINIFY=true; jobBeautify "$@"
+		;;
+	
+	*)
+		if [ -n "$1" ]; then
+			jobBeautify "$@"
+		else
+			echo -e "$EXEC_NAME : No input file specified.\nTry \`$EXEC_NAME -h' or \`$EXEC_NAME --help' for more information."
+		fi
+		;;
+esac
+ 

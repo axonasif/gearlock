@@ -1,1 +1,88 @@
- 
+# Define vars
+MODULE_PATH="$GBDIR/boot-comp/BanGooglePlayServicesUpdater"
+TITLE="Ban AutoUpdate of Google-Play-Services"
+
+# Define functions
+function module.is_enabled() {
+	test "$1" == "-p" && PRINT=true
+	if test -e "$MODULE_PATH"; then
+		test -n "$PRINT" && echo 'Enabled'
+		true
+	else
+		test -n "$PRINT" && echo 'Disabled'
+		false
+	fi
+}
+
+function module.install() {
+	argv="$1"
+	shift
+	
+	{
+		ckdirex "${MODULE_PATH%/*}" 755
+		case "$argv" in
+			"-string")
+					echo "$1" > "$MODULE_PATH"
+				;;
+			"-file")
+					rsync "$1" "$2"
+				;;
+		esac
+		chmod -f 755 "$MODULE_PATH"
+	} 2>/dev/null
+	RETC=$?
+	
+	if test -z "$MODULE_REMOVED"; then
+		if test "$RETC" == "0"; then
+			msgbox "$TITLE" " ${_info_} " "\n Operation successful, reboot to see changes" 7 60
+		else
+			msgbox "$TITLE" " ${_info_} " "\n Something went wrong, operation failed: $RETC" 7 60
+		fi
+	fi
+	
+}
+
+function module.remove() {
+	test ! -e "$MODULE_PATH" && msgbox "$TITLE" " ${_info_} " "\n This module is not enabled" 7 60 && return
+	
+	rm "$MODULE_PATH" 2>/dev/null
+	RETC=$?
+	
+	if test "$RETC" == "0" ; then
+		msgbox "$TITLE" " ${_info_} " "\n Module successfully removed, reboot to see changes" 7 60
+	else
+		msgbox "$TITLE" " ${_info_} " "\n Something went wrong, operation failed: $RETC" 7 60
+	fi
+	
+	MODULE_PATH="${MODULE_PATH}.disable"
+	MODULE_REMOVED=true
+	test -n "$1" && module.install $*
+}
+
+dialog --colors --clear --backtitle " $(gecpc "$TITLE" "#") " \
+		--title " Confirm Action " --yes-label "Enable" --no-label "Disable" \
+		--help-button --help-label "Exit" $(module.is_enabled && echo '--defaultno') \
+		--yesno "\n Current status: ${MRED}$(module.is_enabled -p)${MRC}\n What do you wanna do ?" 8 60
+RETC=$?
+
+case "$RETC" in
+	# Insall button
+	"0")
+		module.install -string '#!/gearlock/bin/bash
+pm disable com.android.vending/com.google.android.finsky.headless.GmsCoreUpdateService
+'
+	;;
+	# Uninstall button
+	"1")
+		module.remove -string '#!/gearlock/bin/bash
+pm enable com.android.vending/com.google.android.finsky.headless.GmsCoreUpdateService
+rm $0
+'
+	;;
+	# Exit button
+	"2")
+		true
+	;;
+esac
+
+nopause

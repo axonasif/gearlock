@@ -9,17 +9,13 @@ done
 # Define vars
 targetDevice="$(mount | grep "on /mnt" | awk '{print $1}')";
 
-reMount(){
-	(
-		test -n "$unmounted" && true || return
-		test -z "$elsefs" && mount -o rw,noatime "$targetDevice" /mnt
-	)>/dev/null 2>&1
-
+function reMount(){
+	test -n "$unmounted" && true || return
+	test -z "$elsefs" && mount -o rw,noatime "$targetDevice" /mnt
 }
 
-unMount(){
+function unMount(){
 	unmounted=true
-	(
 	# Free loop devices to avoid read errors.
 		for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | sort -r); do
 			mount 2>/dev/null | grep -q "^$loopDev" && umount -d "$loopDev";
@@ -29,13 +25,12 @@ unMount(){
 		for mp in /data /system /android/data /android/system /sfs /gearlock/gearroot $(test -z "$elsefs" && echo '/mnt'); do
 			mountpoint -q $mp && umount $mp;
 		done
-	)>/dev/null 2>&1
 	:
 }
 
-runJob(){
+function runJob(){
 	
-	checkImg(){
+	function checkImg(){
 		for img in data.img system.img; do
 			if [ -e "$OROOT/$img" ]; then
 				test -z "$unmounted" && unMount;
@@ -69,12 +64,12 @@ runJob(){
 }
 
 	
-	if [ -n "$FIXFS" ] || [ -e "$OROOT/fixfs" ] || [ -z "$UI" ]; then
+	if [ -z "$UI" ] || [ -n "$FIXFS" ] || [ -e "$OROOT/fixfs" ]; then
 		runJob;
 	else
 		if dialog --colors --clear --title " Confirm action " --yesno "Are you sure that you want GearLock to repair \Z1$targetDevice\Zn ?" 8 41; then
 			clear && runJob -f;
-			echo -e "\n++ Press any key to continue ...\c" && read -n1;
+			echo -e "\n++ Press any key to continue ...\c" && read -nr1;
 		else
 			dialog --clear --title "Notice" --msgbox "\nOkay then !" 8 41;
 		fi;

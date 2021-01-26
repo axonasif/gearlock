@@ -74,17 +74,17 @@ function do_mk_unins(){
 	}
 
 	if [ "$GEN_UNINS" = "yes" ] && [ -f "${GRLT}/uninstall.sh" ]; then
-		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_HEADER"
-		(merge_auto_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_AUTO_GEN"
-		(merge_custom_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_CUSTOM_GEN" "GEN_UNINS"
+		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS:: MERGE_HEADER"
+		(merge_auto_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS:: MERGE_AUTO_GEN"
+		(merge_custom_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS:: MERGE_CUSTOM_GEN" "GEN_UNINS"
 
 	elif [ ! "$GEN_UNINS" = "yes" ] && [ -f "${GRLT}/uninstall.sh" ]; then
-		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_HEADER"
-		(merge_custom_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_CUSTOM_GEN" "GEN_UNINS"
+		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS:: MERGE_HEADER"
+		(merge_custom_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS:: MERGE_CUSTOM_GEN" "GEN_UNINS"
 
 	elif [ "$GEN_UNINS" = "yes" ] && [ ! -f "${GRLT}/uninstall.sh" ]; then
-		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_HEADER"
-		(merge_auto_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS_MERGE_AUTO_GEN" "GEN_UNINS"
+		(merge_header; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS:: MERGE_HEADER"
+		(merge_auto_gen; sleep 1) & gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEN_UNINS:: MERGE_AUTO_GEN" "GEN_UNINS"
 	fi
 
 }
@@ -93,7 +93,7 @@ function install_comm(){
 	# Extension
 	if nout ls "${GRLT}/${GCOMM}/extension"*; then
 		(rsync -a "${GRLT}/${GCOMM}/extension"* "${EXTDIR}/${C_EXTNAME:="$NAME"}"; sleep 2.5) &
-		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: INSTALL_EXTENSION" "INSTALL_EXTENSION"
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: EXTENSION:: INSTALL" "INSTALL_EXTENSION"
 	fi
 
 	# GearBoot
@@ -104,22 +104,28 @@ function install_comm(){
 		for gbex in init post-fs post-fs-data boot-post boot-comp; do
 			if ls "$cGBe/$gbex"*>/dev/null 2>&1; then
 				(sleep 1.5 && rsync -a "$cGBe/$gbex"* "${GBDIR}/$gbex/${NAME}") &
-				gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEARBOOT_EXECUTABLE:: $gbex"
+				gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEARBOOT_EXECUTABLE:: INSTALL:: $gbex"
 			fi
 		done
 	JOBS+="INSTALL_GEARBOOT_EXEC "
 	fi
 
+	# GearBoot/overlay
+	if [ -d "${GRLT}/${GCOMM}/gearboot/overlay" ]; then
+		(sleep 1 && rm -rf "$OVERLAYDIR/${NAME}"; mkdir -p "$OVERLAYDIR/${NAME}" && rsync -a "${GRLT}/${GCOMM}/gearboot/overlay/" "$OVERLAYDIR/${NAME}") &
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: GEARBOOT_OVERLAY:: CREATE" "GEARBOOT_OVERLAY_CREATE"
+	fi
+
 	# Dependencies
 	if [ -d "${GRLT}/${GCOMM}/dependencies" ]; then
 		(rsync -a "${GRLT}/${GCOMM}/dependencies" "$GHOME"; sleep 2) &
-		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_COMMON_DEPENDENCIES" "MERGE_COM_DEP"
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE:: COMMON_DEPENDENCIES" "MERGE_COM_DEP"
 	fi
 	
 	# .local
 	if [ -d "${GRLT}/${GCOMM}/.local" ]; then
 		(rsync -a "${GRLT}/${GCOMM}/.local" "$GHOME"; sleep 2) &
-		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE_LOCAL_FILES" "MERGE_LOC_FILES"
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE:: LOCAL_FILES" "MERGE_LOC_FILES"
 	fi
 }
 

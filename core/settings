@@ -1,11 +1,11 @@
 # Define variables
-LIST_OPTS=(BOOTSOUND SECOND_GTTY UPDATE_CHECK DEFAULT_THEME NORECOVERY FIXFS)
+LIST_OPTS=(BOOTSOUND SECOND_GTTY UPDATE_CHECK DEFAULT_THEME NORECOVERY FIXFS LOAD_FROMFS)
 
 # Define functions
 function checklist(){
 	BACK_TITLE="$1" TITLE="$2" NUM_OPTIONS="$3" HEADER_TEXT="$4"; shift;shift;shift;shift
 	
-	CHOSEN_LIST=$(dialog --clear --colors --ok-label "  ${_confirm_}  " --nocancel --backtitle "$BACK_TITLE" --title "$TITLE" --separate-output --checklist "$HEADER_TEXT" 16 100 "$NUM_OPTIONS" "$@"  3>&1 1>&2 2>&3)
+	CHOSEN_LIST=$(dialog --clear --colors --ok-label "  ${_confirm_}  " --nocancel --backtitle "$BACK_TITLE" --title "$TITLE" --separate-output --checklist "$HEADER_TEXT" 17 100 "$NUM_OPTIONS" "$@"  3>&1 1>&2 2>&3)
 	ORIG_IFS="$IFS"; IFS=$'\n'; CHOSEN_LIST=( $CHOSEN_LIST ); IFS="$ORIG_IFS"
 	
 	CHOSEN=""
@@ -27,7 +27,7 @@ function update_value(){
 }
 
 function fetch_value(){ 
-	cat "$GEARLOCK_RC" 2>/dev/null | sed -n "s|^$1=||p" | sed "s|\"||g" | head -n 1
+	 sed -n "s|^$1=||p" "$GEARLOCK_RC" | sed "s|\"||g" | head -n 1
 }
 
 function set_ui_value(){
@@ -49,7 +49,7 @@ function set_ui_value(){
 function ask_opts (){
 
 # Get input
-ANSWER=$( checklist "${_settings_back_title_}" " ${_settings_title_} " 5 \
+ANSWER=$( checklist "${_settings_back_title_}" " ${_settings_title_} " 6 \
 		"\n${_settings_extra_instructions_} \n \n" \
 		\
 		"${LIST_OPTS[0]}" "${_settings_bootsound_info_}" $(set_ui_value ${LIST_OPTS[0]}) \
@@ -57,7 +57,8 @@ ANSWER=$( checklist "${_settings_back_title_}" " ${_settings_title_} " 5 \
 		"${LIST_OPTS[2]}" "${_settings_update_info_}" $(set_ui_value ${LIST_OPTS[2]}) \
 		"${LIST_OPTS[3]}" "${_settings_default_theme_info_}" $(set_ui_value ${LIST_OPTS[3]}) \
 		"${LIST_OPTS[4]}" "${_settings_norecovery_info_}" $(set_ui_value ${LIST_OPTS[4]}) \
-		"${LIST_OPTS[5]}" "${_settings_fixfs_info_}" $(set_ui_value "${LIST_OPTS[5]}") )
+		"${LIST_OPTS[5]}" "${_settings_fixfs_info_}" $(set_ui_value "${LIST_OPTS[5]}") \
+		"${LIST_OPTS[6]}" "${_settings_loadfromfs_info_}" $(set_ui_value "${LIST_OPTS[6]}") )
 
 # Convert $ANSWER into plain string
 ANSWER=( $(eval echo $ANSWER) )
@@ -67,7 +68,7 @@ ANSWER=( $(eval echo $ANSWER) )
 function setup_opts(){
 
 # First handle which options were unchecked.
-for allOPT in ${LIST_OPTS[@]}
+for allOPT in "${LIST_OPTS[@]}"
 do
 	
 	if [[ ! "${ANSWER[*]}" =~ .*$allOPT.* ]]; then

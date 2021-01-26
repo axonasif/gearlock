@@ -1,3 +1,4 @@
+#!/gearlock/bin/bash
 # Ensure we are root user
 test -z "$RECOVERY" && test ! -d "/home/axon" && test "$(whoami)" != "root" && exit 1
 test -z "$ME" && clear && exit 255
@@ -262,43 +263,47 @@ function check_sync_req() {
 
 function check_reboot_req() {
 	callName="${0##*/}"
-	function job(){
+	function job() {
 		geco "\$\$ ${_phrase_gxpm_com_public_jobs_}: ${YELLOW}$(echo "${JOBS}"|xargs|sed "s| |, |g")${RC}" # Print total completed gxpm public jobs
-			geco "\n\$\$ ${_phrase_X_is_requesting_reboot_/@DUMMY@/$TYPE} :\c" && sleep 1
-			while true; do
-				read -rn1 -p "$(geco " ${_phrase_allow_to_reboot_} [${BGREEN}Y${RC}/n]") " "c"
-				case "$c" in
-					[Yy]* ) 
-							geco "\n\n\n++ ${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | \c"
-							greboot
-							break
-							;;
-					[Nn]* ) 
-							touch "$GTMP/reboot"
-							geco "\n" && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
-							break
-							;;
-					* )
-							geco "\c "
-							;;
-				esac
-			done
+			if test "$1" == "-r"; then
+				geco "\n\$\$ ${_phrase_X_is_requesting_reboot_/@DUMMY@/$TYPE} :\c" && sleep 1
+				while true; do
+					read -rn1 -p "$(geco " ${_phrase_allow_to_reboot_} [${BGREEN}Y${RC}/n]") " "c"
+					case "$c" in
+						[Yy]* ) 
+								geco "\n\n\n++ ${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | \c"
+								greboot
+								break
+								;;
+						[Nn]* ) 
+								touch "$GTMP/reboot"
+								geco "\n" && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
+								break
+								;;
+						* )
+								geco "\c "
+								;;
+					esac
+				done
+			else
+				geco "\n" && pause "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
+			fi
 	}
 	
 	if [ "$REQREBOOT" == "yes" ] || [ "${REQREBOOT%%,*}" == "yes" ] && [ "${REQREBOOT##*, }" == "yes" ]; then
-		job
+		job -r
 	elif [ "${REQREBOOT%%,*}" == "yes" ] && [ "${REQREBOOT##*, }" != "yes" ] && test -z "$RECOVERY"; then
-		job
+		job -r
 	elif [ "${REQREBOOT%%,*}" != "yes" ] && [ "${REQREBOOT##*, }" == "yes" ] && test -n "$RECOVERY"; then
-		job
+		job -r
 	else
-		geco "${GREEN}${NAME}-${VERSION}${RC} ${callName^}ation Successful | "
+		job
 	fi 
 
 }
 
 function show_zygote_header() {
-geco "${BBLUE}  ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______
+	geco "${BBLUE}  ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______   ______
  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/
 
   ._.   ___
@@ -312,7 +317,7 @@ ${BBLUE}  ______   ______   ______   ______   ______   ______   ______   ______ 
 ${BBLUE} /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/${RC}
 
 
-"
+	"
 }
 
 # Fetch server & mkrecovery

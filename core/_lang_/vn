@@ -294,6 +294,8 @@ _settings_gtty_info_="Đây là một của sổ Terminal khác bằng cách b�
 _settings_update_info_="Có nên kiểm tra cập nhật Gearlock hay bật thông báo cập nhật mởi không"
 _settings_default_theme_info_="Liệu có nên đặt giao diện này làm mặc định không"
 _settings_norecovery_info_="Khi bật lên, nó sẽ bỏ qua bộ đếm giờ của Chế độ Recovery"
+_settings_fixfs_info_="When enabled, it quick checks & repairs your ExtFS / .img on each boot"
+_settings_loadfromfs_info_="Make GearLock to be loaded from /system instead of RAM"
 
 _ui_about_msg_="
 Gearlock là một chương trình GUI & Recovery được phát triển với rất nhiều thời gian, tâm huyết , sự kiên nhẫn và tình yêu bởi SupremeGamers.

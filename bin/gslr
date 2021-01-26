@@ -1,7 +1,7 @@
 #!/gearlock/bin/bash
-show_help(){
-NPUT=0
-cat << "EOF"
+show_help() {
+	NPUT=0
+	cat << "EOF"
 
 Gslr 0.2 | GearLock Search and Line Replace
 
@@ -19,15 +19,35 @@ For more information & bugreports visit https://supreme-gamers.com/gearlock
 
 EOF
 }
-empty_msg(){
-NPUT=0
-cat << "EOF"
+
+empty_msg() {
+	NPUT=0
+	cat << "EOF"
 No input specified!
 
 Try `gslr --help' for more information.
 EOF
 }
 
-if [ -z "$1" ]; then empty_msg; fi; if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then show_help; fi
-if [ ! -z "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
-LII=$(grep -n "$2" "$1" | head -n1 | cut -d : -f1); if [ ! -z "$LII" ]; then LI=$(echo -e $LII | awk '{print $1}'); sed -i "${LI}s/.*/${3}/" "$1"; else echo -e "~ Error [gslr:1], could not find any line containing ${RED}$2${RC}"; fi; else if [ -z "$NPUT" ]; then echo -e "~ Error [gslr:3], lack of input"; fi; fi
+if [ -z "$1" ]; then
+	empty_msg
+fi
+
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+	show_help
+fi
+
+if test -n "$1" && test -n "$2" && test -n "$3"; then
+	LII="$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)";
+	if test -n "$LII"; then
+		LI="$(echo -e "$LII" | awk '{print $1}')";
+		sed -i "${LI}s/.*/${3}/" "$1";
+	else
+		RETC=$?
+		echo -e "~ Error [gslr:$RETC], could not find any line containing ${RED}$2${RC}" && exit $RETC
+	fi;
+else
+	if test -z "$NPUT"; then
+		echo -e "~ Error [gslr:3], lack of input" && exit 1
+	fi;
+fi

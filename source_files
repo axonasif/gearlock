@@ -1,0 +1,113 @@
+# bin
+bin/ckdirex
+bin/fetch
+bin/fetch.in
+bin/fixfs
+bin/fixscreen
+bin/garc
+bin/gclone
+bin/gdload
+bin/gearboot
+bin/gearinit
+bin/gearlock
+bin/gearlock-cli
+bin/gearlock-post
+bin/gearprop
+bin/gecca
+bin/geco
+bin/gecpc
+bin/gfe
+bin/gkillapp
+bin/gsdir
+bin/gslr
+bin/gstatus
+bin/gsudo
+bin/gxpm
+bin/mc.gearinit
+bin/mkrecovery
+bin/nout
+bin/sudo
+
+# core/
+core/devz
+core/settings
+core/update
+
+# core/_lang_
+core/_lang_/en
+core/_lang_/vn
+
+# core/emisc.src
+core/emisc.src/1
+core/emisc.src/2
+core/emisc.src/3
+core/emisc.src/4
+core/emisc.src/5
+core/emisc.src/6
+core/emisc.src/7
+core/emisc.src/8
+
+# core/gdev.src
+core/gdev.src/1
+core/gdev.src/2
+core/gdev.src/3
+core/gdev.src/4
+core/gdev.src/5
+core/gdev.src/6
+
+# core/ggames.src
+core/ggames.src/1
+core/ggames.src/2
+core/ggames.src/3
+core/ggames.src/4
+
+# core/gst.src
+core/gst.src/1
+core/gst.src/2
+core/gst.src/3
+core/gst.src/4
+core/gst.src/5
+core/gst.src/6
+core/gst.src/7
+core/gst.src/8
+core/gst.src/9
+core/gst.src/10
+#gst.src/_bloat_applist
+core/gst.src/OhMyRam.gbscript
+
+# core/gxpm
+core/gxpm/install
+core/gxpm/install-zip
+core/gxpm/uninstall
+core/gxpm/mesa-native/job
+
+# core/interface
+core/interface/classic
+core/interface/metro
+
+# core/main.src
+core/main.src/1
+core/main.src/2
+core/main.src/3
+core/main.src/4
+core/main.src/5
+core/main.src/6
+core/main.src/7
+core/main.src/8
+
+# core/smask.src
+core/smask.src/1
+core/smask.src/2
+core/smask.src/3
+core/smask.src/4
+core/smask.src/5
+core/smask.src/6
+
+# etc/
+etc/bash.bashrc
+
+# installer
+installer/install
+
+# installer/boot-installer
+installer/boot-installer/init

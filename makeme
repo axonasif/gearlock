@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
 
+
+# Check if sourced
+! echo "$0" | grep -q "makeme" && echo -e 'makeme should not be sourced!' && exit 1
+
 # Define functions
-function gslr ()
-{
-	if [ ! -z "$1" ] && [ ! -z "$2" ] && [ ! -z "$3" ]; then
-		LII=$(grep -n "$2" "$1" | head -n1 | cut -d : -f1);
-		if [ ! -z "$LII" ]; then
-			LI=$(echo -e $LII | awk '{print $1}');
+function gslr() {
+	if test -n "$1" && test -n "$2" && test -n "$3"; then
+		LII="$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)";
+		if test -n "$LII"; then
+			LI="$(echo -e "$LII" | awk '{print $1}')";
 			sed -i "${LI}s/.*/${3}/" "$1";
 		else
-			echo -e "~ Error [gslr:2], could not find any line containing ${RED}$2${RC}" && return $?
+			RETC=$?
+			echo -e "~ Error [gslr:$RETC], could not find any line containing ${RED}$2${RC}" && return $RETC
 		fi;
 	else
-		if [ -z "$NPUT" ]; then
-			echo -e "~ Error [gslr:3], lack of input" && return $?
+		if test -z "$NPUT"; then
+			echo -e "~ Error [gslr:3], lack of input" && return 1
 		fi;
 	fi
 };
@@ -25,7 +29,7 @@ function handleError ()
 
 };
 
-function mkInstaller ()
+function build.mkInstaller ()
 {
 	rm -rf "${_buildInstallerOut}"; mkdir -p "${_buildInstallerOut}"
 	local GARCA="${_installerSrc}/packer-engine/garca"
@@ -34,89 +38,255 @@ function mkInstaller ()
 	return $?
 };
 
-function main ()
-{
+function build.setVars() {
+	# Define variables
+	_execDir="$(dirname "$(readlink -f "$0")")"
+	_buildCacheRoot="${_execDir}/out"
+	_buildCache="${_buildCacheRoot}/gearlock"
+	_buildCacheInstallerDir="${_buildCacheRoot}/gri"
+	_buildInstallerOut="${_buildCacheRoot}/build_installer_out"
+	_installerSrc="${_execDir}/installer"
+	_gearlockVersionCode="$(< "${_execDir}"/core/version)"
+}
+
+
+function build.main() {
 		
 	# Define core vars
-	local _buildVariant="$1"
-	local _compressionLevel="$2"
-	local _execDir="$(dirname "$(readlink -f "$0")")"
-	local _buildCacheRoot="${_execDir}/out"
-	local _buildCache="${_buildCacheRoot}/gearlock"
-	local _buildCacheInstallerDir="${_buildCacheRoot}/gri"
-	local _buildInstallerOut="${_buildCacheRoot}/build_installer_out"
-	local _installerSrc="${_execDir}/installer"
-		
-	echo -e "Start of GearLock $(cat "${_execDir}"/core/version) build\n"
-		
-	# Clean & remake _buildCacheRoot|_buildCache
-	test -e "${_buildCacheRoot}" && rm -r "${_buildCacheRoot}"
-	mkdir -p "${_buildCacheRoot}" "${_buildCache}" || handleError "Failed 'mkdir ${_buildCache}'"
-		
-	# Copy raw files into _buildCache
-	echo -e "Copying raw files into ${_buildCache}"
-	cd "${_execDir}" && rsync -a --info=progress2 bin core etc lib libexec share usr "${_buildCache}" || handleError "Failed to copy files into ${_buildCache}\'"
-		
-	# Change dir to _buildCache
-	cd "${_buildCache}"
-	mkdir ${_extraPlaceHolderDirs=tmp gearroot} && chmod 755 ${_extraPlaceHolderDirs} || handleError "Failed \'mkdir/chmod ${_extraPlaceHolderDirs}\'"
-		
-	# Re-configure/fix shebangs in bin & remove `gearlock/bin`
-	echo -e "Removing ${cExternal:=core/_external_}"
-	rm -r ${cExternal}; test "$?" != "0" && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
-	rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
+# 	local _buildVariant="$1"
+	local _compressionLevel="$1"
 	
-	echo -e "Fixing shebangs"
-	# Look for `#/bin/bash`
-	for f in $(grep "#\!/bin/bash" -lr bin | xargs);
-	do
-		gslr "$f" "#\!/bin/bash" "#\!\/gearlock\/bin\/bash" || handleError "Failed to replace shebangs with gslr"
-	done;
+    # Clean & remake _buildCacheRoot|_buildCache
+    test -e "${_buildCacheRoot}" && rm -r "${_buildCacheRoot}"
+    mkdir -p "${_buildCacheRoot}" "${_buildCache}" || handleError "Failed 'mkdir ${_buildCache}'"
 		
+	if test -z "$RUN_CHECK"; then
+		echo -e "Start of GearLock ${_gearlockVersionCode} build\n"
+			
+		# Copy raw files into _buildCache
+		echo -e "Copying raw files into ${_buildCache}"
+		cd "${_execDir}" && rsync -ah --info=progress2 bin core etc lib libexec share usr "${_buildCache}" || handleError "Failed to copy files into ${_buildCache}\'"
+			
+		# Change dir to _buildCache
+		cd "${_buildCache}" || exit
+		mkdir ${_extraPlaceHolderDirs=tmp gearroot} && chmod 755 ${_extraPlaceHolderDirs} || handleError "Failed \'mkdir/chmod ${_extraPlaceHolderDirs}\'"
+			
+		# Re-configure/fix shebangs in bin & remove `gearlock/bin`
+		echo -e "Removing ${cExternal:=core/_external_}"
+		rm -r ${cExternal}; test "$?" != "0" && handleError "Failed to \'rm -r ${cExternal}\'" && exit 1
+		#rm -f "${_buildCache}/bin/bashbox" "${_buildCache}/bin/mkrecovery.multi"
+			
+		echo -e "Fixing shebangs"
+		# Look for `#/bin/bash`
+		for f in $(grep "#\!/bin/bash" -lr bin | xargs);
+		do
+			gslr "$f" "#\!/bin/bash" "#\!\/gearlock\/bin\/bash" || handleError "Failed to replace shebangs with gslr"
+		done;
+	fi
+		
+	
+	# Optimize/Syntax-check source code
+	echo -e "Checkig source code syntax of GearLock ${_gearlockVersionCode}"
+	local source_files_gen_list="${_buildCacheRoot}/.source_files"
+	rm -f "$source_files_gen_list"
+	file_list=($(awk 'NF' "${_execDir}/source_files" | sed '/#.*/d')) || handleError "Failed to read source_files"
+	for f in "${file_list[@]}"; do
+		echo "\"${_execDir}/$f\"" >> "$source_files_gen_list"
+	done
+	chmod +x "${_execDir}/bin/bashbox"
+	STRICT="true" NO_CREATE="true" bash "${_execDir}/bin/bashbox" $(xargs < "$source_files_gen_list") \
+		|| handleError "Syntax errors found, can not continue"
+# 	readarray -d '' optim_gen_list < <(find "${_buildCache}/bin" "${_buildCache}/core" -name '*.bb.sh' -print0)
+# 	for gen_list in "${optim_gen_list[@]}"; do
+# 		#mv "$gen_list" "${gen_list%.bb.sh}"
+# 		rm "$gen_list"
+# 	done
+	test -n "$RUN_CHECK" && exit 0
+	
 	# Recursive Chmod 755 _buildCache
 	echo -e "Setting permissions to 755 recursively for cpio image"
 	chmod -R 755 "${_buildCache}" || handleError "Failed to \'chmod -R 755 ${_buildCache}\'"
 		
 	# Make cpio archive of `gearlock` ~~ cd into _buildCacheRoot
-	test "$2" == '-p' && read -p "Press [Enter] to continue" readEnterKey
 	echo -e "Making cpio archive of gearlock directory: \c"
 	cd "${_buildCacheRoot}" || handleError "Failed to cd ${_buildCacheRoot}"
 	mkdir -p "${_buildCacheInstallerDir}" || handleError "Failed to mkdir ${_buildCacheInstallerDir}"
 	find gearlock | cpio --owner=root:root -o -H newc -O "${_buildCacheInstallerDir}/gearlock"
 		
-	# Merge files from _installerSrc into _buildCacheInstallerDir
-	echo -e "Merging files from ${_installerSrc} into ${_buildCacheInstallerDir}"
-	local installerSrcFiles=(
-	"${_installerSrc}/bin"
-	"${_installerSrc}/hook"
-	"${_installerSrc}/sp"
-	"${_installerSrc}/fx.apk"
-	"${_installerSrc}/install"
-	"${_execDir}/core/version"
-    )
-    
-	for files in "${installerSrcFiles[@]}"; do
-		rsync -a "${files}" "${_buildCacheInstallerDir}"
-	done
+	if test -z "$AOSP_PROJECT"; then
+		# Merge files from _installerSrc into _buildCacheInstallerDir
+		echo -e "Merging files from ${_installerSrc} into ${_buildCacheInstallerDir}"
+		local installerSrcFiles=(
+			"${_installerSrc}/bin"
+			"${_installerSrc}/hook"
+			"${_installerSrc}/sp"
+			"${_installerSrc}/fx.apk"
+			"${_installerSrc}/install"
+			"${_execDir}/core/version"
+		)
+		
+		for files in "${installerSrcFiles[@]}"; do
+			rsync -a "${files}" "${_buildCacheInstallerDir}"
+		done
 
-		
-	# Make ghome empty dirs
-	for folders in ghome ghome/dependencies ghome/extensions ghome/status ghome/unins ghome/gearboot \
-	${gd:=ghome/gearboot}/boot-comp $gd/boot-post $gd/init $gd/post-fs $gd/post-fs-data; do mkdir -p "${_buildCacheInstallerDir}/$folders"; done
-	# Copy extra ghome subdirs
-# 	rsync -a "${_installerSrc}/extensions" "${_installerSrc}/.config" "${_installerSrc}/.local" "${_buildCacheInstallerDir}/ghome"
-	chmod -R 755 "${_buildCacheInstallerDir}" 
-		
-	# Create self executable gearlock installer
-	echo -e "Making executable GearLock Installer: \c"
-	mkInstaller "${_buildInstallerOut}"/gearlock gri "${_compressionLevel}" > /dev/null 2>&1
-	local retCode=$?
-	test "$retCode" != "0" && handleError "Making of gearlock installer failed" $retCode
-	ls -lh "${_buildInstallerOut}" | grep gearlock | awk '{print $5}'
-		
-	# Make bootinstall-initrd.img
-	echo -e "Making initrd.img-bootinstall image: \c"
-	"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/bootinstall-initrd.img"
+			
+		# Make ghome empty dirs
+		for folders in ghome ghome/dependencies ghome/extensions ghome/status ghome/unins ghome/gearboot \
+		${gd:=ghome/gearboot}/boot-comp $gd/boot-post $gd/init $gd/post-fs $gd/post-fs-data; do mkdir -p "${_buildCacheInstallerDir}/$folders"; done
+		# Copy extra ghome subdirs
+	# 	rsync -a "${_installerSrc}/extensions" "${_installerSrc}/.config" "${_installerSrc}/.local" "${_buildCacheInstallerDir}/ghome"
+		chmod -R 755 "${_buildCacheInstallerDir}" 
+			
+		# Create self executable gearlock installer
+		echo -e "Making executable GearLock Installer: \c"
+		! build.mkInstaller "${_buildInstallerOut}"/gearlock gri "${_compressionLevel}" > /dev/null 2>&1 \
+			&& handleError "Making of gearlock installer failed"
+		ls -lh "${_buildInstallerOut}" | grep gearlock | awk '{print $5}'
+			
+		# Make bootinstall-initrd.img
+		echo -e "Making initrd.img-bootinstall image: \c"
+		"${_installerSrc}/boot-installer/makeme" "${_buildInstallerOut}/initrd.img"
+	fi
 };
 
-main ${1:-"-mx23"} ${2:-""}
+function patch.aosp_root() {
+	files_to_patch=(
+		"device/generic/common/device.mk"
+		"bootable/newinstaller/Android.mk"
+		"bootable/newinstaller/initrd/init"
+		"bootable/newinstaller/install/scripts/1-install"
+		"bootable/newinstaller/install/grub2/efi/boot/android.cfg"
+	)
+	
+	function patch.apply() {
+		local FILE="$1"
+		echo -e "==== Applying GearLock patches to $FILE"
+		case "$FILE" in
+			"${files_to_patch[0]}")
+				local _dir="$(echo "$0" | grep -q 'vendor' && echo 'vendor' || echo 'bootable')"
+				gslr "$aosp_root/$FILE" \
+					'PRODUCT_COPY_FILES := \\' \
+					"PRODUCT_COPY_FILES := \\\n    $_dir\/gearlock\/out\/gri\/gearlock:gearlock \\" \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[1]}")
+				line="$(grep -n 'BUILT_IMG.*:=.*$(.*)' "$aosp_root/$FILE" | head -n1 \
+						| sed 's|/|\\/|g; s|initrd.img|initrd.img gearlock|')"
+						
+				sed -i "${line%%:*}s/.*/${line#*:}/" "$aosp_root/$FILE" \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[2]}")
+				gslr "$aosp_root/$FILE" "mount_sdcard" "mount_sdcard; hook_gearinit" \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[3]}")
+				line="$(grep -n 'files=.*".*initrd.img.*"' "$aosp_root/$FILE" | head -n1 \
+						| sed 's|initrd.img|initrd.img /mnt/$SRC/gearlock|; s|/|\\/|g')"
+						
+				sed -i "${line%%:*}s/.*/${line#*:}/" "$aosp_root/$FILE" \
+				|| handleError "Failed to patch $aosp_root/$FILE"
+				;;
+				
+			"${files_to_patch[4]}")
+				sed -i 's/add_entry.*$/& NORECOVERY=1/g' "$aosp_root/$FILE"
+				sed -i 's|submenu "Advanced options -> " {|submenu "Advanced options -> " {\
+	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
+	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
+	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=0|' "$aosp_root/$FILE"
+				sed -i 's|submenu "Advanced options -> " --class forward {|submenu "Advanced options -> " --class forward {\
+	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
+	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
+	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=0|' "$aosp_root/$FILE"
+				;;
+		esac
+		(
+			cd "$aosp_root/${FILE%/*}" || handleError "Failed to change dir to $aosp_root/${FILE%/*}"
+			git commit -a -m "Update/apply GearLock patches for $FILE" --author="AXON <axonasif@gmail.com>" 1>/dev/null
+		)
+	}
+	
+	# Start with updating/placing hook script
+	local HOOK_PATH="$aosp_root/bootable/newinstaller/initrd/scripts/0-hook"
+	rsync "$_execDir/installer/hook" "$HOOK_PATH" || handleError "Failed to copy hook into $HOOK_PATH"
+	
+	# Now let's find which files we need to patch
+	for _file in "${files_to_patch[@]}"; do
+		! grep -i -E -q 'gearlock|gearinit' "$aosp_root/$_file" \
+			&& patch.apply "$_file"
+	done
+}
+
+
+function gen.newVersion() {
+	function semver() {
+		SEMVER_BIN="${_execDir}/semver"
+		chmod +x "$SEMVER_BIN"
+		"$SEMVER_BIN" "$@"
+	}
+		# Gather the data we need
+		local CURRENT_VERSION PATCH_VERSION MINOR_VERSION VERSION_FILE LAST_SYNC_FILE
+
+		LAST_SYNC_FILE="${_execDir}/.last_sync"
+		LAST_SYNC_HARSH="$(git log --all --ancestry-path ^$(< "$LAST_SYNC_FILE") --format=format:%H | tail -n 1)" || return
+		LAST_COMMIT_HARSH="$(git rev-parse HEAD)"
+		NEW_COMMITS="$(git rev-list --no-merges ${LAST_SYNC_HARSH}...${LAST_COMMIT_HARSH} | wc -l)"
+		VERSION_FILE="${_execDir}/core/version"
+
+		# Handling what we need to do
+		for times in $(seq $NEW_COMMITS); do
+			CURRENT_VERSION="$(< "$VERSION_FILE")" || return
+			PATCH_VERSION="$(semver get patch $CURRENT_VERSION)" || return
+			MINOR_VERSION="$(semver get minor $CURRENT_VERSION)" || return
+
+			# Version updating logic
+			if [ "$PATCH_VERSION" != 20 ] && [ "$PATCH_VERSION" -lt 20 ]; then
+				echo "$(semver bump patch $CURRENT_VERSION)" > "$VERSION_FILE"
+			elif [ "$MINOR_VERSION" == 10 ]; then
+				echo "$(semver bump major $CURRENT_VERSION)" > "$VERSION_FILE"			
+			elif [ "$PATCH_VERSION" == 20 ]; then
+				echo "$(semver bump minor $CURRENT_VERSION)" > "$VERSION_FILE"
+			fi
+		done
+		
+		# Update last commit hash cache file
+		echo "$LAST_COMMIT_HARSH" > "$LAST_SYNC_FILE"
+
+}
+
+case "$1" in
+	--aosp-project-makefile)
+		aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
+		AOSP_PROJECT=true
+		build.setVars
+		patch.aosp_root
+		build.main "-mx23"
+		;;
+	
+	--aosp-project-vendorsetup)
+		shift
+		test -z "$1" && handleError "Failed to locate \$aosp_root"
+		aosp_root="$1"
+		AOSP_PROJECT=true
+		build.setVars
+		patch.aosp_root
+		build.main "-mx23"
+		;;
+		
+	--run-check)
+		RUN_CHECK=true
+		build.setVars
+		build.main ${1:-"-mx23"}
+		;;
+	--update-version)
+		build.setVars
+		gen.newVersion
+		;;
+	*)
+		build.setVars
+		build.main ${1:-"-mx23"}
+		;;
+esac

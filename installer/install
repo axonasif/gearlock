@@ -69,15 +69,22 @@ function greboot() {
 	fi
 }
 
-function gslr() { 
-	LII=$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)
-	if [ -n "$LII" ]; then
-		LI=$(geco $LII | awk '{print $1}')
-		sed -i "${LI}s/.*/${3}/" "$1"
+function gslr() {
+	if test -n "$1" && test -n "$2" && test -n "$3"; then
+		LII="$(grep -n "$2" "$1" | head -n1 | cut -d : -f1)";
+		if test -n "$LII"; then
+			LI="$(echo -e "$LII" | awk '{print $1}')";
+			sed -i "${LI}s/.*/${3}/" "$1";
+		else
+			RETC=$?
+			echo -e "~ Error [gslr:$RETC], could not find any line containing ${RED}$2${RC}" && return $RETC
+		fi;
 	else
-		geco "~ Error [gslr:1], could not find any line containing ${RED}$2${RC}"
+		if test -z "$NPUT"; then
+			echo -e "~ Error [gslr:3], lack of input" && return 1
+		fi;
 	fi
-}
+};
 
 function endjob() { 
 	if [ "$1" = "-b" ]; then
@@ -104,8 +111,8 @@ function get_osroot() {
 	BIMGVAR="$(cmdline BOOT_IMAGE)"
 	SRCVAR="$(cmdline SRC)"
 	test -z "$SRCVAR" && test -n "$BIMGVAR" \
-	&& OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GMOUNT/$(dirname "$BIMGVAR")")" \
-	|| OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GMOUNT/$SRCVAR")"
+	&& OSROOT="$(coreutils --coreutils-prog=readlink -m "$GMOUNT/$(dirname "$BIMGVAR")")" \
+	|| OSROOT="$(coreutils --coreutils-prog=readlink -m "$GMOUNT/$SRCVAR")"
 }
 
 
@@ -282,22 +289,42 @@ function gen_rep_ramdisk() {
 	test -e "$BD/gearlock.img" && rm -f "$BD/gearlock.img"
 	nout chmod 777 "$OSROOT"/*img "$OSROOT/gearlock"
 	for prog in sync fsync; do
-		$prog "$IRN" "$OSROOT/gearlock"
-		is_old_gl && $prog "$SRN"
+		{
+			$prog "$IRN" "$OSROOT/gearlock"
+			is_old_gl && $prog "$SRN"
+		} 2>/dev/null
 	done
 	geco "Done"
 }
 
 function merge_ghome() {
 	test ! -d "/system/ghome" && TER="/data" || TER="/system"
-	mountpoint -q $TER && cp -ar "$BD/ghome" $TER && chown root:root -hR $TER/ghome && chmod -R 755 $TER/ghome
+	mountpoint -q "$TER" && cp -ar "$BD/ghome" "$TER" && chown root:root -hR "$TER/ghome" && chmod -R 755 "$TER/ghome"
 }
 
 function install_apps() {
 	if [ "$(getprop sys.boot_completed 2>/dev/null)" = "1" ]; then
 		geco "\n+ Installing ${WHITE}fx File-Manager${RC} : \c"
-		for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do nout pm uninstall $app; done
+		for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do
+			nout pm uninstall $app
+		done
 		pm install -r "$BD/fx.apk"
+	else
+		GHOME="$(
+			test -e '/data/ghome' && echo '/data/ghome'
+			test -e '/system/ghome' && echo '/system/ghome'
+		)"
+		test -z "$GHOME" && return 1
+		cp -ar "$BD/fx.apk" "$GHOME/status"
+		echo -e '#!/gearlock/bin/bash
+for app in "gearlock.wrapper.axon" "com.supremegamers.gearlock" "jackpal.androidterm"; do
+	nout pm uninstall $app
+done
+APK="$STATDIR/fx.apk"
+pm install "$APK"
+rm -f "$APK" "$0"
+exit
+' > "$GHOME/gearboot/boot-comp/DealWithApp.sh"
 	fi
 }
 
@@ -347,7 +374,7 @@ while true; do
 	
 	else
 	
-		OSROOT="$(bbconfig --coreutils-prog=readlink -m "$GRROOT")"
+		OSROOT="$(coreutils --coreutils-prog=readlink -m "$GRROOT")"
 		test -z "$BIMGVAR" && BIMGVAR="$BOOT_IMAGE" # For when initrd.img-installer is used
 		play_ani; geco '\n\n'; do_job
 		geco "\n++ GearLock successfully installed/updated\n"

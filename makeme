@@ -335,9 +335,12 @@ function setup.devEnv() {
 		mount --bind "${_execDir}" "$NEW_ROOT/gearlock" || exit
 	}
 
-	export GDEBUG=true
+	test ! -e "$NEW_ROOT/data/ghome" && {
+		mkdir -p "$NEW_ROOT/data/ghome"
+		chmod -R 755 "$NEW_ROOT/data"
+	}
 	echo -e "+++ Now run the following command to enter gearlock development root: \
-	\033[0;31msudo chroot \"$NEW_ROOT\" /gearlock/bin/bash\033[0m"
+	\033[0;31msudo chroot \"$NEW_ROOT\" /gearlock/bin/env GDEBUG=true /gearlock/bin/bash\033[0m"
 }
 
 

@@ -11,7 +11,7 @@ function printSplash(){
 
 function run_gearlock(){
 	test "$(tput cols)" -gt "80" && printSplash
-	if [ -z "$RECOVERY" ]; then
+	if [ -z "$RECOVERY" ] && [ -z "$GDEBUG" ]; then
 		if [ -x "$(command -v su)" ]; then
 			su -c "gearlock-post"
 		else
@@ -23,7 +23,7 @@ function run_gearlock(){
 }
 
 function remount(){
-	test -z "$RECOVERY" && su -c 'mount -o rw,remount /'
+	test -z "$GDEBUG" && test -z "$RECOVERY" && su -c 'mount -o rw,remount /'
 }
 
 case "$1" in

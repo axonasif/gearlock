@@ -47,6 +47,12 @@ git clone https://github.com/AXIM0S/gearlock && cd gearlock && chmod +x makeme &
 
 Then you should find the outputs at `out/installer`
 
+If you want to test bare basic functionalities of GearLock within a linux-distro for development porposes then run:
+
+```bash
+./makeme --setup-devenv
+```
+
 For working over sources for the core files, take a look at `core/` and `core/_external_bin/`
 
 You might have noticed that there are prebuilt binaries in the repository but not their source code.

@@ -1,6 +1,6 @@
 ### Setup environment
 # Ensure we are root user
-test -z "$RECOVERY" && test ! -d "/home/axon" && test "$(whoami)" != "root" && exit 1
+test -z "$RECOVERY" && test -z "$GDEBUG" && test "$(whoami)" != "root" && exit 1
 
 # Define functions
 function cmdline(){

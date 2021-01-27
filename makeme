@@ -315,6 +315,32 @@ function gen.conventionalChangelog() {
 }
 
 
+function setup.devEnv() {
+	test "$(whoami)" != 'root' && echo 'error: Run as root' && exit 1
+
+	NEW_ROOT="${1:-"$HOME/gdev_root"}"
+	mkdir -p "$NEW_ROOT" && chmod 777 "$NEW_ROOT" || exit
+
+	for _dir in proc dev sys; do
+		mkdir -p "$NEW_ROOT/$_dir" || exit
+		mountpoint -q "$NEW_ROOT/_$dir" && {
+			echo "$NEW_ROOT/$_dir is already mounted"
+			continue
+		}
+		mount --bind "/$_dir" "$NEW_ROOT/$_dir" || exit
+	done
+
+	mkdir -p "$NEW_ROOT/gearlock" && chmod 755 "$NEW_ROOT/gearlock" || exit
+	! mountpoint -q "$NEW_ROOT/gearlock" && {
+		mount --bind "${_execDir}" "$NEW_ROOT/gearlock" || exit
+	}
+
+	export GDEBUG=true
+	echo -e "+++ Now run the following command to enter gearlock development root: \
+	\033[0;31msudo chroot \"$NEW_ROOT\" /gearlock/bin/bash\033[0m"
+}
+
+
 case "$1" in
 	--aosp-project-makefile)
 		aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
@@ -347,6 +373,10 @@ case "$1" in
 		shift
 		build.setVars
 		gen.conventionalChangelog "$@"
+		;;
+	--setup-devenv)
+		build.setVars
+		setup.devEnv
 		;;
 	*)
 		build.setVars

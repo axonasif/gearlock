@@ -2,13 +2,13 @@
 test -d "/system/ghome" && export HOME="/system/ghome" || export HOME="/data/ghome"
 export PATH="/gearlock/bin:$HOME/.local/bin:/sbin:/bin:/system/bin:/system/xbin:\
 /system/vendor/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
-PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w$\033[0m "
 
 if test -d "/system" && test -d "/data" && test -z "$RECOVERY"; then
 	export ANDROID_ROOT="/system" ANDROID_DATA="/data"
 else
 	export ANDROID_ROOT="/gearlock" ANDROID_DATA="/gearlock/tmp"
 fi
+
 
 # Extended bash history.
 HISTCONTROL=ignoreboth
@@ -17,7 +17,7 @@ HISTSIZE=
 HISTTIMEFORMAT="%d/%m/%y %T "
 HISTIGNORE='ls:pwd:date:cd *:'
 HISTFILE="$HOME/.bash_extended_history"
-PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
+PROMPT_COMMAND="updatePrompt; history -a; $PROMPT_COMMAND"
 shopt -s histappend
 
 ## Convert normal bash_history into bash_extended_history if exists
@@ -36,3 +36,13 @@ if test -n "$RECOVERY"; then
 	}
 	trap "chvt 1" EXIT
 fi
+
+# Define shell functions
+function updatePrompt() {
+	RETC="$?"
+	if test "$RETC" == 0; then
+		PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w$\033[0m "
+	else
+		PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w \033[0;31m[$RETC]\033[0m$\033[0m "
+	fi
+}

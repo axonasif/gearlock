@@ -256,6 +256,62 @@ function gen.newVersion() {
 
 }
 
+function gen.conventionalChangelog() {
+	# Gather logs
+	output="${_execDir}/CHANGELOG.md" && rm -f "$output" || exit
+	fullGitlog="$(git log --no-merges --pretty=format:"%s" "$@" \
+				| grep -E '^feat|^fix|^perf|^refactor|^chore|^build|^ci')"
+	fixLog="$(echo "$fullGitlog" | grep '^fix.*:')"
+	featLog="$(echo "$fullGitlog" | grep '^feat.*:')"
+	choreLog="$(echo "$fullGitlog" | grep '^chore.*:')"
+	refactorLog="$(echo "$fullGitlog" | grep '^refactor.*:')"
+	perfLog="$(echo "$fullGitlog" | grep '^perf.*:')"
+	buildLog="$(echo "$fullGitlog" | grep '^build.*:')"
+	ciLog="$(echo "$fullGitlog" | grep '^ci.*:')"
+
+	# Now lets phrase them
+	for log in "$featLog" "$fixLog" "$perfLog" "$refactorLog" "$choreLog" "$buildLog" "$ciLog"; do
+		if test -n "$log"; then
+			logName="$(echo "$log" | head -n1 | sed 's|(.*)||g' | cut -d ':' -f1)"
+			# Create H1
+			case "$logName" in
+				"feat")
+					echo "# Feature" >> "$output"
+					;;
+				"fix")
+					echo -e "\n\n# Bugfix" >> "$output"
+					;;
+				"perf")
+					echo -e "\n\n# Performance Improvements" >> "$output"
+					;;
+				"refactor")
+					echo -e "\n\n# Refactor" >> "$output"
+					;;
+				"chore")
+					echo -e "\n\n# Chore" >> "$output"
+					;;
+				"build")
+					echo -e "\n\n# Build" >> "$output"
+					;;
+				"ci")
+					echo -e "\n\n# Ci" >> "$output"
+					;;
+			esac
+
+			# Merge logs
+			echo >> "$output"
+			while read -r line; do
+				if echo "$line" | grep -q "^.*(.*): "; then
+					echo -e "* $(echo "$line" | sed 's|^feat||; s|^fix||; s|^perf||; s|^refactor||; s|^chore||; s|^build||; s|^ci||')" >> "$output"
+				else
+					echo -e "* $(echo "$line" | sed 's|^.*: ||')" >> "$output"
+				fi
+			done < <(echo "$log")
+		fi
+	done
+}
+
+
 case "$1" in
 	--aosp-project-makefile)
 		aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
@@ -283,6 +339,11 @@ case "$1" in
 	--update-version)
 		build.setVars
 		gen.newVersion
+		;;
+	--create-changelog)
+		shift
+		build.setVars
+		gen.conventionalChangelog "$@"
 		;;
 	*)
 		build.setVars

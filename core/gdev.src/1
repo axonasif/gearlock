@@ -1,7 +1,7 @@
 # FIXME: This was poorly coded in the past on rush.
 
 # Check Android env
-if test -z "$GEARLOCK_V"; then
+if test -z "$GEARLOCK_VER"; then
 	BD="$(dirname "$(readlink -f "$0")")"
 	export GTMP="$BD/cache" \
 		WORKDIR="$BD/workdir" \

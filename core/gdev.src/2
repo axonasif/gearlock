@@ -1,5 +1,5 @@
 # Check Android env
-if test -z "$GEARLOCK_V"; then
+if test -z "$GEARLOCK_VER"; then
 	BD="$(dirname "$(readlink -f "$0")")"
 	export GTMP="$BD/cache"
 	mkdir -p "$GTMP"
@@ -102,7 +102,7 @@ function print_success(){
 		geco "\nBuild failed ..."
 	else
 		geco "\n$TTYPE successfully build as "${NAME}"_"${VERSION}"_"${AUTHOR}".gxp and can be found at gearload dir"
-		test -n "$GEARLOCK_V" && geco "You can test it through ${YELLOW}GXPM${RC} right now"
+		test -n "$GEARLOCK_VER" && geco "You can test it through ${YELLOW}GXPM${RC} right now"
 		chmod -Rf 777 "$GRLOAD" 2>/dev/null
 	fi
 	:

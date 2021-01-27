@@ -48,7 +48,8 @@
 	"editor.detectIndentation": false,
 	"conventionalCommits.scopes": [
 		"build-system",
-		"gxpm"
+		"gxpm",
+		"gdk"
 	]
 	}
 }

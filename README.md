@@ -45,7 +45,7 @@ If you want to build GearLock then all you gotta do is running the following com
 git clone https://github.com/AXIM0S/gearlock && cd gearlock && chmod +x makeme && ./makeme
 ```
 
-Then you should find the outputs at `out/build_installer_out`
+Then you should find the outputs at `out/installer`
 
 For working over sources for the core files, take a look at `core/` and `core/_external_bin/`
 

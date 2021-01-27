@@ -378,8 +378,9 @@ case "$1" in
 		gen.conventionalChangelog "$@"
 		;;
 	--setup-devenv)
+		shift
 		build.setVars
-		setup.devEnv
+		setup.devEnv "$1"
 		;;
 	*)
 		build.setVars

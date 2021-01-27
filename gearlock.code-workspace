@@ -47,7 +47,8 @@
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
 	"conventionalCommits.scopes": [
-		"build-system"
+		"build-system",
+		"gxpm"
 	]
 	}
 }

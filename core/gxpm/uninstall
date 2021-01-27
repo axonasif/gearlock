@@ -1,4 +1,3 @@
-test -z "$GEARLOCK_V" && exit 1
 export UNINS_SCRIPT="$1" && clear && source "$1"
 test "$DEF_HEADER" == "yes" && show_zygote_header
 

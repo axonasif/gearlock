@@ -285,7 +285,7 @@ function gen.conventionalChangelog() {
 					echo -e "\n\n# Performance Improvements" >> "$output"
 					;;
 				"refactor")
-					echo -e "\n\n# Refactor" >> "$output"
+					echo -e "\n\n# Refactoring" >> "$output"
 					;;
 				"chore")
 					echo -e "\n\n# Chore" >> "$output"
@@ -302,7 +302,10 @@ function gen.conventionalChangelog() {
 			echo >> "$output"
 			while read -r line; do
 				if echo "$line" | grep -q "^.*(.*): "; then
-					echo -e "* $(echo "$line" | sed 's|^feat||; s|^fix||; s|^perf||; s|^refactor||; s|^chore||; s|^build||; s|^ci||')" >> "$output"
+					raw="$(echo "$line" | sed 's|^feat||; s|^fix||; s|^perf||; s|^refactor||; s|^chore||; s|^build||; s|^ci||')"
+					tag="**$(echo "$raw" | sed 's|:.*||; s|(||; s|)||')**"
+					content="$(echo "$raw" | sed 's|.*(.*): ||')"
+					echo "* ${tag}: ${content}" >> "$output"
 				else
 					echo -e "* $(echo "$line" | sed 's|^.*: ||')" >> "$output"
 				fi

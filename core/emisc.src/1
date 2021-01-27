@@ -18,7 +18,7 @@ while true; do
             if [ -n "$(blkid $SEL_BLK | grep "TYPE=\"vfat\"")" ]; then
             mount -t vfat -o rw "$SEL_BLK" "$PREFIX/$MOUNTP_NAME"
             elif [ -n "$(blkid $SEL_BLK | grep "TYPE=\"ntfs\"")" ]; then
-            ntfs-3g -o rw "$SEL_BLK" "$PREFIX/$MOUNTP_NAME"
+            mount.ntfs -o rw "$SEL_BLK" "$PREFIX/$MOUNTP_NAME"
             else
             mount -o loop,rw "$SEL_BLK" "$PREFIX/$MOUNTP_NAME"
             fi

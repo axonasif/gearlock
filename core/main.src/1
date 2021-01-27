@@ -1,3 +1,5 @@
+# FIXME: Needs refactoring and butification
+
 trap "cf big" EXIT; cf small
 logo_gpkgman(){ gecca $CORE/interface/assets/classic/header_gpkgman; }
 com_body_gpkgman(){
@@ -90,9 +92,9 @@ done
 view_gxpm_log(){
 	if [ -f "$GXPM_LOG" ]; then dialog --clear --backtitle "$(gecpc "${_gxpm_full_name_}" "%")" --title "${_installed_uninstalled_pak_extn_}" --textbox "$GXPM_LOG" 30 150; else msgbox "${_beep_boop_}" "${_notice_}" "\n- ${_nothing_was_found_}"; fi
 }
-do_install(){ cf small; chk_ghome; $CORE/gxpm/install "$1"; cf big; }
-do_install_zip(){ cf small; chk_ghome; $CORE/gxpm/install-zip "$1"; cf big; }
-do_uninstall(){ cf small; $CORE/gxpm/uninstall "$1"; cf big; }
+do_install(){ chk_ghome; $CORE/gxpm/install "$1"; }
+do_install_zip(){ chk_ghome; $CORE/gxpm/install-zip "$1"; }
+do_uninstall(){ chk_ghome; $CORE/gxpm/uninstall "$1"; }
 
 # Uninstall menu
 replace_body_unins(){

@@ -14,3 +14,5 @@ jobs:
       - uses: amannn/action-semantic-pull-request@v3.1.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: superbrothers/close-pull-request@v3
+        if: failure()

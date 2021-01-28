@@ -18,7 +18,13 @@ done
 # Take copy of STATUS DIR
 echo -e "+ Dumping status directory" && sleep 0.7
 test -n "$STATDIR" && {
-	find "$STATDIR" -type f -size -2M | xargs -r0I{} rsync -a {} "$DUMP_DIR/status_dump"
+	find "$STATDIR" -type f -size -2M -print0 | xargs -r0I{} rsync -a {} "$DUMP_DIR/status_dump"
+}
+
+# Take a copy of gearlock/tmp directory
+echo -e "+ Dumping gearlock/tmp directory" && sleep 0.7
+test -n "$GTMP" && {
+	find "$GTMP" -mindepth 1 -maxdepth 1 -type f -size -2M -print0 | xargs -r0I{} rsync -a {} "$DUMP_DIR/gtmp_dump"
 }
 
 # Dump GSTATUS

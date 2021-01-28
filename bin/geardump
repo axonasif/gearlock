@@ -17,7 +17,9 @@ done
 
 # Take copy of STATUS DIR
 echo -e "+ Dumping status directory" && sleep 0.7
-test -n "$STATDIR" && rsync -a "$STATDIR/" "$DUMP_DIR/status_dump" 2>/dev/null
+test -n "$STATDIR" && {
+	find "$STATDIR" -type f -size -2M | xargs -r0I{} rsync -a {} "$DUMP_DIR/status_dump"
+}
 
 # Dump GSTATUS
 echo -e "+ Dumping gstatus output"

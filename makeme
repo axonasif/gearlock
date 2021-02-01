@@ -16,7 +16,7 @@ function gslr() {
 			echo -e "~ Error [gslr:$RETC], could not find any line containing ${RED}$2${RC}" && return $RETC
 		fi;
 	else
-		if test -z "$NPUT"; then
+		if test -z "$1"; then
 			echo -e "~ Error [gslr:3], lack of input" && return 1
 		fi;
 	fi
@@ -151,69 +151,113 @@ function build.main() {
 };
 
 function patch.aosp_root() {
-	files_to_patch=(
-		"device/generic/common/device.mk"
-		"bootable/newinstaller/Android.mk"
-		"bootable/newinstaller/initrd/init"
-		"bootable/newinstaller/install/scripts/1-install"
-		"bootable/newinstaller/install/grub2/efi/boot/android.cfg"
-	)
+	if test -n "$BIGDROID_PROJECT"; then
+		files_to_patch=(
+			"initial_ramdisk/init"
+			"install_ramdisk/scripts/1-install"
+			"install_ramdisk/grub2/efi/boot/android.cfg"
+		)
+	else
+		files_to_patch=(
+			"device/generic/common/device.mk"
+			"bootable/newinstaller/Android.mk"
+			"bootable/newinstaller/initrd/init"
+			"bootable/newinstaller/install/scripts/1-install"
+			"bootable/newinstaller/install/grub2/efi/boot/android.cfg"
+		)
+	fi
+	
+# 	function get.patch_file() {
+# 		local patch_file="$1"
+# 		local line
+# 		for line in "${files_to_patch[@]}"; do
+# 			echo "$line" | grep -q ".*${patch_file}\$" && break
+# 		done
+# 		echo "$aosp_root/$line"
+# 	}
 	
 	function patch.apply() {
-		local FILE="$1"
+		local FILE="${1##*/}"
+		local FILE_PATH="$1"
 		echo -e "==== Applying GearLock patches to $FILE"
-		case "$FILE" in
-			"${files_to_patch[0]}")
-				local _dir="$(echo "$0" | grep -q 'vendor' && echo 'vendor' || echo 'bootable')"
-				gslr "$aosp_root/$FILE" \
-					'PRODUCT_COPY_FILES := \\' \
-					"PRODUCT_COPY_FILES := \\\n    $_dir\/gearlock\/out\/gri\/gearlock:gearlock \\" \
-				|| handleError "Failed to patch $aosp_root/$FILE"
-				;;
+		
+		if [ "${FILE}" == "device.mk" ]; then
+			local _dir="$(echo "$0" | grep -q 'vendor' && echo 'vendor' || echo 'bootable')"
+			gslr "$FILE_PATH" \
+				'PRODUCT_COPY_FILES := \\' \
+				"PRODUCT_COPY_FILES := \\\\\n    $_dir\/gearlock\/out\/gri\/gearlock:gearlock \\\\" \
+			|| handleError "Failed to patch $FILE"
+			
+		elif [ "${FILE}" == "Android.mk" ]; then
+			line="$(grep -n 'BUILT_IMG.*:=.*$(.*)' "$FILE_PATH" | head -n1 \
+					| sed 's|/|\\/|g; s| gearlock||; s|initrd.img|initrd.img gearlock|')"
+					
+			sed -i "${line%%:*}s/.*/${line#*:}/" "$FILE_PATH" \
+			|| handleError "Failed to patch $FILE"
+			
+		elif [ "${FILE}" == "init" ]; then
+				gslr "$FILE_PATH" "mount_sdcard" "mount_sdcard; hook_gearinit" \
+				|| handleError "Failed to patch $FILE"
 				
-			"${files_to_patch[1]}")
-				line="$(grep -n 'BUILT_IMG.*:=.*$(.*)' "$aosp_root/$FILE" | head -n1 \
-						| sed 's|/|\\/|g; s|initrd.img|initrd.img gearlock|')"
+		elif [ "${FILE}" == "1-install" ]; then
+				line="$(grep -n 'files=.*".*initrd.img.*"' "$FILE_PATH" | head -n1 \
+						| sed 's| /mnt/$SRC/gearlock||; s|initrd.img|initrd.img /mnt/$SRC/gearlock|; s|/|\\/|g')"
 						
-				sed -i "${line%%:*}s/.*/${line#*:}/" "$aosp_root/$FILE" \
-				|| handleError "Failed to patch $aosp_root/$FILE"
-				;;
+				sed -i "${line%%:*}s/.*/${line#*:}/" "$FILE_PATH" \
+				|| handleError "Failed to patch $FILE"
 				
-			"${files_to_patch[2]}")
-				gslr "$aosp_root/$FILE" "mount_sdcard" "mount_sdcard; hook_gearinit" \
-				|| handleError "Failed to patch $aosp_root/$FILE"
-				;;
-				
-			"${files_to_patch[3]}")
-				line="$(grep -n 'files=.*".*initrd.img.*"' "$aosp_root/$FILE" | head -n1 \
-						| sed 's|initrd.img|initrd.img /mnt/$SRC/gearlock|; s|/|\\/|g')"
-						
-				sed -i "${line%%:*}s/.*/${line#*:}/" "$aosp_root/$FILE" \
-				|| handleError "Failed to patch $aosp_root/$FILE"
-				;;
-				
-			"${files_to_patch[4]}")
-				sed -i 's/add_entry.*$/& NORECOVERY=1/g' "$aosp_root/$FILE"
+		elif [ "${FILE}" == "android.cfg" ]; then
+				sed -i 's/add_entry.*$/& NORECOVERY=1/g' "$FILE_PATH"
 				sed -i 's|submenu "Advanced options -> ".*$|& \
 	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1\
 	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1\
-	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=1|' "$aosp_root/$FILE"
-				;;
-		esac
-		(
-			cd "$aosp_root/${FILE%/*}" || handleError "Failed to change dir to $aosp_root/${FILE%/*}"
-			git commit -a -m "Update/apply GearLock patches for $FILE" --author="AXON <axonasif@gmail.com>" 1>/dev/null
-		)
+	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=1|' "$FILE_PATH"
+		fi
+		
+		if test -z "$BIGDROID_PROJECT"; then
+			local ORIG_PWD="$(pwd)"
+			FILE="$FILE_PATH"
+			cd "${FILE%/*}" || handleError "Failed to change dir to ${FILE%/*}"
+			git commit -a -m "Update/apply GearLock patches for ${FILE/"$aosp_root"/}" --author="AXON <axonasif@gmail.com>" 1>/dev/null
+			cd "$ORIG_PWD"
+		fi
 	}
 	
 	# Start with updating/placing hook script
-	local HOOK_PATH="$aosp_root/bootable/newinstaller/initrd/scripts/0-hook"
-	rsync "$_execDir/installer/hook" "$HOOK_PATH" || handleError "Failed to copy hook into $HOOK_PATH"
+	HOOK_PATH="$(
+		if test -n "$BIGDROID_PROJECT"; then
+			echo "$aosp_root/initial_ramdisk/scripts/0-hook"
+		else
+			echo "$aosp_root/bootable/newinstaller/initrd/scripts/0-hook"
+		fi
+	)" && {
+		rsync "$_execDir/installer/hook" "$HOOK_PATH" || handleError "Failed to copy hook into $HOOK_PATH"
+		(
+			test -z "$BIGDROID_PROJECT" && {
+				cd "${HOOK_PATH%/*}" || return 1
+				cd ../../ || return 1
+				git commit -a -m "Update/apply GearLock hook" --author="AXON <axonasif@gmail.com>" 1>/dev/null
+			}
+		)
+	}
 	
 	# Now let's find which files we need to patch
 	for _file in "${files_to_patch[@]}"; do
-		! grep -i -E -q 'gearlock|gearinit' "$aosp_root/$_file" \
-			&& patch.apply "$_file"
+		local patch_sum_file="$_execDir/.patch_sum"
+		local _sel_file="$aosp_root/$_file"
+		test -e "$_sel_file" && {
+			if test -z "$NO_PATCH_SUM" && test -e "$patch_sum_file"; then
+				test "$(sha256sum "$_sel_file" | awk '{print $1}')" != "$(echo "$(< "$patch_sum_file")" | grep "${_sel_file##*/}" | awk '{print $2}')" && {
+					patch.apply "$_sel_file" && \
+					sed -i "s|${_sel_file##*/}.*|${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')|" "$patch_sum_file"
+				}
+			else
+				export NO_PATCH_SUM=true
+				! grep -i -E -q 'gearlock|gearinit' "$_sel_file" \
+					&& patch.apply "$_sel_file" && \
+				echo "${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')" >> "$patch_sum_file"
+			fi
+		}
 	done
 }
 
@@ -225,34 +269,29 @@ function gen.newVersion() {
 		"$SEMVER_BIN" "$@"
 	}
 		# Gather the data we need
-		local CURRENT_VERSION PATCH_VERSION MINOR_VERSION VERSION_FILE LAST_SYNC_FILE
+		local CURRENT_VERSION PATCH_VERSION MINOR_VERSION VERSION_FILE 
 
-		LAST_SYNC_FILE="${_execDir}/.last_sync"
-		LAST_SYNC_HARSH="$(git log --all --ancestry-path ^$(< "$LAST_SYNC_FILE") --format=format:%H | tail -n 1)" || return
-		LAST_COMMIT_HARSH="$(git rev-parse HEAD)"
-		NEW_COMMITS="$(git rev-list --no-merges ${LAST_SYNC_HARSH}...${LAST_COMMIT_HARSH} | wc -l)"
+		NEW_COMMITS="$(git log --no-merges --pretty=format:"%s" | sed '/Update version code/Q' | grep -v -i '^Update.*' | wc -l)"
 		VERSION_FILE="${_execDir}/core/version"
 
 		# Handling what we need to do
 		for times in $(seq $NEW_COMMITS); do
 			CURRENT_VERSION="$(< "$VERSION_FILE")" || return
-			PATCH_VERSION="$(semver get patch $CURRENT_VERSION)" || return
-			MINOR_VERSION="$(semver get minor $CURRENT_VERSION)" || return
+			PATCH_VERSION="$(semver get patch "$CURRENT_VERSION")" || return
+			MINOR_VERSION="$(semver get minor "$CURRENT_VERSION")" || return
 
 			# Version updating logic
 			local bumpPoint="40"
 			local bumpPointMajor="10"
 			if [ "$PATCH_VERSION" != "$bumpPoint" ] && [ "$PATCH_VERSION" -lt "$bumpPoint" ]; then
-				echo "$(semver bump patch $CURRENT_VERSION)" > "$VERSION_FILE"
+				echo "$(semver bump patch "$CURRENT_VERSION")" > "$VERSION_FILE"
 			elif [ "$MINOR_VERSION" == "$bumpPointMajor" ]; then
-				echo "$(semver bump major $CURRENT_VERSION)" > "$VERSION_FILE"
+				echo "$(semver bump major "$CURRENT_VERSION")" > "$VERSION_FILE"
 			elif [ "$PATCH_VERSION" == "$bumpPoint" ]; then
-				echo "$(semver bump minor $CURRENT_VERSION)" > "$VERSION_FILE"
+				echo "$(semver bump minor "$CURRENT_VERSION")" > "$VERSION_FILE"
 			fi
 		done
 		
-		# Update last commit hash cache file
-		echo "$LAST_COMMIT_HARSH" > "$LAST_SYNC_FILE"
 
 }
 
@@ -272,29 +311,29 @@ function gen.conventionalChangelog() {
 	# Now lets phrase them
 	for log in "$featLog" "$fixLog" "$perfLog" "$refactorLog" "$choreLog" "$buildLog" "$ciLog"; do
 		if test -n "$log"; then
-			logName="$(echo "$log" | head -n1 | sed 's|(.*)||g' | cut -d ':' -f1)"
+			logName="$(echo "$log" | head -n1 | cut -d ':' -f1 | sed 's|(.*)||g')"
 			# Create H1
 			case "$logName" in
 				"feat")
-					echo "# Feature" >> "$output"
+					echo "### New Features" >> "$output"
 					;;
 				"fix")
-					echo -e "\n\n# Bugfix" >> "$output"
+					echo -e "\n\n### Bug Fixes" >> "$output"
 					;;
 				"perf")
-					echo -e "\n\n# Performance Improvements" >> "$output"
+					echo -e "\n\n### Performance Improvements" >> "$output"
 					;;
 				"refactor")
-					echo -e "\n\n# Refactoring" >> "$output"
+					echo -e "\n\n### Refactors" >> "$output"
 					;;
 				"chore")
-					echo -e "\n\n# Chore" >> "$output"
+					echo -e "\n\n### Chores" >> "$output"
 					;;
 				"build")
-					echo -e "\n\n# Build" >> "$output"
+					echo -e "\n\n### Build System" >> "$output"
 					;;
 				"ci")
-					echo -e "\n\n# Ci" >> "$output"
+					echo -e "\n\n### Continuous Integration" >> "$output"
 					;;
 			esac
 
@@ -343,7 +382,7 @@ function setup.devEnv() {
 	\033[0;31msudo chroot \"$NEW_ROOT\" /gearlock/bin/env GDEBUG=true /gearlock/bin/bash\033[0m"
 }
 
-
+# CLAP
 case "$1" in
 	--aosp-project-makefile)
 		aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
@@ -352,7 +391,6 @@ case "$1" in
 		patch.aosp_root
 		build.main "-mx23"
 		;;
-	
 	--aosp-project-vendorsetup)
 		shift
 		test -z "$1" && handleError "Failed to locate \$aosp_root"
@@ -362,7 +400,11 @@ case "$1" in
 		patch.aosp_root
 		build.main "-mx23"
 		;;
-		
+	--bigdroid-project-hook)
+		export BIGDROID_PROJECT=true
+		test -z "$SYSTEM_DIR" && exit 1
+		exec "$0" --aosp-project-vendorsetup "$MOUNT_DIR"
+		;;
 	--run-check)
 		RUN_CHECK=true
 		build.setVars

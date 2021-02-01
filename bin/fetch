@@ -19,22 +19,26 @@ function fetch_bootimage(){
 set -a
 
 # Initialize some pre-environment vars
-if test -d "/system" && test -d "/data" && test -z "$RECOVERY"; then
-	ANDROID_ROOT="/system" ANDROID_DATA="/data"
+ME="AXON"
+DATA_DIR="/data"
+SYSTEM_DIR="/system"
+
+if test -d "$SYSTEM_DIR" && test -d "$DATA_DIR" && test -z "$RECOVERY"; then
+	ANDROID_ROOT="$SYSTEM_DIR" ANDROID_DATA="$DATA_DIR"
 else
 	ANDROID_ROOT="/gearlock" ANDROID_DATA="/gearload/tmp"
 fi
 
 # Set PATH
-PATH="/gearlock/bin:$GHOME/.local/bin:/sbin:/bin:/system/bin:/system/xbin:\
-/system/vendor/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
+PATH="/gearlock/bin:$GHOME/.local/bin:/sbin:/bin:$SYSTEM_DIR/bin:$SYSTEM_DIR/xbin:\
+$SYSTEM_DIR/vendor/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
 
 # Set GHOME
 GHOME="$(
-	if test -d "/system/ghome"; then
-		echo "/system/ghome"
+	if test -d "$SYSTEM_DIR/ghome"; then
+		echo "$SYSTEM_DIR/ghome"
 	else
-		echo "/data/ghome"
+		echo "$DATA_DIR/ghome"
 	fi
 )"
 HOME="$GHOME"
@@ -78,7 +82,7 @@ fi
 
 # Ensure ghome file hierarchy
 test ! -d "$GHOME" && {
-		test -e "${vG:="/system/vendor/ghome"}" && garca x -aoa -o"$GHOME" "$vG" || mkdir -p "$GHOME"
+		test -e "${vG:="$SYSTEM_DIR/vendor/ghome"}" && garca x -aoa -o"$GHOME" "$vG" || mkdir -p "$GHOME"
 		chmod -Rf 755 "$GHOME"
 } 2>>/dev/null
 {
@@ -107,9 +111,9 @@ if test -n "$GRROOT"; then
 		else
 			if test "$CPU_ARCH" == "x86"; then
 				HOST_ARCH="x86"
-			elif test -e '/system/lib64'; then
+			elif test -e "$SYSTEM_DIR/lib64"; then
 				HOST_ARCH="x86_64"
-			elif test -e '/system/lib'; then
+			elif test -e "$SYSTEM_DIR/lib"; then
 				HOST_ARCH="x86"
 			else
 				HOST_ARCH="$CPU_ARCH"
@@ -118,8 +122,8 @@ if test -n "$GRROOT"; then
 		fi
     )" # FIXME: Any better way ?
     
-	if test -e "/system/build.prop"; then
-		SDK="$(sed -n "s/^ro.build.version.sdk=//p" '/system/build.prop' 2>/dev/null | head -n 1)"
+	if test -e "$SYSTEM_DIR/build.prop"; then
+		SDK="$(sed -n "s/^ro.build.version.sdk=//p" "$SYSTEM_DIR/build.prop" 2>/dev/null | head -n 1)"
 		case "$SDK" in
 			22) v="5.1" ;;
 			23) v="6.0" ;;
@@ -139,9 +143,6 @@ if test -n "$GRROOT"; then
 		ANDROID_VER="8.0" # FIXME: Needs betterment
 	fi
 	
-	ME="AXON"
-	DATA_DIR="/data"
-	SYSTEM_DIR="/system"
 	CORE="$GRLBASE/core"
 	DEPDIR="$GHOME/dependencies"
 	STATDIR="$GHOME/status"
@@ -162,7 +163,7 @@ if test -n "$GRROOT"; then
 		mount | grep "$GRROOT_DIR" | grep -q ext4 && echo "$GRROOT/.gxpm" \
 			|| echo "$GHOME/.gxpm"
 	)"
-	KMODDIR="/system/lib/modules"
+	KMODDIR="$SYSTEM_DIR/lib/modules"
 	test -e "/sbin/magisk" && MAGISK_COREV="$(magisk -v)"
 	BOOTCOMP="$(
 		test -e "$GTMP/boot-comp" && echo "yes" \

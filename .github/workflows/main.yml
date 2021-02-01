@@ -43,4 +43,4 @@ jobs:
           author_name: AXIM0S
           author_email: axonasif@gmail.com
           message: 'Update version code'
-          add: './.last_sync ./core/version'
+          add: './core/version'

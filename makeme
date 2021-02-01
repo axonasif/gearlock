@@ -156,6 +156,7 @@ function patch.aosp_root() {
 			"initial_ramdisk/init"
 			"install_ramdisk/scripts/1-install"
 			"install_ramdisk/grub2/efi/boot/android.cfg"
+			"install_ramdisk/grub2/efi/boot/grub.cfg"
 		)
 	else
 		files_to_patch=(

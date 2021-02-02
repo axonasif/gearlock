@@ -2,6 +2,9 @@
 test -d "/system/ghome" && export HOME="/system/ghome" || export HOME="/data/ghome"
 export PATH="/gearlock/bin:$HOME/.local/bin:/sbin:/bin:/system/bin:/system/xbin:\
 /system/vendor/bin:/apex/com.android.runtime/bin:/apex/com.android.art/bin"
+: "${TERM:="linux"}"
+: "${TERMINFO:="/gearlock/share/terminfo"}"
+export TERM TERMINFO
 
 if test -d "/system" && test -d "/data" && test -z "$RECOVERY"; then
 	export ANDROID_ROOT="/system" ANDROID_DATA="/data"
@@ -9,6 +12,8 @@ else
 	export ANDROID_ROOT="/gearlock" ANDROID_DATA="/gearlock/tmp"
 fi
 
+# When there is no ghome present
+test ! -e "$HOME" && ( source /gearlock/bin/fetch )
 
 # Extended bash history.
 HISTCONTROL=ignoreboth
@@ -40,9 +45,6 @@ fi
 # Define shell functions
 function updatePrompt() {
 	RETC="$?"
-	if test "$RETC" == 0; then
-		PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w$\033[0m "
-	else
-		PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w \033[0;31m[$RETC]\033[0m$\033[0m "
-	fi
+	test "$RETC" == "0" && PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w$\033[0m " \
+	|| PS1="\033[1;34m\u@gearlock\033[0m:\033[1;31m\w \033[0;31m[$RETC]\033[0m$\033[0m "
 }

@@ -1,4 +1,5 @@
 #!/gearlock/bin/bash -i
+set +o history
 echo -e "
     The basic controls are done with Ctrl, Ctrl+x Key, Alt+Key / FunctionKey, ESC.
     For top menu you need to press Alt + 9 / F9.

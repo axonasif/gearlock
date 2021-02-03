@@ -150,6 +150,10 @@ function wizard_run(){
 				read -eri "$(get_value NAME)" -p "$(geco "Enter your $TTYPE ${GREEN}Name${RC} > ")" "TNAME"
 				update_value NAME "$TNAME" && geco
 
+				# Codename
+				read -eri "$(get_value NAME)" -p "$(geco "Enter your $TTYPE ${GREEN}CodeName${RC} (${YELLOW}should be unique, lowercase and no special-chars${RC}) > ")" "TCODENAME"
+				update_value CODENAME "${TCODENAME,,}" && geco
+
 				# Version
 				read -eri "$(get_value VERSION)" -p "$(geco "Enter your ${GREEN}$TTYPE${RC} version > ")" "TVERSION"
 				update_value VERSION "$TVERSION" && geco
@@ -212,43 +216,6 @@ function wizard_run(){
 		break
 	done
 
-## Deprecieated since GearLock 7.1
-# 	# Encrypt
-# 	while true; do
-# 		read -rp "$(geco "\n~ Do you want to encrypt your ${TTYPE}? [${GREEN}Y${RC}/n]") " c
-# 		case $c in
-# 			[Yy]* )
-# 
-# 				# Show extraction process
-# 				while true; do
-# 					geco "\nYou have enabled encryption for your ${TTYPE}"
-# 					read -rp "$(geco "~ Do you also want to hide the extraction progress? [y/${GREEN}N${RC}]") (Current Value: $(get_value SHOW_PROG)) " c
-# 					case $c in
-# 						[Yy]* ) update_value SHOW_PROG no && break ;;
-# 						[Nn]* ) update_value SHOW_PROG yes && break ;;
-# 						* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
-# 					esac
-# 				done
-# 
-# 				# Encryption type
-# 				while true; do
-# 					geco "\n${GREEN}Normal-Encryption${RC} : In this mode, the package files can not be extracted without encryption key but the file structure can be seen"
-# 					geco "${YELLOW}Header-Encryption${RC} : This mode does not allow the package files to be seen without having the encryption key"
-# 					read -rp "$(geco "~ What kind of encryption do you want to use? [${GREEN}N${RC}ormal/${YELLOW}H${RC}eader]") " c ; geco "\n"
-# 						case $c in
-# 							[Nn]* ) build_gxp -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" && break ;;
-# 							[Hh]* ) build_gxp -mhe=on -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" && break ;;
-# 							* ) geco "\nEnter either ${GREEN}N${RC} or H" ;;
-# 						esac
-# 					done
-# 
-# 					break
-# 					;;
-# 
-# 				[Nn]* ) build_gxp && break ;;
-# 				* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
-# 			esac
-# 		done
 	build_gxp
 
 }
@@ -256,9 +223,7 @@ function wizard_run(){
 
 	if [ -z "$1" ]; then set_type; wizard_run; else
 		case "$1" in
-			--noenc) set_type; build_gxp ;;
-			--normal-enc) set_type; build_gxp -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" ;;
-			--header-enc) set_type; build_gxp -mhe=on -p"2Xj^7pAz=UN#5%=#%XQAFY-tik^jh97sz6C&2x8-dH+xPjhoz#BzP5**uk+7XH7w" ;;
+			--nowizard) set_type; build_gxp ;;
 			--help|-h) show_help ;;
 			*) geco "${_self}: unknown option: $*" && show_help ;;
 	esac; fi

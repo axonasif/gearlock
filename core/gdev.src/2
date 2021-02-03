@@ -114,11 +114,7 @@ GearLock Development Kit
 \$ Command Line Options: ./${_self} <option> <optional-compMethod> <optional-compRatio>
 
 
-    --noenc                   Does not use encryption
-
-    --normal-enc              Use normal encryption (Package structure can be seen)
-
-    --header-enc              Use powerful header encryption (Package structure can not be seen without passkey)
+    --nowizard                Does not use wizard mode
 
     --help, -h                Print this help message
     

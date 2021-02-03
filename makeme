@@ -41,7 +41,11 @@ function build.mkInstaller ()
 function build.setVars() {
 	# Define variables
 	_execDir="$(dirname "$(readlink -f "$0")")"
-	_buildCacheRoot="${_execDir}/out"
+	if test -n "$BIGDROID_PROJECT"; then
+		_buildCacheRoot="$TMP_DIR/gearlock_out"
+	else
+		_buildCacheRoot="${_execDir}/out"
+	fi
 	_buildCache="${_buildCacheRoot}/gearlock"
 	_buildCacheInstallerDir="${_buildCacheRoot}/gri"
 	_buildInstallerOut="${_buildCacheRoot}/installer"

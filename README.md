@@ -50,7 +50,7 @@ Then you should find the outputs at `out/installer`
 If you want to test bare basic functionalities of GearLock within a linux-distro for development porposes then run:
 
 ```bash
-./makeme --setup-devenv
+./makeme --setup-devenv "$HOME/gdev"
 ```
 
 For working over sources for the core files, take a look at `core/` and `core/_external_bin/`
@@ -65,11 +65,11 @@ I will need a lot of free time to accomplish this since I'm a student, but you c
 
 # Additional Links
 
-* GearLock dev-doc: https://supreme-gamers.com/gearlock
 * GearLock dev-kit: https://github.com/AXIM0S/gearlock-dev-kit
 * GearLock core-pkg: https://github.com/AXIM0S/gearlock-core-pkg
-* GearLock mesa-pkg: https://github.com/AXIM0S/gearlock-core-pkg
+* GearLock mesa-pkg: https://github.com/AXIM0S/gearlock-mesa-pkg
 * GearLock kernel-pkg: https://github.com/AXIM0S/gearlock-kernel-pkg
+* GearLock dev-doc: https://wiki.supreme-gamers.com/gearlock/developer-guide
 
 
 
@@ -83,7 +83,7 @@ Adaptation for Android-Generic Project was done by: @electrikjesus
 > git clone https://github.com/AXIM0S/gearlock vendor/gearlock
 > ```
 
-### Lastly, build ISO (Doesn't matter what method you picked)
+### Lastly, build ISO
 
 > Android-Generic (x86/PC):
 `build-x86 android_x86_64-userdebug`
@@ -126,6 +126,7 @@ Without their open-minded years of hard work, GearLock wouldn't have been the sa
 * https://github.com/landley/toybox
 * https://github.com/osospeed/ttyecho
 * http://e2fsprogs.sourceforge.net
+* https://github.com/arter97/resetprop
 
 
 

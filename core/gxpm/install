@@ -1,3 +1,4 @@
+#!/gearlock/bin/bash
 test -z "$ME" && clear && exit 1
 test ! -f "$GXPM_LOG" && touch "$GXPM_LOG" # Ensure GXPM_LOG exists
 clear_grlt
@@ -47,7 +48,8 @@ function do_mk_unins(){
 		}
 
 	function merge_auto_gen(){
-		if [ -d "${GRLT}/system" ] || [ -d "${GRLT}/data" ] || [ -d "${GRLT}/${GCOMM}/dependencies" ]; then
+		if [ -d "${GRLT}/system" ] || [ -d "${GRLT}/data" ] || [ -d "${GRLT}/${GCOMM}/dependencies" ] \
+			|| [ -d "${GRLT}/${GCOMM}/.local" ] || [ -d "${GRLT}/${GCOMM}/ghome" ]; then
 			echo "do_unins(){" >> "$UNINSDIR/${NAME}_${VERSION}"
 			echo "# GXPM AutoGen" >> "${UNINSDIR}/${NAME}_${VERSION}"
 
@@ -61,6 +63,9 @@ function do_mk_unins(){
 			}
 			test -d "${GRLT}/${GCOMM}/.local" && {
 				cd "${GRLT}/${GCOMM}" && find '.local' -type f | awk '{print "rm -f \"$GHOME/"$0"\""}' >> "${UNINSDIR}/${NAME}_${VERSION}"
+			}
+			test -d "${GRLT}/${GCOMM}/ghome" && {
+				cd "${GRLT}/${GCOMM}" && find ghome -type f | sed 's|^ghome/||' | awk '{print "rm -f \"$GHOME/"$0"\""}' >> "${UNINSDIR}/${NAME}_${VERSION}"
 			}
 
 			echo "}" >> "${UNINSDIR}/${NAME}_${VERSION}"
@@ -126,6 +131,12 @@ function install_comm(){
 	if [ -d "${GRLT}/${GCOMM}/.local" ]; then
 		(rsync -a "${GRLT}/${GCOMM}/.local" "$GHOME"; sleep 2) &
 		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE:: LOCAL_FILES" "MERGE_LOC_FILES"
+	fi
+	
+	# ghome
+	if [ -d "${GRLT}/${GCOMM}/ghome" ]; then
+		(rsync -a "${GRLT}/${GCOMM}/ghome/" "$GHOME"; sleep 2) &
+		gxpmJob "@@ ${_phrase_running_job_}:: ${TYPE}:: MERGE:: GHOME_FILES" "MERGE_GHOME_FILES"
 	fi
 }
 

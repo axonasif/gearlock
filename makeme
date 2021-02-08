@@ -553,7 +553,7 @@ function gen.conventionalChangelog() {
 
 
 function setup.gitHooks() {
-	test -z "$_execDir" && build.setVars
+	test ! -e "$_execDir/.git/hooks" && return 0
 	cat > "${_execDir}/.git/hooks/commit-msg" <<"EOF"
 #!/usr/bin/env bash
 # Adapted to be bash friendly from https://github.com/craicoverflow/sailr
@@ -659,6 +659,7 @@ case "$1" in
 		aosp_root="$(pwd)" || handleError "Failed to locate \$aosp_root"
 		AOSP_PROJECT=true
 		build.setVars
+		setup.gitHooks
 		patch.aosp_root
 		build.main "-mx23"
 		;;
@@ -668,7 +669,7 @@ case "$1" in
 		aosp_root="$1"
 		AOSP_PROJECT=true
 		build.setVars
-		setu.gitHooks
+		setup.gitHooks
 		patch.aosp_root
 		build.main "-mx23"
 		;;

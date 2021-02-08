@@ -552,6 +552,79 @@ function gen.conventionalChangelog() {
 }
 
 
+function setup.gitHooks() {
+	test -z "$_execDir" && build.setVars
+	cat > "${_execDir}/.git/hooks/commit-msg" <<"EOF"
+#!/usr/bin/env bash
+# Adapted to be bash friendly from https://github.com/craicoverflow/sailr
+# For the gearlock repository
+
+# Print out a standard error message which explains
+# how the commit message should be structured
+function print_error() {
+	commit_message="$1"
+# 	regular_expression=$2
+	echo -e "\n\e[31m[Invalid Commit Message]"
+	echo -e "------------------------\033[0m\e[0m"
+	echo -e "Valid types: \e[36m${types[@]}\033[0m"
+	echo -e "Max length (first line): \e[36m$max_length\033[0m"
+	echo -e "Min length (first line): \e[36m$min_length\033[0m\n"
+# 	echo -e "\e[37mRegex: \e[33m$regular_expression\033[0m"
+	echo -e "\e[37mActual commit message: \e[33m\"$commit_message\"\033[0m"
+	echo -e "\e[37mActual length: \e[33m$(echo $commit_message | wc -c)\033[0m\n"
+	echo -e 'Examples:\n
+feat: Auto updating support for gxp installer
+
+fix: Syntax error on core/settings
+
+perf: Optimize booting sequence code in bin/gearboot
+
+refactor: Change how bin/gxpm handle arguments
+
+For detailed info, please check https://www.conventionalcommits.org
+	'
+}
+
+function main() {
+	types=(
+			"feat"
+			"fix"
+			"perf"
+			"refactor"
+			"chore"
+			"build"
+			"ci"
+	)
+	min_length=5
+	max_length=52
+
+	regexp="^[.0-9]+$|"
+
+	for type in "${types[@]}"; do
+		regexp="${regexp}$type|"
+	done
+
+	regexp="${regexp%|})(\(.+\))?: "
+	regexp="${regexp}.{$min_length,$max_length}$"
+
+	# get the first line of the commit message
+	START_LINE="$(head -n1 "${INPUT_FILE:="$1"}")"
+
+	if [[ ! "$START_LINE" =~ $regexp ]]; then
+		# commit message is invalid according to config - block commit
+		print_error "$START_LINE"
+		exit 1
+	fi
+}
+
+main "$@"
+
+EOF
+	test $? != 0 && exit
+
+}
+
+
 function setup.devEnv() {
 	test "$(whoami)" != 'root' && echo 'error: Run as root' && exit 1
 
@@ -595,6 +668,7 @@ case "$1" in
 		aosp_root="$1"
 		AOSP_PROJECT=true
 		build.setVars
+		setu.gitHooks
 		patch.aosp_root
 		build.main "-mx23"
 		;;
@@ -620,10 +694,12 @@ case "$1" in
 	--setup-devenv)
 		shift
 		build.setVars
+		setup.gitHooks
 		setup.devEnv "$1"
 		;;
 	*)
 		build.setVars
+		setup.gitHooks
 		build.main ${1:-"-mx23"}
 		;;
 esac

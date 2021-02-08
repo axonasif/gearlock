@@ -610,7 +610,7 @@ function main() {
 	# get the first line of the commit message
 	START_LINE="$(head -n1 "${INPUT_FILE:="$1"}")"
 
-	if [[ ! "$START_LINE" =~ $regexp ]]; then
+	if ! echo "$START_LINE" | grep -q -E '^Update .*|^Merge .*' && [[ ! "$START_LINE" =~ $regexp ]]; then
 		# commit message is invalid according to config - block commit
 		print_error "$START_LINE"
 		exit 1
@@ -619,6 +619,11 @@ function main() {
 
 main "$@"
 
+EOF
+
+	cat > "${_execDir}/.git/hooks/pre-commit" <<"EOF"
+#!/usr/bin/env bash
+git pull
 EOF
 	test $? != 0 && exit
 

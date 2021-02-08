@@ -116,7 +116,7 @@ function build.main() {
 	echo -e "Making cpio archive of gearlock directory: \c"
 	cd "${_buildCacheRoot}" || handleError "Failed to cd ${_buildCacheRoot}"
 	mkdir -p "${_buildCacheInstallerDir}" || handleError "Failed to mkdir ${_buildCacheInstallerDir}"
-	find gearlock | cpio --owner=root:root -o -H newc -O "${_buildCacheInstallerDir}/gearlock"
+	find gearlock | cpio --owner=0:0 -o -H newc -O "${_buildCacheInstallerDir}/gearlock"
 		
 	if test -z "$AOSP_PROJECT"; then
 		# Merge files from _installerSrc into _buildCacheInstallerDir

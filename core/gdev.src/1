@@ -12,12 +12,19 @@ if test -z "$GEARLOCK_VER"; then
 	PATH="$BD/bin:$PATH"
 	! chmod -R 777 "$BD/bin" > /dev/null 2>&1 \
 		&& echo "Failed to get execution permissions on 'bin/garc'" && exit 1
+	test -z "$NO_PULL" && SHA="$(sha256sum "$0")" && {
+		echo -e '+ Running git pull: \c' && git pull
+		echo
+		test "$(sha256sum "$0")" != "$SHA" && export NO_PULL=true && exec "$0"
+	}
 fi
 
 
 function main(){
-	! curl --output /dev/null --silent --fail -r 0-0 "https://www.google.com" \
-		&& echo -e "Your internet is down." && exit 1
+	echo -e '\n+ Checking for internet access ...' && {
+		! curl --output /dev/null --silent --fail -r 0-0 "https://www.google.com" \
+			&& echo -e "Your internet is down." && exit 1
+	}
 		
 	echo -e "\n+ Downloading $1 ..." && {
 		! curl -LkSs "https://api.github.com/repos/AXIM0S/${1}/tarball" -o "$GTMP/${1}.tar.gz" \
@@ -25,23 +32,23 @@ function main(){
 	}
 	
 	echo -e "\n+ Setting up $1 ...\n" && {
-		test -e "$WORKDIR" && read -rn1 -p ' -- [!!!] Warning, workdir already exists, remove ? [Y/n] ' c && test "${c,,}" == "y" && rm -r "$WORKDIR"
+		test -e "$WORKDIR" && read -rn1 -p ' -- [!!!] Warning, workdir already exists, remove ? [Y/n] ' c && test "${c,,}" == "y" && rm -r "$WORKDIR" && echo
 		mkdir -p "$WORKDIR"
 		tar --strip-components=1 -C "$WORKDIR" -xf "$GTMP/${1}.tar.gz"
 		find "$WORKDIR" -name ".keep" -exec rm {} +
 		chmod -R 755 "$WORKDIR"
 	}
 	
-	echo -e "\n+ Browse to $WORKDIR"
-	echo -e "\n+ If you havent read the documentation yet then visit https://supreme-gamers.com/gearlock"
+	echo -e "\n+ Browse to $WORKDIR
+\n+ If you havent read the documentation yet then visit https://supreme-gamers.com/gearlock"
 	test -z "$ME" && echo -e "\n\n++ Run ./build to make your extension/package once it's ready"
 	:
 }
 
 wizard_run(){
-	echo -e "~ Choose what kind of Custom Package you want to work with ...\n"
-	echo -e "~ You may select the *kernel/mesa-specific package if you want a pre-configured kernel/mesa installer engine\n"
-	echo -e "~ You can use the *core-package for building something complex like an ${BGREEN}Extension${RC} or for ${YELLOW}boot-executables${RC} or anything!\n"
+	echo -e "~ Choose what kind of Custom Package you want to work with ...
+~ You may select the *kernel/mesa-specific package if you want a pre-configured kernel/mesa installer engine
+~ You can use the *core-package for building something complex like an ${BGREEN}Extension${RC} or for ${YELLOW}boot-executables${RC} or anything!\n"
 
 	select opt in "Kernel Package" "Mesa Package" "Custom Core Package" "Exit"; do
 		if ! echo "$opt" | grep -q 'Exit'; then

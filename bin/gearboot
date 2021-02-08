@@ -39,8 +39,7 @@ function hook_boot() {
 }
 
 function do_zygote_job() {
-	test -e /system/bin && test -e /system/xbin && chmod 777 /system/*bin/su>/dev/null 2>&1
-	test -e /sbin/su && chmod 777 /sbin/su
+	chmod -f 755 /system/*bin /system/*bin/su /sbin/su >/dev/null 2>&1
 	hook_boot
 	test "$SECOND_GTTY" != "no" && touch "$GTMP/.mkbashls"
 	for _dir in "init" "post-fs" "post-fs-data" "boot-post" "boot-comp"; do

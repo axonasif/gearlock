@@ -1,8 +1,8 @@
 #!/gearlock/bin/bash
 # Setup tempdir
 source /gearlock/bin/fetch || exit
-DUMP_DIR="$GTMP/dumpDebug"
-DUMP_ARCHIVE_TARGET="/data/dumpDebug.7z"
+DUMP_DIR="$GTMP/geardump"
+DUMP_ARCHIVE_TARGET="/data/geardump.zip"
 mkdir -p "$DUMP_DIR"
 
 # Dump all variables (Environment + Local)
@@ -62,12 +62,12 @@ if test -z "$RECOVERY"; then
 fi
     
 # Pack the dump
-echo -e "+ Packing your dumpDebug"
+echo -e "\n+ Packing your dumpDebug"
 rm -f "$DUMP_ARCHIVE_TARGET" "$GRROOT/${DUMP_ARCHIVE_TARGET##*/}"
-garca a "$DUMP_ARCHIVE_TARGET" "$DUMP_DIR"/* > /dev/null 2>&1
+garca a -tzip "$DUMP_ARCHIVE_TARGET" "$DUMP_DIR"/* > /dev/null 2>&1
 rsync "$DUMP_ARCHIVE_TARGET" "$GRROOT/${DUMP_ARCHIVE_TARGET##*/}"
 rm -rf "$DUMP_DIR"
 chmod -f 777 "$DUMP_ARCHIVE_TARGET" "$GRROOT/${DUMP_ARCHIVE_TARGET##*/}"
 echo -e "
-++++ ${DUMP_ARCHIVE_TARGET##*/} saved at ${DUMP_ARCHIVE_TARGET%/*} and at your OS-PARTITION-ROOT.
-++++ Kindy upload it to whoever asked you for debugging perposes" && exit
+++++ \033[1;32m${DUMP_ARCHIVE_TARGET##*/}\033[0m saved at \033[1;31m${DUMP_ARCHIVE_TARGET%/*}\033[0m and at your \033[1;34mOS-PARTITION-ROOT\033[0m.
+++++ Kindy upload it to whoever asked you for debugging perposes." && exit

@@ -269,10 +269,205 @@ function patch.aosp_root() {
 
 function gen.newVersion() {
 	function semver() {
-		SEMVER_BIN="${_execDir}/semver"
-		chmod +x "$SEMVER_BIN"
-		"$SEMVER_BIN" "$@"
+		# https://github.com/fsaintjacques/semver-tool
+		NAT='0|[1-9][0-9]*'
+		ALPHANUM='[0-9]*[A-Za-z-][0-9A-Za-z-]*'
+		IDENT="$NAT|$ALPHANUM"
+		FIELD='[0-9A-Za-z-]+'
+
+SEMVER_REGEX="\
+^[vV]?\
+($NAT)\\.($NAT)\\.($NAT)\
+(\\-(${IDENT})(\\.(${IDENT}))*)?\
+(\\+${FIELD}(\\.${FIELD})*)?$"
+
+		function error {
+			echo -e "$1" >&2
+			exit 1
+		}
+
+
+		function usage_help() {
+			exit 1
+		}
+
+		function validate_version {
+			local version=$1
+			if [[ "$version" =~ $SEMVER_REGEX ]]; then
+				# if a second argument is passed, store the result in var named by $2
+				if [ "$#" -eq "2" ]; then
+				local major=${BASH_REMATCH[1]}
+				local minor=${BASH_REMATCH[2]}
+				local patch=${BASH_REMATCH[3]}
+				local prere=${BASH_REMATCH[4]}
+				local build=${BASH_REMATCH[8]}
+				eval "$2=(\"$major\" \"$minor\" \"$patch\" \"$prere\" \"$build\")"
+				else
+				echo "$version"
+				fi
+			else
+				error "version $version does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'. See help for more information."
+			fi
+		}
+
+		# render_prerel -- return a prerel field with a trailing numeric string
+		#                  usage: render_prerel numeric [prefix-string]
+		#
+		function render_prerel {
+			if [ -z "$2" ]
+			then
+				echo "${1}"
+			else
+				echo "${2}${1}"
+			fi
+		}
+
+		# extract_prerel -- extract prefix and trailing numeric portions of a pre-release part
+		#                   usage: extract_prerel prerel prerel_parts
+		#                   The prefix and trailing numeric parts are returned in "prerel_parts".
+		#
+		PREFIX_ALPHANUM='[.0-9A-Za-z-]*[.A-Za-z-]'
+		DIGITS='[0-9][0-9]*'
+		EXTRACT_REGEX="^(${PREFIX_ALPHANUM})*(${DIGITS})$"
+
+		function extract_prerel {
+			local prefix; local numeric;
+
+			if [[ "$1" =~ $EXTRACT_REGEX ]]
+			then                                        # found prefix and trailing numeric parts
+				prefix="${BASH_REMATCH[1]}"
+				numeric="${BASH_REMATCH[2]}"
+			else                                        # no numeric part
+				prefix="${1}"
+				numeric=
+			fi
+
+			eval "$2=(\"$prefix\" \"$numeric\")"
+		}
+
+		# bump_prerel -- return the new pre-release part based on previous pre-release part
+		#                and prototype for bump
+		#                usage: bump_prerel proto previous
+		#
+		function bump_prerel {
+			local proto; local prev_prefix; local prev_numeric;
+
+			# case one: no trailing dot in prototype => simply replace previous with proto
+			if [[ ! ( "$1" =~ \.$ ) ]]
+			then
+				echo "$1"
+				return
+			fi
+
+			proto="${1%.}"                              # discard trailing dot marker from prototype
+
+			extract_prerel "${2#-}" prerel_parts        # extract parts of previous pre-release
+		#   shellcheck disable=SC2154
+			prev_prefix="${prerel_parts[0]}"
+			prev_numeric="${prerel_parts[1]}"
+
+			# case two: bump or append numeric to previous pre-release part
+			if [ "$proto" == "+" ]                      # dummy "+" indicates no prototype argument provided
+			then
+				if [ -n "$prev_numeric" ]
+				then
+					: $(( ++prev_numeric ))             # previous pre-release is already numbered, bump it
+					render_prerel "$prev_numeric" "$prev_prefix"
+				else
+					render_prerel 1 "$prev_prefix"      # append starting number
+				fi
+				return
+			fi
+
+			# case three: set, bump, or append using prototype prefix
+			if [  "$prev_prefix" != "$proto" ]
+			then
+				render_prerel 1 "$proto"                # proto not same pre-release; set and start at '1'
+			elif [ -n "$prev_numeric" ]
+			then
+				: $(( ++prev_numeric ))                 # pre-release is numbered; bump it
+				render_prerel "$prev_numeric" "$prev_prefix"
+			else
+				render_prerel 1 "$prev_prefix"          # start pre-release at number '1'
+			fi
+		}
+
+		function command_bump {
+			local new; local version; local sub_version; local command;
+
+			case $# in
+				2) case $1 in
+					major|minor|patch|prerel|release) command=$1; sub_version="+."; version=$2;;
+					*) usage_help;;
+				esac ;;
+				3) case $1 in
+					prerel|build) command=$1; sub_version=$2 version=$3 ;;
+					*) usage_help;;
+				esac ;;
+				*) usage_help;;
+			esac
+
+			validate_version "$version" parts
+			# shellcheck disable=SC2154
+			local major="${parts[0]}"
+			local minor="${parts[1]}"
+			local patch="${parts[2]}"
+			local prere="${parts[3]}"
+			local build="${parts[4]}"
+
+			case "$command" in
+				major) new="$((major + 1)).0.0";;
+				minor) new="${major}.$((minor + 1)).0";;
+				patch) new="${major}.${minor}.$((patch + 1))";;
+				release) new="${major}.${minor}.${patch}";;
+				prerel) new=$(validate_version "${major}.${minor}.${patch}-$(bump_prerel "$sub_version" "$prere")");;
+				build) new=$(validate_version "${major}.${minor}.${patch}${prere}+${sub_version}");;
+				*) usage_help ;;
+			esac
+
+			echo "$new"
+			exit 0
+		}
+
+		function command_get {
+			local part version
+
+			if [[ "$#" -ne "2" ]] || [[ -z "$1" ]] || [[ -z "$2" ]]; then
+				usage_help
+				exit 0
+			fi
+
+			part="$1"
+			version="$2"
+
+			validate_version "$version" parts
+			local major="${parts[0]}"
+			local minor="${parts[1]}"
+			local patch="${parts[2]}"
+			local prerel="${parts[3]:1}"
+			local build="${parts[4]:1}"
+			local release="${major}.${minor}.${patch}"
+
+			case "$part" in
+				major|minor|patch|release|prerel|build) echo "${!part}" ;;
+				*) usage_help ;;
+			esac
+
+			exit 0
+		}
+
+		case $# in
+		0) echo "Unknown command: $*";;
+		esac
+
+		case $1 in
+			bump) shift; command_bump "$@";;
+			get) shift; command_get "$@";;
+			*) echo "Unknown arguments: $*";;
+		esac
+
 	}
+
 		# Gather the data we need
 		local CURRENT_VERSION PATCH_VERSION MINOR_VERSION VERSION_FILE 
 
@@ -296,8 +491,6 @@ function gen.newVersion() {
 				echo "$(semver bump minor "$CURRENT_VERSION")" > "$VERSION_FILE"
 			fi
 		done
-		
-
 }
 
 function gen.conventionalChangelog() {

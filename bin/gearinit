@@ -193,7 +193,7 @@ function recovery_menu(){
 				1) boot_os p ;;
 				2) mkJob gearlock ;;
 				3) dialog --title " Creating a virtual command term " --nook --nocancel --pause "" 8 41 3 && mkJob bash -l ;;
-				4) clear && export UI=true && fixfs ;;
+				4) clear && UI=true fixfs ;;
 				5) mkJob mc.gearinit ;;
 			esac
 		done

@@ -621,10 +621,10 @@ main "$@"
 
 EOF
 
-	cat > "${_execDir}/.git/hooks/pre-commit" <<"EOF"
-#!/usr/bin/env bash
-git pull
-EOF
+# 	cat > "${_execDir}/.git/hooks/pre-commit" <<"EOF"
+# #!/usr/bin/env bash
+# git pull
+# EOF
 	test $? != 0 && exit
 
 }

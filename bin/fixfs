@@ -12,18 +12,25 @@ targetDevice="$(mount | grep "on /mnt" | awk '{print $1}')";
 function reMount(){
 	test -n "$unmounted" && true || return
 	test -z "$elsefs" && mount -o rw,noatime "$targetDevice" /mnt
+	unset unmounted
 }
 
 function unMount(){
 	unmounted=true
-	# Free loop devices to avoid read errors.
+
+	# unMount early mountpoints
+		for mp in /data /system /android/data /android/system; do
+			mountpoint -q $mp && umount -df $mp;
+		done
+
+	# Free loop devices to avoid read errors
 		for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | sort -r); do
-			mount 2>/dev/null | grep -q "^$loopDev" && umount -d "$loopDev";
+			mount 2>/dev/null | grep -q "^$loopDev" && umount -df "$loopDev";
 		done;
 
 	# unMount mountpoints
-		for mp in /data /system /android/data /android/system /sfs /gearlock/gearroot $(test -z "$elsefs" && echo '/mnt'); do
-			mountpoint -q $mp && umount $mp;
+		for mp in /sfs $(test -z "$elsefs" && echo '/gearlock/gearroot /mnt'); do
+			mountpoint -q $mp && umount -df $mp;
 		done
 	:
 }
@@ -33,7 +40,6 @@ function runJob(){
 	function checkImg(){
 		for img in data.img system.img; do
 			if [ -e "$OROOT/$img" ]; then
-				test -z "$unmounted" && unMount;
 				echo -e "\n++ Checking $img ...\n" && e2fsck -y $force "$OROOT/$img";
 			fi;
 		done;
@@ -55,6 +61,7 @@ function runJob(){
 		unMount && fsck -CTy $force "$targetDevice";
 	## When we have non-ext* partition
 	else
+		unMount;
 		checkImg;
 	fi
 	

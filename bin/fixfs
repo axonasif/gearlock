@@ -63,13 +63,12 @@ function runJob(){
 	
 }
 
-	
-	if [ -z "$UI" ] || [ -n "$FIXFS" ] || [ -e "$OROOT/fixfs" ]; then
-		runJob;
+	if [ -z "$UI" ]; then
+		runJob $1;
 	else
 		if dialog --colors --clear --title " Confirm action " --yesno "Are you sure that you want GearLock to repair \Z1$targetDevice\Zn ?" 8 41; then
 			clear && runJob -f;
-			echo -e "\n++ Press any key to continue ...\c" && read -nr1;
+			echo -e "\n++ Press any key to continue ...\c" && read -rn1;
 		else
 			dialog --clear --title "Notice" --msgbox "\nOkay then !" 8 41;
 		fi;

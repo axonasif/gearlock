@@ -1,3 +1,6 @@
+# /
+vendorsetup.sh
+
 # bin
 bin/ckdirex
 bin/fetch

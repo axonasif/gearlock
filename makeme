@@ -34,6 +34,7 @@ function build.mkInstaller ()
 	rm -rf "${_buildInstallerOut}"; mkdir -p "${_buildInstallerOut}"
 	local GARCA="${_installerSrc}/packer-engine/garca"
 	rsync -a "${_execDir}/installer/packer-engine/bash" "${_execDir}/installer/packer-engine/busybox" "${_buildCacheInstallerDir}"
+	chmod +x "$GARCA" || exit
 	"$GARCA" a -m0=zstd "$3" -sfx "$1" "$2"
 	return $?
 };
@@ -98,7 +99,7 @@ function build.main() {
 	done
 	
 	echo -e "Checkig source code syntax of GearLock ${_gearlockVersionCode}"
-	chmod +x "${_execDir}/bin/bashbox"
+	chmod +x "${_execDir}/bin/bashbox" || exit
 	STRICT="true" NO_CREATE="true" bash "${_execDir}/bin/bashbox" $(xargs < "$source_files_gen_list") \
 		|| handleError "Syntax errors found, can not continue"
 # 	readarray -d '' optim_gen_list < <(find "${_buildCache}/bin" "${_buildCache}/core" -name '*.bb.sh' -print0)

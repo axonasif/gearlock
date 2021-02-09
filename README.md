@@ -39,7 +39,7 @@ Feel free to create a fork and help make this project even better.
 
 Your commits should follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) specification, otherwise it will be rejected.
 
-If you want to build GearLock then all you gotta do is running the following command:
+If you want to build GearLock then all you gotta do is run the following command:
 
 * From linux distros
 

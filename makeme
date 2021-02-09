@@ -612,8 +612,10 @@ function main() {
 	# get the first line of the commit message
 	START_LINE="$(head -n1 "${INPUT_FILE:="$1"}")"
 	
-	if ! echo "$START_LINE" | grep -q -E '^Update .*|^Merge .*' && \
-	! echo "$START_LINE" | grep -q ':' || [[ ! "$START_LINE" =~ $regexp ]]; then
+	echo "$START_LINE" | grep -q -E '^Update|^Merge' && return 0
+	exit 1
+	
+	if ! echo "$START_LINE" | grep -q ':' || [[ ! "$START_LINE" =~ $regexp ]]; then
 		# commit message is invalid according to config - block commit
 		print_error "$START_LINE"
 	fi

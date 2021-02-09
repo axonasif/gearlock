@@ -633,7 +633,7 @@ EOF
 
 
 function setup.devEnv() {
-	test "$(whoami)" != 'root' && echo 'error: Run as root' && exit 1
+	test "$(whoami)" != 'root' && handleError 'Run as root' 1
 
 	NEW_ROOT="${1:-"$HOME/gdev_root"}"
 	mkdir -p "$NEW_ROOT" && chmod 777 "$NEW_ROOT" || exit

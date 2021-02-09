@@ -41,16 +41,25 @@ Your commits should follow [Conventional Commits](https://www.conventionalcommit
 
 If you want to build GearLock then all you gotta do is running the following command:
 
-```bash
-git clone https://github.com/AXIM0S/gearlock && cd gearlock && chmod +x makeme && ./makeme
-```
+* From linux distros
+
+> ```bash
+> git clone https://github.com/AXIM0S/gearlock && cd gearlock && bash makeme
+> ```
+
+* From android-x86 distros (assuming you have GearLock installed)
+
+> ```bash
+> curl -L https://github.com/AXIM0S/gearlock/archive/main.zip -o gearlock.zip
+> unzip -qq gearlock.zip && cd gearlock-main && bash makeme
+> ```
 
 Then you should find the outputs at `out/installer`
 
 If you want to test bare basic functionalities of GearLock within a linux-distro for development porposes then run:
 
 ```bash
-./makeme --setup-devenv "$HOME/gdev"
+bash makeme --setup-devenv "$HOME/gdev"
 ```
 
 For working over sources for the core files, take a look at `core/` and `core/_external_bin/`

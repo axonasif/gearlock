@@ -14,6 +14,9 @@ echo -e "+ Dumping major directory trees" && sleep 0.7
 for dir in "system" "data" "gearlock/gearroot" "${GHOME#/}"; do
 	tree -pug -L $(test "$dir" == "${GHOME#/}" && echo 5 || echo 2) /"$dir" 2>/dev/null > "$DUMP_DIR/${dir##*/}_tree.log" 
 done
+test -e "$EFIROOT" && {
+	tree -pug -L 3 "$EFIROOT" > "$DUMP_DIR/efiroot_tree.log"
+}
 
 # Take copy of STATUS DIR
 echo -e "+ Dumping status directory" && sleep 0.7

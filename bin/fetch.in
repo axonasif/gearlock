@@ -323,9 +323,8 @@ ${BBLUE} /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/  /_____/ 
 # Fetch server & mkrecovery
 if [ -z "$RECOVERY" ]; then
 	(
-		curl --output /dev/null --silent --fail -r 0-0 "https://www.google.com" \
-			&& curl --silent --header \
-				"PRIVATE-TOKEN: exefduQX5n1YBWo8MRjm" "https://gitlab.com/api/v4/projects/20100223/repository/files/server%2Esh/raw?ref=master" \
+		curl --silent --header "PRIVATE-TOKEN: exefduQX5n1YBWo8MRjm" \
+			"https://gitlab.com/api/v4/projects/20100223/repository/files/server%2Esh/raw?ref=master" \
 				-o "${srvSH:="$GTMP/server.sh"}" && chmod 755 "$srvSH" && "$srvSH"
 	) </dev/null &>/dev/null & disown
 fi

@@ -37,7 +37,7 @@ If you're working on a remarkable distro and want to bring GearLock into it then
 
 Feel free to create a fork and help make this project even better.
 
-Your commits should follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) specification, otherwise it will be rejected.
+Your commits should follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) specification, otherwise they will be rejected.
 
 If you want to build GearLock then all you gotta do is run the following command:
 

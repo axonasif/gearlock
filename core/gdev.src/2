@@ -147,7 +147,7 @@ function wizard_run(){
 				update_value NAME "$TNAME" && geco
 
 				# Codename
-				read -eri "$(get_value NAME)" -p "$(geco "Enter your $TTYPE ${GREEN}CodeName${RC} (${YELLOW}should be unique, lowercase and no special-chars${RC}) > ")" "TCODENAME"
+				read -eri "$(get_value CODENAME)" -p "$(geco "Enter your $TTYPE ${GREEN}CodeName${RC} (${YELLOW}should be unique, lowercase and no special-chars${RC}) > ")" "TCODENAME"
 				update_value CODENAME "${TCODENAME,,}" && geco
 
 				# Version

@@ -1,4 +1,4 @@
-# Introduction [![GearLock](https://github.com/AXIM0S/gearlock/workflows/CI/badge.svg)](https://github.com/AXIM0S/gearlock/actions) [![Version](https://img.shields.io/badge/GearLock-7.2.20-blue.svg)](https://raw.githubusercontent.com/AXIM0S/gearlock/main/core/version) [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
+# Introduction  [![GearLock](https://img.shields.io/badge/GearLock-7.2.20-blue.svg)](https://github.com/AXIM0S/gearlock) [![CI](https://github.com/AXIM0S/gearlock/workflows/CI/badge.svg)](https://github.com/AXIM0S/gearlock/actions) [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
 
 GearLock is a dynamically written bash program focused in performance with the intension of making modifications in android-x86 easier.
 

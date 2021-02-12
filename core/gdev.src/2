@@ -204,6 +204,36 @@ function wizard_run(){
 						* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
 					esac
 				done
+
+				# Interactive mode
+				while true; do
+					geco "\n~ Interactivity is valid if your install/uninstall operation requires inputs from the user ${BGREEN}expect Yes or No${RC}"
+					geco "~ You need to define this in your metadata so that GXPM can know if performing an auto/silent install/uninstall of your $TTYPE is possible"
+					read -rp "$(geco "\nSo, does your $TTYPE require additional interactivity? [${GREEN}Y${RC}/n]") (Current Value: $(get_value INTERACTIVE)) " c
+					case $c in
+						[Yy]* )
+							geco
+							select opt in "Only in install" "Only in uninstall" "Both install + uninstall"
+							do
+								case "$opt" in
+									"Only in install")
+										update_value INTERACTIVE "yes, no"
+										;;
+									"Only in uninstall")
+										update_value INTERACTIVE "no, yes"
+										;;
+									"Both install + uninstall")
+										update_value INTERACTIVE "yes, yes"
+										;;
+								esac
+								break
+							done
+							break
+							;;
+						[Nn]* ) update_value INTERACTIVE "no, no" && break ;;
+						* ) geco "\nEnter either ${GREEN}y${RC}es or no" ;;
+					esac
+				done
 				;;
 			"Exit")
 				exit 0

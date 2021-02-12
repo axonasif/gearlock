@@ -25,11 +25,19 @@ geco "\n+ Press [Enter] to start the process" && read EnterKey
 	done
 
 rsync -a "$KERNEL_IMAGE" "$WORKDIR/kernel"
+
+# Name
 geco && read -eri "$(get_value AUTHOR)" -p "$(geco "Enter your ${GREEN}Name${RC} as the owner/dev/author > ")" "TAUTHOR"
 update_value AUTHOR "$TAUTHOR" && geco
+
+# Codename
+read -eri "$(get_value NAME)" -p "$(geco "Enter your $TTYPE ${GREEN}CodeName${RC} (${YELLOW}should be unique, lowercase and no special-chars${RC}) > ")" "TCODENAME"
+update_value CODENAME "${TCODENAME,,}" && geco
+
+# Version
 read -eri "$(uname -r)" -p "$(geco "Enter your ${GREEN}$TTYPE${RC} version > ")" "TVERSION"
 update_value VERSION "$TVERSION"
 
 geco "\n+ Triggering the final build process ..." && sleep 1
-"$GDK_BASE/2" --noenc; ckExit
+"$GDK_BASE/2" --nowizard; ckExit
 

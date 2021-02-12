@@ -17,11 +17,18 @@ geco "\n+ Press [Enter] to start the process" && read EnterKey
 "$GDK_BASE/1" --gearlock-mesa-pkg; ckExit
 geco && "$CORE/gxpm/mesa-native/job" backup "$WORKDIR"
 
+# name
 geco && read -eri "$(get_value AUTHOR)" -p "$(geco "Enter your ${GREEN}Name${RC} as the owner/dev/author > ")" "TAUTHOR"
 update_value AUTHOR "$TAUTHOR" && geco
+
+# Codename
+read -eri "$(get_value NAME)" -p "$(geco "Enter your $TTYPE ${GREEN}CodeName${RC} (${YELLOW}should be unique, lowercase and no special-chars${RC}) > ")" "TCODENAME"
+update_value CODENAME "${TCODENAME,,}" && geco
+
+# Version
 read -eri "${_mesa_ExtractVersion}_Android_${ANDROID_VER}" -p "$(geco "Enter your ${GREEN}$TTYPE${RC} version > ")" "TVERSION"
 update_value VERSION "$TVERSION"
 sed -i "s|MESA_ANDROID_VER=\".*\"|MESA_ANDROID_VER=\"${ANDROID_VER%%.*}\"|" "$WORKDIR/install.sh"
 
 geco "\n+ Triggering the final build process ..." && sleep 1
-"$GDK_BASE/2" --noenc; ckExit
+"$GDK_BASE/2" --nowizard; ckExit

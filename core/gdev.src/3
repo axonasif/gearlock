@@ -1,3 +1,4 @@
+# FIXME: I've planned some massive changes for this function but will need to catch some free time first
 geco "- This will only run ${RED}install.sh${RC}\n- Will not respect !zygote.sh props\n+ Also, your extension or boot-scripts wont be copied in this.."; sleep 3
 source $WORKDIR/'!zygote.sh'; geco "\n\n"
 chmod 777 $WORKDIR/install.sh && $WORKDIR/install.sh

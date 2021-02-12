@@ -492,6 +492,9 @@ SEMVER_REGEX="\
 				echo "$(semver bump minor "$CURRENT_VERSION")" > "$VERSION_FILE"
 			fi
 		done
+		
+		# Update version badge on README.md
+		sed -i "s|https://img.shields.io/badge/GearLock-.*-blue.svg|https://img.shields.io/badge/GearLock-$(< "$VERSION_FILE")-blue.svg|g" "$_execDir/README.md"
 }
 
 function gen.conventionalChangelog() {

@@ -24,12 +24,11 @@ bin/gkillapp
 bin/gsdir
 bin/gslr
 bin/gstatus
-bin/gsudo
+bin/sudo
 bin/gxpm
 bin/mc.gearinit
 bin/mkrecovery
 bin/nout
-bin/sudo
 
 # core/
 core/devz

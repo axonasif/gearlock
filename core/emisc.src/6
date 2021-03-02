@@ -100,16 +100,17 @@ function module.remove() {
 
 function fetch.magisk(){
 	! get_net_stat && exit 1
-	geco "\n+ ${_fetching_latest_magisk_}"
+	geco "\n+ ${_fetching_magisk_}"
 	
 	local json_data VERSION DWL
 	json_data="$(curl --silent "https://raw.githubusercontent.com/topjohnwu/magisk_files/master/stable.json" \
 				| grep -A5 '"magisk":')" || { geco "Error: Failed to fetch latest magisk" && exit 1; }
 	VERSION="$(echo "$json_data" | grep '"version":' | sed -E 's/.*"([^"]+)".*/\1/')"
-	DWL="$(echo "$json_data" | grep '"link":' | sed -E 's/.*"([^"]+)".*/\1/')"
+	#DWL="$(echo "$json_data" | grep '"link":' | sed -E 's/.*"([^"]+)".*/\1/')"
+	DWL="https://github.com/topjohnwu/Magisk/releases/download/v21.4/Magisk-v21.4.zip"
 	
-	geco "\n+ ${_latest_magisk_is_/@DUMMY@/$VERSION}" && sleep 1
-	geco "\n+ ${_downloading_magisk_/@DUMMY@/$VERSION}"
+	#geco "\n+ ${_latest_magisk_is_/@DUMMY@/$VERSION}" && sleep 1
+	geco "\n+ ${_downloading_magisk_21.4}"
 	rm -f "$GTMP/magisk.zip"
 	gdload "$DWL" "$GTMP/magisk.zip" || { geco "${_download_was_interrupted_} ..." && exit 1; }
 	

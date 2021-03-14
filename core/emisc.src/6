@@ -4,6 +4,7 @@ MODULE_PATH="$GHOME/.local/bin/$COMMON_NAME"
 OVERLAY_PATH="$OVERLAYDIR/$COMMON_NAME/init/init.superuser.rc"
 DATA_BIN_DIR="/data/.rusty-magisk"
 TITLE="${COMMON_NAME^^} Installer / Remover"
+MAGISK_BUNDLE_NAME="magisk.bundle"
 
 # Define functions
 function module.status() {
@@ -22,17 +23,56 @@ function module.install() {
 	shift
 	
 	{
+		
+		dialog --colors --clear --backtitle " $(gecpc "$TITLE" "#") " \
+				--title " Confirm Action " \
+				--yes-label "Stable" --no-label " Unstable-bleedingEdge " \
+				--help-button --help-label "Exit" \
+				--yesno "\n Select the version channel >" 7 100
+		RETC=$?
+
+		case "$RETC" in
+			# Stable button
+			"0")
+				{
+					VERSION_CHANNEL="stable"
+					
+				}
+			;;
+			# Unstable-bleedingEdge button
+			"1")
+				{
+					
+					VERSION_CHANNEL="unstable"
+					
+				}
+			;;
+			# Exit button
+			"2")
+				return 1
+			;;
+		esac
+		
 		fetch.magisk
 		fetch.rusty-magisk
 		mkdir -p "$DATA_BIN_DIR" || exit 1
 		
 		geco "\n+ Caching latest magisk binary and app at $DATA_BIN_DIR"
-		nout garca x -o"$GTMP/magisk" "$GTMP/magisk.zip" common/magisk.apk 'x86/magiskinit*' || { geco "Error: Failed to extract magisk.zip"; exit 1; }
-		local magisk_init
-		magisk_init="$GTMP/magisk/x86/magiskinit$(test "$HOST_ARCH" == "x86_64" && echo '64')"
-		chmod +x "$magisk_init"
-		"$magisk_init" -x magisk "$DATA_BIN_DIR/magisk" && chmod 755 "$DATA_BIN_DIR/magisk" || exit 1
-		rsync -a "$GTMP/magisk/common/magisk.apk" "$DATA_BIN_DIR" || exit 1
+		
+		if test "$VERSION_CHANNEL" == "stable"; then
+			nout garca x -o"$GTMP/magisk" "$GTMP/$MAGISK_BUNDLE_NAME" common/magisk.apk 'x86/magiskinit*' \
+				|| { geco "Error: Failed to extract ${MAGISK_DWL##*/}"; exit 1; }
+			local magisk_init
+			magisk_init="$GTMP/magisk/x86/magiskinit$(test "$CPU_ARCH" == "x86_64" && echo '64')"
+			chmod +x "$magisk_init"
+			"$magisk_init" -x magisk "$DATA_BIN_DIR/magisk" && chmod 755 "$DATA_BIN_DIR/magisk" || exit 1
+			rsync -a "$GTMP/$MAGISK_BUNDLE_NAME" "$DATA_BIN_DIR/magisk.apk" || exit 1
+		else
+			unzip -pj "$GTMP/$MAGISK_BUNDLE_NAME" "lib/x86/libmagisk$(test "$CPU_ARCH" == "x86" && echo '32' || echo '64').so" > "$DATA_BIN_DIR/magisk"\
+				|| { geco "Error: Failed to extract ${MAGISK_DWL##*/}"; exit 1; }
+			chmod 755 "$DATA_BIN_DIR/magisk" || exit 1
+			rsync -a "$GTMP/$MAGISK_BUNDLE_NAME" "$DATA_BIN_DIR/magisk.apk" || exit 1
+		fi
 		
 		geco "\n+ Creating overlay at gearboot/overlay" && sleep 0.5
 		mkdir -p "${OVERLAY_PATH%/*}" || { geco "Error: Failed to create overlay dir"; exit 1; }
@@ -102,16 +142,22 @@ function fetch.magisk(){
 	! get_net_stat && exit 1
 	geco "\n+ ${_fetching_latest_magisk_}"
 	
-	local json_data VERSION DWL
-	json_data="$(curl --silent "https://raw.githubusercontent.com/topjohnwu/magisk_files/master/stable.json" \
-				| grep -A5 '"magisk":')" || { geco "Error: Failed to fetch latest magisk" && exit 1; }
-	VERSION="$(echo "$json_data" | grep '"version":' | sed -E 's/.*"([^"]+)".*/\1/')"
-	DWL="$(echo "$json_data" | grep '"link":' | sed -E 's/.*"([^"]+)".*/\1/')"
+	local json_data VERSION
 	
+	if test "$VERSION_CHANNEL" == "stable"; then
+		VERSION="21.4"
+		MAGISK_DWL="https://github.com/topjohnwu/Magisk/releases/download/v21.4/Magisk-v21.4.zip"
+	else
+		json_data="$(curl --silent "https://raw.githubusercontent.com/topjohnwu/magisk_files/master/stable.json" \
+					| grep -A5 '"magisk":')" || { geco "Error: Failed to fetch latest magisk" && exit 1; }
+		VERSION="$(echo "$json_data" | grep '"version":' | sed -E 's/.*"([^"]+)".*/\1/')"
+		MAGISK_DWL="$(echo "$json_data" | grep '"link":' | sed -E 's/.*"([^"]+)".*/\1/')"
+	fi
+		
 	geco "\n+ ${_latest_magisk_is_/@DUMMY@/$VERSION}" && sleep 1
 	geco "\n+ ${_downloading_magisk_/@DUMMY@/$VERSION}"
-	rm -f "$GTMP/magisk.zip"
-	gdload "$DWL" "$GTMP/magisk.zip" || { geco "${_download_was_interrupted_} ..." && exit 1; }
+	rm -f "$GTMP/$MAGISK_BUNDLE_NAME"
+	gdload "$MAGISK_DWL" "$GTMP/$MAGISK_BUNDLE_NAME" || { geco "${_download_was_interrupted_} ..." && exit 1; }
 	
 }
 
@@ -127,7 +173,7 @@ function fetch.rusty-magisk() {
 	
 	geco "\n+ Latest rusty-magisk version is: ${BGREEN}$VERSION${RC}" && sleep 1
 	geco "\n+ Downloading ${BRED}rusty-magisk_${HOST_ARCH} $VERSION${RC}"
-	rm -f "$MODULE_PATH"
+	rm -f "$MODULE_PATH" "$GTMP/"*"$COMMON_NAME"*
 	gdload "$LINK" "$GTMP/$COMMON_NAME" || { geco "${_download_was_interrupted_} ..." && exit 1; }
 }
 
@@ -149,7 +195,7 @@ case "$RETC" in
 	;;
 	# Exit button
 	"2")
-		true
+		false
 	;;
 esac
 

@@ -14,7 +14,7 @@ It can be used both GUI and TTY in a user-friendly manner, including advanced CL
 
 # Features
 
-I mainly post updates at https://supreme-gamers.com/r/gearlock-custom-recovery-replacement-for-android-x86.40
+I mainly post updates at [SupremeGamers](https://supreme-gamers.com/r/gearlock-custom-recovery-replacement-for-android-x86.40)
 
 So, check there.
 
@@ -63,6 +63,8 @@ bash makeme --setup-devenv "$HOME/gdev"
 ```
 
 For working over sources for the core files, take a look at `core/` and `core/_external_bin/`
+
+Also check `core/_lang_/` if you want to improve the language translations and concurrent strings.
 
 You might have noticed that there are prebuilt binaries in the repository but not their source code.
 
@@ -140,6 +142,8 @@ Without their open-minded years of hard work, GearLock wouldn't have been the sa
 
 
 # Copyright and License
+
+This project is [GPL-2.0](https://github.com/AXIM0S/gearlock/blob/main/LICENSE) licensed.
 
 ```
     GearLock

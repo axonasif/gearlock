@@ -500,7 +500,7 @@ SEMVER_REGEX="\
 function gen.conventionalChangelog() {
 	# Gather logs
 	output="${_execDir}/CHANGELOG.md" && rm -f "$output" || exit
-	fullGitlog="$(git log --no-merges --pretty=format:"%s [%an]" "$@" \
+	fullGitlog="$(git log --no-merges --pretty=format:"%s [[%an](https://github.com/AXIM0S/gearlock/commit/%H)]" "$@" \
 				| grep -E '^feat|^fix|^perf|^refactor|^chore|^build|^ci')"
 	fixLog="$(echo "$fullGitlog" | grep '^fix.*:')"
 	featLog="$(echo "$fullGitlog" | grep '^feat.*:')"

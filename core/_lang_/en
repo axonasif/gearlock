@@ -55,7 +55,7 @@ _sub_footer_items_="[b].Back"
 
 _footer_items_extn_classicui_="[b].Back [i].Install-Extensions [r].Refresh [h].Help"
 _footer_items_gxpm_classicui_="[b].Back [i].View-Installed [u].Uninstall [r].Refresh [s].Reboot"
-_footer_input_prompt_classicui_="Ehh, Whats cooki'n ^_^ Doc?"
+_footer_input_prompt_classicui_="Ehh, Whats cookin' ^_^ Doc?"
 
 _redirecting_to_gxpm_="You are being redirected to GearLock Package & Extension Manager, you can install extensions from there if you have any installable extension package downloaded"
 _extn_not_found_="No installed extension found.\n\nYou can run them here once you install some extension from the package manager"

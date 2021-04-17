@@ -50,7 +50,7 @@ If you want to build GearLock then all you gotta do is run the following command
 * From android-x86 distros (assuming you have GearLock installed)
 
 > ```bash
-> curl -L https://github.com/AXIM0S/gearlock/archive/main.zip -o gearlock.zip
+> curl -L https://git.io/JO43W -o gearlock.zip
 > unzip -qq gearlock.zip && cd gearlock-main && bash makeme
 > ```
 

@@ -557,7 +557,7 @@ function gen.conventionalChangelog() {
 
 
 function setup.gitHooks() {
-	test ! -e "$_execDir/.git/hooks" && return 0
+	test ! -e "$_execDir/.git/hooks" && return 1
 	cat > "${_execDir}/.git/hooks/commit-msg" <<"EOF"
 #!/usr/bin/env bash
 # Adapted to be bash friendly from https://github.com/craicoverflow/sailr
@@ -631,7 +631,9 @@ EOF
 # #!/usr/bin/env bash
 # git pull
 # EOF
-	test $? != 0 && exit
+	test $? != 0 && exit 1
+
+	chmod 777 "${_execDir}/.git/hooks/commit-msg" || exit 1
 
 }
 

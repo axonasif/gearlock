@@ -162,10 +162,10 @@ function fetch.magisk(){
 }
 
 function fetch.rusty-magisk() {
-	geco "\n+ Fetching latest ${BRED}AXIM0S/rusty-magisk${RC}"
+	geco "\n+ Fetching latest ${BRED}axonasif/rusty-magisk${RC}"
 	
 	local LINK VERSION
-	LINK="$(curl -s https://api.github.com/repos/AXIM0S/rusty-magisk/releases/latest \
+	LINK="$(curl -s https://api.github.com/repos/axonasif/rusty-magisk/releases/latest \
 					| grep "browser_download_url.*\brusty-magisk_${HOST_ARCH}\b" \
 					| sed -E 's/.*"([^"]+)".*/\1/'
 				)" || { geco "Error: Failed to fetch latest rusty-magisk" && exit 1; }

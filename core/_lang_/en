@@ -16,7 +16,7 @@ _not_available_in_recovery_mode_="Not available in RECOVERY mode"
 _press_alt_f7_="Press ${YELLOW}Alt+F7${RC} for GUI"
 
 _function_disabled_="This is either disabled or not available for now"
-_chcking_net_connection_="Checking if you are connected to internet by pinging google"
+_chcking_net_connection_="Checking if you are connected to internet by pinging Gitlab"
 _net_connection_unavailable_="Your internet connection might be either down or you are not connected to the internet\n~ Please make sure you are porperly connected to the internet"
 _osroot_not_located_="Failed to locate OSROOT.\nError code 110"
 _sel_interface_theme_="Select Interface Theme"

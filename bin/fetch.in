@@ -156,7 +156,7 @@ function get_base_dir() {
 
 function get_net_stat() {
 	geco "\n~ ${_chcking_net_connection_}\n"
-	if curl --output /dev/null --silent --fail -r 0-0 "https://www.google.com"; then
+	if curl --output /dev/null --silent --fail -r 0-0 "https://gitlab.com"; then
 		NET_CONN=yes && return 0
 	else
 		NET_CONN=no && geco "\n~ ${_net_connection_unavailable_} ..." && return 1

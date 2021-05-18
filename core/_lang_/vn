@@ -16,7 +16,7 @@ _not_available_in_recovery_mode_="Không có sẵn ở Chế độ Recovery"
 _press_alt_f7_="Nhấn ${YELLOW}Alt+F7${RC} để quay trở lại GUI (giao diện đồ họa chính)"
 
 _function_disabled_="Chức năng này đang bị tắt hoặc không có sẵn"
-_chcking_net_connection_="Ping Google để kiểm tra máy bạn đã kết nối Internet chưa..."
+_chcking_net_connection_="Ping Gitlab để kiểm tra máy bạn đã kết nối Internet chưa..."
 _net_connection_unavailable_="Internet của bạn đang có vấn đề hoặc chưa kết nối\n~ Hãy kiểm tra lại và chắc chắn rằng bạn đã kết nối nhé !"
 _osroot_not_located_="Không tìm thấy OSROOT.\n Mã Error 110"
 _sel_interface_theme_="Chọn giao diện"

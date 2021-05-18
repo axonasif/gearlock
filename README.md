@@ -14,11 +14,112 @@ It can be used both GUI and TTY in a user-friendly manner, including advanced CL
 
 # Features
 
-I mainly post updates at [SupremeGamers](https://supreme-gamers.com/r/gearlock-custom-recovery-replacement-for-android-x86.40)
+<details>
+  <summary>Spoiler (click here)</summary>
+  
+- Install any custom kernel / mesa or pretty much anything. There are also tons of other extension & packages available in our RESOURCES section for you to install with a powerful package-manager.
 
-So, check there.
+- Install flashable zip files. (BETA)
 
-This repo is only used for development and issue tracking.
+- Use RECOVERY-MODE even before your android starts.
+- + MidNight Commander FileManager integration in recovery mode.
+- + Repair corrupted EXT partitions before booting up the OS.
+
+- Decompress / extend the size of your system image
+
+- Backup & restore your whole data
+
+- Mesa Version faker
+
+- Change CPU governor & frequency
+
+- Change MAC Address
+
+- Update google apps directly from a opengapps package
+
+- Install latest/custom magisk version directly from github source by patching the ramdisk. (on-device)
+
+- GoogleLess Mode feature
+
+- Unity Game Engine Crash Fix
+
+- Resolve the issue for magisk installation, in which magisk makes the tty unusable
+
+- SU-Handler for switching between SuperSU & MagiskSU
+
+- Introducing GearProp, which can force overwrite any system property.
+
+- Purge / remove extra kernel modules from your system
+
+- MultiLang support with UTF8. (EN, VN, CN, ES)
+
+- Record screen with audio without any app. (Directly from gearlock with internal audio support)
+
+- Very developer friendly with tons of easy to use tools
+
+- Disable / Enable Laptop touchpad or keyboard
+
+- Extensible by installing custom extensions
+
+- And many more! This list is probably outdated, lol.
+  
+</details>
+
+
+# Boot flags
+
+
+You can control the behavior of GearLock early recovery screen with boot-flags.
+There are three kinds of flags you can use.
+
+<details>
+  <summary>Spoiler (more details)</summary>
+
+
+- NORECOVERY
+- ALWAYSRECOVERY
+- FIXFS
+- NOGFX
+
+## NORECOVERY
+
+This helps you bypass the recovery countdown screen. You can either put NORECOVERY=0 in your grub-config or make a file named norecovery in your android-x86 partition.
+
+### Grub config example:
+
+```bash
+linux /kernel quiet NORECOVERY=0
+```
+
+## ALWAYSRECOVERY​
+
+This lets you to auto-enter recovery mode always* without having to press ESC.
+Just like NORECOVERY, you can active this by grub (ALWAYSRECOVERY=0) or by making a file named alwaysrecovery in android-x86 partition.
+
+## FIXFS
+
+This will auto-fix extFS on each boot from the option which you find in recovery mode.
+
+In other words, it will run fsck against your root partition.
+
+Grub> `FIXFS=0`
+File-Flag> `fixfs`
+
+
+## NOGFX
+
+When this flag is found, GearLock does not attempt to get the best possible visuals during RECOVERY-MODE. There are some really rare cases among some users in which when GearLock tries to ensure better visuals, kernel panic happens during boot.
+
+Grub> `NOGFX=0`
+File-Flag> `nogfx`
+
+</details>
+
+
+
+# Flashable ZIP Compatibility
+
+If you want my honest word then you should know that about 99% of the available flashable zips out there will likely fail since they were never made for android-x86 and GearLock has nothing to do about that. In which most of them are flashable-roms which you obviously won't be installing on android-x86. Currently I've had success with OpenGapps and a few other zips. Other than that will surely fail unless the developer itself implements android-x86 support.
 
 
 

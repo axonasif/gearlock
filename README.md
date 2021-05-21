@@ -234,6 +234,7 @@ Without their open-minded years of hard work, GearLock wouldn't have been the sa
 * Ahmad Moemen (Contibutor)
 * Diaz (Donator)
 * rk (Donator)
+* https://github.com/termux/termux-packages
 * https://github.com/opsengine/cpulimit
 * https://github.com/landley/toybox
 * https://github.com/osospeed/ttyecho

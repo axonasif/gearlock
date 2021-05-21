@@ -88,13 +88,13 @@ This helps you bypass the recovery countdown screen. You can either put NORECOVE
 ### Grub config example:
 
 ```bash
-linux /kernel quiet NORECOVERY=0
+linux /kernel quiet NORECOVERY=1
 ```
 
 ## ALWAYSRECOVERY​
 
 This lets you to auto-enter recovery mode always* without having to press ESC.
-Just like NORECOVERY, you can active this by grub (ALWAYSRECOVERY=0) or by making a file named alwaysrecovery in android-x86 partition.
+Just like NORECOVERY, you can active this by grub (`ALWAYSRECOVERY=1`) or by making a file named `alwaysrecovery` in android-x86 partition.
 
 ## FIXFS
 
@@ -102,7 +102,8 @@ This will auto-fix extFS on each boot from the option which you find in recovery
 
 In other words, it will run fsck against your root partition.
 
-Grub> `FIXFS=0`
+Grub-Flag> `FIXFS=1`
+
 File-Flag> `fixfs`
 
 
@@ -110,7 +111,7 @@ File-Flag> `fixfs`
 
 When this flag is found, GearLock does not attempt to get the best possible visuals during RECOVERY-MODE. There are some really rare cases among some users in which when GearLock tries to ensure better visuals, kernel panic happens during boot.
 
-Grub> `NOGFX=0`
+Grub-Flag> `NOGFX=1`
 File-Flag> `nogfx`
 
 </details>

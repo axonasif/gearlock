@@ -51,7 +51,7 @@ It can be used both GUI and TTY in a user-friendly manner, including advanced CL
 
 - Purge / remove extra kernel modules from your system
 
-- MultiLang support with UTF8. (EN, VN, CN, ES)
+- MultiLang support with UTF8. (EN, VN, {CN, ES --- yet to be done})
 
 - Record screen with audio without any app. (Directly from gearlock with internal audio support)
 
@@ -83,7 +83,7 @@ There are three kinds of flags you can use.
 
 ## NORECOVERY
 
-This helps you bypass the recovery countdown screen. You can either put NORECOVERY=0 in your grub-config or make a file named norecovery in your android-x86 partition.
+This helps you bypass the recovery countdown screen. You can either put `NORECOVERY=1` in your grub-config or make a file named norecovery in your android-x86 partition.
 
 ### Grub config example:
 

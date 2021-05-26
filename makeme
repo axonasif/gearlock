@@ -221,10 +221,11 @@ function patch.aosp_root() {
 		fi
 		
 		if test -z "$BIGDROID_PROJECT"; then
-			local ORIG_PWD="$(pwd)"
+			local ORIG_PWD
+			ORIG_PWD="$(pwd)"
 			FILE="$FILE_PATH"
 			cd "${FILE%/*}" || handleError "Failed to change dir to ${FILE%/*}"
-			git commit -a -m "Update/apply GearLock patches for ${FILE/"$aosp_root"/}" --author="AXON <axonasif@gmail.com>" 1>/dev/null
+			git commit -a -m "$_unique_commit_msg" --author="AXON <axonasif@gmail.com>" 1>/dev/null
 			cd "$ORIG_PWD"
 		fi
 	}
@@ -240,9 +241,10 @@ function patch.aosp_root() {
 		rsync "$_execDir/installer/hook" "$HOOK_PATH" || handleError "Failed to copy hook into $HOOK_PATH"
 		(
 			test -z "$BIGDROID_PROJECT" && {
-				cd "${HOOK_PATH%/*}" || return 1
-				cd ../../ || return 1
-				git commit -a -m "Update/apply GearLock hook" --author="AXON <axonasif@gmail.com>" 1>/dev/null
+				cd "${HOOK_PATH%/*}" || handleError "Failed to apply hook"
+				cd ../../ || handleError "Failed to apply hook"
+				git add initrd/scripts/0-hook || handleError "Failed to apply hook"
+				git commit -m "Apply GearLock ${_gearlockVersionCode} initrd hook" --author="AXON <axonasif@gmail.com>" >/dev/null 2>&1
 			}
 		)
 	}
@@ -251,18 +253,26 @@ function patch.aosp_root() {
 	for _file in "${files_to_patch[@]}"; do
 		local patch_sum_file="$_execDir/.patch_sum"
 		local _sel_file="$aosp_root/$_file"
+		local _unique_commit_msg="Apply GearLock patches #1 for ${_sel_file/$aosp_root\//}"
 		test -e "$_sel_file" && {
-			if test -z "$NO_PATCH_SUM" && test -e "$patch_sum_file"; then
-				test "$(sha256sum "$_sel_file" | awk '{print $1}')" != "$(echo "$(< "$patch_sum_file")" | grep "${_sel_file##*/}" | awk '{print $2}')" && {
-					patch.apply "$_sel_file" && \
-					sed -i "s|${_sel_file##*/}.*|${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')|" "$patch_sum_file"
-				}
-			else
-				export NO_PATCH_SUM=true
-				! grep -i -E -q 'gearlock|gearinit' "$_sel_file" \
-					&& patch.apply "$_sel_file" && \
-				echo "${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')" >> "$patch_sum_file"
-			fi
+			# First checking method for ensuring that the patches are not being re-applied
+			local _git_patch_log
+			_git_patch_log="$(git -C "${_sel_file%/*}" log --no-merges --pretty=format:"%s" | grep -m1 -B9999 "^$_unique_commit_msg")"
+			test -z "$_git_patch_log" || grep -q "^Revert \"$_unique_commit_msg\"" <<<"$_git_patch_log" && {
+
+				if test -z "$NO_PATCH_SUM" && test -e "$patch_sum_file"; then
+					test "$(sha256sum "$_sel_file" | awk '{print $1}')" != "$(echo "$(< "$patch_sum_file")" | grep "${_sel_file##*/}" | awk '{print $2}')" && {
+						patch.apply "$_sel_file" && \
+						sed -i "s|${_sel_file##*/}.*|${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')|" "$patch_sum_file"
+					}
+				else
+					export NO_PATCH_SUM=true
+					! grep -i -E -q 'gearlock|gearinit' "$_sel_file" \
+						&& patch.apply "$_sel_file" && \
+					echo "${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')" >> "$patch_sum_file"
+				fi
+
+			}
 		}
 	done
 }
@@ -500,7 +510,7 @@ SEMVER_REGEX="\
 function gen.conventionalChangelog() {
 	# Gather logs
 	output="${_execDir}/CHANGELOG.md" && rm -f "$output" || exit
-	fullGitlog="$(git log --no-merges --pretty=format:"%s [[%an](https://github.com/AXIM0S/gearlock/commit/%H)]" "$@" \
+	fullGitlog="$(git log --no-merges --pretty=format:"%s [[%an](https://github.com/axonasif/gearlock/commit/%H)]" "$@" \
 				| grep -E '^feat|^fix|^perf|^refactor|^chore|^build|^ci')"
 	fixLog="$(echo "$fullGitlog" | grep '^fix.*:')"
 	featLog="$(echo "$fullGitlog" | grep '^feat.*:')"

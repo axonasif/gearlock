@@ -1,1 +1,52 @@
-! get_net_stat && exit 1; geco "+ ${_fetching_gearlock_update_info_} ..."; curl -o "$GTMP/update.sh" --silent --fail --header "PRIVATE-TOKEN: exefduQX5n1YBWo8MRjm" "https://gitlab.com/api/v4/projects/20100223/repository/files/update%2Esh/raw?ref=master" || { geco "\n- ${_failed_to_fetch_gearlock_update_info_} ..."; exit 1; }; chmod 777 "$GTMP/update.sh" && "$GTMP/update.sh"
+function gupdate (){
+! get_net_stat && geco "+ ${_Unable to connect Internet Please Try Offline-Installer_}" && exit 1; geco "+ ${_fetching_gearlock_update_info_} ..."; curl -o "$GTMP/update.sh" --silent --fail --header "PRIVATE-TOKEN: exefduQX5n1YBWo8MRjm" "https://gitlab.com/api/v4/projects/20100223/repository/files/update%2Esh/raw?ref=master" || { geco "\n- ${_failed_to_fetch_gearlock_update_info_} ..."; exit 1; }; chmod 777 "$GTMP/update.sh" && "$GTMP/update.sh"
+}
+URL="https://supreme-gamers.com/resources/gearlock-custom-recovery-replacement-for-android-x86.40"
+function gb(){
+clear && geco "+++Checking Gearlock-binary at Gearlord folder\n"
+if [ -f "$GRLOAD/gearlock" ]; then 
+geco "+++Updating Gearlock...."; sleep 2; nout rm -f "$STATDIR/update" ; chmod 777 $GRLOAD/gearlock; cd "$GRLOAD"; openvt -s ./gearlock;
+else
+geco "+++Gearlock-Binary:- ${RED}Not-Found${RC}\n"; geco "${GREEN}Visit:- $URL ${RC}"; geco "\n${BLUE}+++Link is saved at Gearload folder.${RC}";geco "\nPress Enter To Return.";read; geco $URL > $GRLOAD/glink.txt; clear && exit 1;
+fi 
+}
+function offline(){
+    if yesno "${_Notice_}" "${Offline-Update}" "You Must Place Gearlock binary in Gearload Folder" 7 60; then
+			clear && cf small
+			gb;
+			pause
+			cf big
+		fi
+}
+function fupdate(){
+
+	while true; do
+		cmd=(dialog --backtitle "$(gecpc " GearLock Update Mode " "#" )" \
+				--title "Update-Zone" \
+				--menu "Choose Action To Perform" 9 29 15)
+		options=(
+					1 "Online-Update"
+					2 "Offline-Update"
+				)
+		choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+    if [ "$?" == "1" ]; then
+	clear && exit 1; 
+	fi 
+		for choice in $choices; do
+			case $choice in
+				1) gupdate ;;
+				2) offline;;
+			esac
+		done
+	done
+}
+if [ $RECOVERY == "yes" ]; then 
+    if yesno "${_Notice_}" "${Offline-Update}" "You Must Place Gearlock binary in Gearload Folder" 7 60; then
+			clear && cf small
+			gb;
+			pause
+			cf big
+	fi
+else 
+fupdate;
+fi 

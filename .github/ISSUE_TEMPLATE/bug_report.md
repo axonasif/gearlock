@@ -8,7 +8,7 @@ assignees: axonasif
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+<!---A clear and concise description of what the bug is.--->
 
 **To Reproduce**
 Steps to reproduce the behavior:
@@ -18,7 +18,7 @@ Steps to reproduce the behavior:
 4. See error
 
 **Expected behavior**
-A clear and concise description of what you expected to happen.
+<!---A clear and concise description of what you expected to happen.--->
 
 **Desktop (please complete the following information):**
  - OS: [e.g. Android-x86, BlissOS, PhoenixOS DarkMatter]
@@ -27,11 +27,12 @@ A clear and concise description of what you expected to happen.
  - BIOS: [e.g Legacy, uEFi]
 
 **GearDump logs**
-Attach your `geardump.zip` here, if you don't know how to get it then see 👉 [this](https://wiki.supreme-gamers.com/gearlock/user-guide/getting-geardump)
+<!---Attach your `geardump.zip` here, if you don't know how to get it then see 👉 https://wiki.supreme-gamers.com/gearlock/user-guide/getting-geardump
+--->
 
 **Additional context**
-Add any other context about the problem here.
+<!---Add any other context about the problem here.--->
 
 **Screenshots**
-If applicable, add screenshots to help explain your problem.
-Not essentially required if you provided GearDump.
+<!---If applicable, add screenshots to help explain your problem.
+Not essentially required if you provided GearDump.--->

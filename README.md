@@ -146,7 +146,7 @@ If you want to build GearLock then all you gotta do is run the following command
 * From linux distros
 
 > ```bash
-> git clone https://github.com/AXIM0S/gearlock && cd gearlock && bash makeme
+> git clone https://github.com/axonasif/gearlock && cd gearlock && bash makeme
 > ```
 
 * From android-x86 distros (assuming you have GearLock installed)

@@ -67,6 +67,7 @@ function main ()
 		i915_dri.so
 		i965_dri.so
 		iris_dri.so
+		crocus_dri.so
 		nouveau_dri.so
 		r300_dri.so
 		r600_dri.so

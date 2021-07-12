@@ -30,6 +30,7 @@ i965_dri.so
 
 # Mostly vendor/lib/dri
 gallium_dri.so
+crocus_dri.so
 iris_dri.so
 nouveau_dri.so
 r300_dri.so

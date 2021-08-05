@@ -10,7 +10,7 @@ watchgrow() { lsof "$1" 2>/dev/null | grep "$1" | head -n 1 | sed -r 's/ +/ /g' 
 unMount(){
 (
 # Free loop devices to avoid read errors.
-	for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | sort -r); do mount 2>/dev/null | grep -q "^$loopDev" && umount -d "$loopDev"; done
+	for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | tac); do mount 2>/dev/null | grep -q "^$loopDev" && umount -d "$loopDev"; done
 
 # unMount img mountpoints
 	for mp in /system /data /android/system /android/data /sfs; do mountpoint -q $mp && umount $mp; done

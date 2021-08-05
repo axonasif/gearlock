@@ -24,7 +24,7 @@ function unMount(){
 		done
 
 	# Free loop devices to avoid read errors
-		for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | sort -r); do
+		for loopDev in $(mount | grep "^/dev/loop" | awk '{print $1}' | tac); do
 			mount 2>/dev/null | grep -q "^$loopDev" && umount -df "$loopDev";
 		done;
 

@@ -255,24 +255,31 @@ function patch.aosp_root() {
 		local _sel_file="$aosp_root/$_file"
 		local _unique_commit_msg="Apply GearLock patches #1 for ${_sel_file/$aosp_root\//}"
 		test -e "$_sel_file" && {
-			# First checking method for ensuring that the patches are not being re-applied
-			local _git_patch_log
-			_git_patch_log="$(git -C "${_sel_file%/*}" log --no-merges --pretty=format:"%s" | grep -m1 -B9999 "^$_unique_commit_msg")"
-			test -z "$_git_patch_log" || grep -q "^Revert \"$_unique_commit_msg\"" <<<"$_git_patch_log" && {
 
-				if test -z "$NO_PATCH_SUM" && test -e "$patch_sum_file"; then
-					test "$(sha256sum "$_sel_file" | awk '{print $1}')" != "$(echo "$(< "$patch_sum_file")" | grep "${_sel_file##*/}" | awk '{print $2}')" && {
-						patch.apply "$_sel_file" && \
-						sed -i "s|${_sel_file##*/}.*|${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')|" "$patch_sum_file"
-					}
-				else
-					export NO_PATCH_SUM=true
-					! grep -i -E -q 'gearlock|gearinit' "$_sel_file" \
-						&& patch.apply "$_sel_file" && \
-					echo "${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')" >> "$patch_sum_file"
-				fi
+			if test -v "BIGDROID_PROJECT"; then {
+				patch.apply "$_sel_file";
+			} else {
+				# First checking method for ensuring that the patches are not being re-applied
+				local _git_patch_log
+				_git_patch_log="$(git -C "${_sel_file%/*}" log --no-merges --pretty=format:"%s" | grep -m1 -B9999 "^$_unique_commit_msg")"
+				echo "+++ ${_sel_file%/*}"
+				test -z "$_git_patch_log" || grep -q "^Revert \"$_unique_commit_msg\"" <<<"$_git_patch_log" && {
 
-			}
+					if test -z "$NO_PATCH_SUM" && test -e "$patch_sum_file"; then
+						test "$(sha256sum "$_sel_file" | awk '{print $1}')" != "$(echo "$(< "$patch_sum_file")" | grep "${_sel_file##*/}" | awk '{print $2}')" && {
+							patch.apply "$_sel_file" && \
+							sed -i "s|${_sel_file##*/}.*|${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')|" "$patch_sum_file"
+						}
+					else
+						export NO_PATCH_SUM=true
+						! grep -i -E -q 'gearlock|gearinit' "$_sel_file" \
+							&& patch.apply "$_sel_file" && \
+						echo "${_sel_file##*/} $(sha256sum "$_sel_file" | awk '{print $1}')" >> "$patch_sum_file"
+					fi
+
+				}
+			} fi
+
 		}
 	done
 }

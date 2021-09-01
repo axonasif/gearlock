@@ -6,6 +6,14 @@ jobEnd(){
 	
 }
 
+cleanV8(){
+	for app in /data/app/*
+	do
+  		pkg=$(basename $app)
+  		[ -e "$app/lib/arm64" ] && [ "$(ls $app/lib/ | wc -l)" = "1" ] && echo "$pkg is armv8,it will be removed!" && pm uninstall $(echo $pkg| grep -oE "^[^-]+")
+	done
+}
+
 # Define Vars
 GETT="/system/build.prop"
 L1="ro.product.cpu.abilist="
@@ -19,6 +27,7 @@ do
     case $opt in
     "Apply Fix")
 		# Define Line to replace
+		cleanV8
 		gslr $GETT "$L1" "ro.product.cpu.abilist=x86_64,x86,armeabi-v7a,armeabi"
 		gslr $GETT "$L2" "ro.product.cpu.abilist32=x86,armeabi-v7a,armeabi"
 		gslr $GETT "$L3" "ro.product.cpu.abilist64=x86_64"

@@ -27,7 +27,8 @@ do
     case $opt in
     "Apply Fix")
 		# Define Line to replace
-		cleanV8
+		dialog --yesno "Unity fix will corrupt all arm64 apps/games\nSo its recomended to remove them\nDo you want to?" 0 0
+ && cleanV8
 		gslr $GETT "$L1" "ro.product.cpu.abilist=x86_64,x86,armeabi-v7a,armeabi"
 		gslr $GETT "$L2" "ro.product.cpu.abilist32=x86,armeabi-v7a,armeabi"
 		gslr $GETT "$L3" "ro.product.cpu.abilist64=x86_64"

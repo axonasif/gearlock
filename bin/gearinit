@@ -132,6 +132,12 @@ function boot_os(){
 	exit 0
 }
 
+function tboot_os(){
+	umount /android/data
+	mount -t tmpfs tmpfs /android/data
+	boot_os p
+}
+
 function print_ran_header(){
 	#test -e '/system/etc/hide_me' && return 0
 	clear && echo '  ___________________   _____ __________.____    ________  _________  ____  __.
@@ -170,10 +176,11 @@ function recovery_menu(){
 				--menu "\n \n Press Alt + 1 2 3 ... to switch between active windows\n \n" 15 60 15)
 		options=(
 					1 "Boot Operating System"
-					2 "Run GearLock (Recovery Mode)"
-					3 "Open Virtual Command Terminal"
-					4 "Repair /// Check File Systems"
-					5 "MidnightCommander FileManager"
+					2 "Temporary Fresh Boot Operating System"
+					3 "Run GearLock (Recovery Mode)"
+					4 "Open Virtual Command Terminal"
+					5 "Repair /// Check File Systems"
+					6 "MidnightCommander FileManager"
 				)
 		choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
 
@@ -191,10 +198,11 @@ function recovery_menu(){
 		for choice in $choices; do
 			case $choice in
 				1) boot_os p ;;
-				2) mkJob gearlock ;;
-				3) dialog --title " Creating a virtual command term " --nook --nocancel --pause "" 8 41 3 && mkJob bash -l ;;
-				4) clear && UI=true fixfs ;;
-				5) mkJob mc.gearinit ;;
+				2) tboot_os ;;
+				3) mkJob gearlock ;;
+				4) dialog --title " Creating a virtual command term " --nook --nocancel --pause "" 8 41 3 && mkJob bash -l ;;
+				5) clear && UI=true fixfs ;;
+				6) mkJob mc.gearinit ;;
 			esac
 		done
 	done

@@ -133,7 +133,7 @@ function boot_os(){
 }
 
 function tboot_os(){
-	unmount /android/data
+	umount /android/data
 	mount -t tmpfs tmpfs /android/data
 	boot_os p
 }

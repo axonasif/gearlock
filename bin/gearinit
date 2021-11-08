@@ -37,7 +37,7 @@ function load_dri(){
 		{
 			modprobe -a $(get_dev 'atkbd|hid_apple')
 			test ! -e "$OROOT/nogfx" && test -z "$NOGFX" \
-			&& modprobe -a $(get_dev 'i915|amdgpu|radeon|nouveau')
+			&& modprobe -a $(get_dev 'i915|amdgpu|radeon|nouveau|virtio_gpu')
 		}>/dev/null 2>&1
 		checkFail
 	elif [ -e "$RECOVERY_LOADER" ]; then

@@ -138,6 +138,23 @@ function tboot_os(){
 	boot_os p
 }
 
+function kselect(){
+	ls $OROOT/kernels/* 2>/dev/null || return 1
+	option=""
+	for file in $(ls "$OROOT/kernels")
+	do
+	  [ -d "/system/lib/modules/$file" ] && option="$option $file $file"
+	done
+	
+	[ -z "$option" ] && return 1
+	
+	choices=$(dialog --title " Kernel Selector " --no-tags \
+		--menu "Select a kernel" 15 60 15 \
+			$option 2>&1 >/dev/tty)
+	# Handle input
+	[ -z "$choices" ] || cp "$OROOT/kernels/$choices" "/mnt$BOOT_IMAGE"
+}
+
 function print_ran_header(){
 	#test -e '/system/etc/hide_me' && return 0
 	clear && echo '  ___________________   _____ __________.____    ________  _________  ____  __.
@@ -178,9 +195,10 @@ function recovery_menu(){
 					1 "Boot Operating System"
 					2 "Temporary Fresh Boot Operating System"
 					3 "Run GearLock (Recovery Mode)"
-					4 "Open Virtual Command Terminal"
-					5 "Repair /// Check File Systems"
-					6 "MidnightCommander FileManager"
+					4 "Kernel Selector"
+					5 "Open Virtual Command Terminal"
+					6 "Repair /// Check File Systems"
+					7 "MidnightCommander FileManager"
 				)
 		choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
 
@@ -200,9 +218,10 @@ function recovery_menu(){
 				1) boot_os p ;;
 				2) tboot_os ;;
 				3) mkJob gearlock ;;
-				4) dialog --title " Creating a virtual command term " --nook --nocancel --pause "" 8 41 3 && mkJob bash -l ;;
-				5) clear && UI=true fixfs ;;
-				6) mkJob mc.gearinit ;;
+				4) kselect ;;
+				5) dialog --title " Creating a virtual command term " --nook --nocancel --pause "" 8 41 3 && mkJob bash -l ;;
+				6) clear && UI=true fixfs ;;
+				7) mkJob mc.gearinit ;;
 			esac
 		done
 	done

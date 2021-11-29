@@ -100,7 +100,12 @@ doJob ()
 	gclone "$BD/system/" "$SYSTEM_DIR"; handleError "Failed to place files"
 
 # Backup kernel image
+    current_kernel=$(uname -r)
+    effective_kernel=$(ls "$BD/system/lib/modules/")
 	geco "\n\n+ Backing up your stock kernel image: \c" && sleep 1
+	mkdir -p "$GRROOT/kernels"
+	[ -f "$GRROOT/kernels/$current_kernel" ] || cp "$KERNEL_IMAGE" "$GRROOT/kernels/$current_kernel"
+	[ -f "$GRROOT/kernels/$effective_kernel" ] || cp "$PKG_KERNEL_IMAGE" "$GRROOT/kernels/$effective_kernel"
 	if test -f "$RESCUE_KERNEL_IMAGE"; then
 		geco "Already backed up as $(basename "$RESCUE_KERNEL_IMAGE")"
 	else

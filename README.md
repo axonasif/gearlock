@@ -141,6 +141,11 @@ Feel free to create a fork and help make this project even better.
 
 Your commits should follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0) specification, otherwise they will be rejected.
 
+You can start hacking into Gearlock by simply clicking on the button below!
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/axonasif/gearlock)
+
+
 If you want to build GearLock then all you gotta do is run the following command:
 
 * From linux distros

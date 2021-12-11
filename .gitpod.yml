@@ -1,0 +1,6 @@
+image:
+  file: .gitpod.Dockerfile
+
+tasks:
+  - name: Compile Gearlock
+    init: bash makeme

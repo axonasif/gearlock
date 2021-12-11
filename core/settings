@@ -13,7 +13,7 @@ function checklist(){
 		CHOSEN+="\"$i\" "
 	done
 	
-	echo "$CHOSEN"
+	printf '%s\n' "$CHOSEN"
 }
 
 function update_value(){ 
@@ -21,7 +21,7 @@ function update_value(){
 	if grep -q "$1=" "$GEARLOCK_RC"; then
 		sed -i "s|$1=.*|$1=\"$2\"|g" "$GEARLOCK_RC"
 	else
-		echo -e "\n$1=\"$2\"" >> "$GEARLOCK_RC"
+		printf '%s\n' "\n$1=\"$2\"" >> "$GEARLOCK_RC"
 	fi
 
 }
@@ -34,13 +34,13 @@ function set_ui_value(){
 
 	if [ "$(fetch_value "$1")" == "yes" ] || [ "$(fetch_value "$1")" == "/gearlock/etc/bootsound.wav" ] \
 	|| [ "$(fetch_value "$1")" == "metro" ] || [ "$(fetch_value "$1")" == "classic" ]; then
-		echo ON 
+		printf '%s\n' ON 
 	elif [ "$1" == NORECOVERY ] && [ -e "$GRROOT/norecovery" ]; then
-		echo ON
+		printf '%s\n' ON
 	elif [ "$1" == FIXFS ] && [ -e "$GRROOT/fixfs" ]; then
-		echo ON
+		printf '%s\n' ON
 	else
-		echo OFF
+		printf '%s\n' OFF
 	fi
 
 }
@@ -61,7 +61,7 @@ ANSWER=$( checklist "${_settings_back_title_}" " ${_settings_title_} " 6 \
 		"${LIST_OPTS[6]}" "${_settings_loadfromfs_info_}" $(set_ui_value "${LIST_OPTS[6]}") )
 
 # Convert $ANSWER into plain string
-ANSWER=( $(eval echo $ANSWER) )
+ANSWER=( $(eval printf '%s\n' $ANSWER) )
 
 }
 

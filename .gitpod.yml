@@ -1,6 +1,12 @@
 image:
   file: .gitpod.Dockerfile
 
+# List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
-  - name: Compile Gearlock
-    init: bash makeme
+  - init: make
+  - command: |
+      _file='gearlock.code-workspace';
+      _hook="$HOME/.bashrc.d/launch-cw";
+      if test ! -e "$_hook"; then {
+        printf '%s\n' "code \$GITPOD_REPO_ROOT/$_file && rm $_hook" > "$_hook";
+      } fi

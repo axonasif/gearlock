@@ -2,7 +2,7 @@
 tasks:
   - init: make
   - command: |
-      _file='platform.code-workspace';
+      _file='gearlock.code-workspace';
       _hook="$HOME/.bashrc.d/launch-cw";
       if test ! -e "$_hook"; then {
         printf '%s\n' "rm $_hook && code \$GITPOD_REPO_ROOT/$_file" > "$_hook";

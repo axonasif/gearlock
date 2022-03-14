@@ -2,6 +2,8 @@ NAME="gearlock"
 CODENAME="gearlock"
 AUTHORS=("AXON <axonasif@gmail.com>")
 VERSION="1.0"
-DEPENDENCIES=()
+DEPENDENCIES=(
+	std::b3622afd717025f0ae123faa6318c7af1db35034
+)
 REPOSITORY=""
 BASHBOX_COMPAT="0.3.9~"

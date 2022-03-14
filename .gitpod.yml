@@ -4,3 +4,7 @@ image:
 tasks:
   - name: Compile Gearlock
     init: bash makeme
+
+vscode:
+  extensions:
+    - timonwong.shellcheck

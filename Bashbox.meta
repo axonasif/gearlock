@@ -1,0 +1,7 @@
+NAME="gearlock"
+CODENAME="gearlock"
+AUTHORS=("AXON <axonasif@gmail.com>")
+VERSION="1.0"
+DEPENDENCIES=()
+REPOSITORY=""
+BASHBOX_COMPAT="0.3.9~"

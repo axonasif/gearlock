@@ -1,6 +1,10 @@
-image:
-  file: .gitpod.Dockerfile
-
 tasks:
-  - name: Compile Gearlock
-    init: bash makeme
+  - name: Install bashbox
+    before: curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall
+  - name: Compile gearlock
+    init: bashbox build --release
+vscode:
+  extensions:
+    - timonwong.shellcheck
+    - mads-hartmann.bash-ide-vscode
+    - evgeniypeshkov.syntax-highlighter

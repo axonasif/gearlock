@@ -1,9 +1,8 @@
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
-tasks:
-  - init: make
-  - command: |
-      _file='gearlock.code-workspace';
-      _hook="$HOME/.bashrc.d/launch-cw";
-      if test ! -e "$_hook"; then {
-        printf '%s\n' "rm $_hook && code \$GITPOD_REPO_ROOT/$_file" > "$_hook";
-      } fi
+  - name: Compile Gearlock
+    init: bash makeme
+
+github:
+  prebuilds:
+    addCheck: false
+

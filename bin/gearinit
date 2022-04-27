@@ -176,6 +176,9 @@ function print_ran_header(){
 	quote[7]="-- I don’t care that they stole my idea ... I care that they don’t have any of their own ... (Nikola Tesla)"
 	quote[8]="-- Seek knowledge from cradle to the grave ... (Muhammad (PBUH))"
 	quote[9]="-- You must be the change you wish to see in the world ... (Mahatma Gandhi)"
+	quote[10]="-- Slow but Steady wins the race ... (Aesop)"
+	quote[11]="-- When you have exhausted all possibilities remember this you haven't ... (Thomas Edison)"
+	quote[12]="-- Happiness is when Gearlock runs without errors ... (Night)"
 
 	echo -e "${quote["${RANDOM: -1}"]}\n\n\n\n++++ Type the word \033[1;33mg\033[0m and press \033[1;32mEnter\033[0m to run \033[1;34mgearlock\033[0m in here.\n++++ Press \033[1;35mAlt + F8\033[0m if you can't type here."
 }

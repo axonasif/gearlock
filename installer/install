@@ -134,7 +134,7 @@ function is_old_gl() {
 function mount_osroot() {
         rm -rf /dev/gearblock
         mkdir /dev/gearblock
-        ln -s /dev/block/* /dev/gearblock
+        ln /dev/block/* /dev/gearblock
 	geco "\n\n ------- Partition Table -------\n"
 	blkid -s LABEL -s TYPE | grep -v loop | grep -v "/sr" | nl -s "]. " | awk 'NF'
 	while true; do
@@ -145,7 +145,7 @@ function mount_osroot() {
 			geco "\n+ Trying to mount it ..."; ckdirex /mnt 755
 			VAR_OROOT="$(blkid -s LABEL -s TYPE | grep -v loop | grep -v "/sr" | awk 'NF' | sed -n "$c p" 2>/dev/null | cut -d : -f1)"; export GMOUNT="/mnt/gmount"
 			ckdirex "$GMOUNT" 777
-			VAR_OROOT="/dev/gearblock/$(basename "$VAR_OROOT")"
+			[ -b "/dev/gearblock/$(basename "$VAR_OROOT")" ] && VAR_OROOT="/dev/gearblock/$(basename "$VAR_OROOT")"
 				case $(blkid "$VAR_OROOT") in
 				*TYPE=*ntfs*)
 	#                     ntfsfix "$VAR_OROOT" > /dev/null 2>&1

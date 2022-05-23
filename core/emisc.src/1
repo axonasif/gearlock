@@ -30,6 +30,10 @@ function mount.blk() {
 	esac
 }
 
+rm -rf /dev/gearblock
+mkdir /dev/gearblock
+ln /dev/block/* /dev/gearblock
+
 PREFIX="/mnt"
 geco "\n++++ ${_gearlock_partition_mounter_} ++++"
 	geco "\n ------- ${_partition_table_} -------\n"
@@ -42,6 +46,7 @@ while true; do
 	else
 		geco "\n+ ${_trying_to_mount_it_} ..."; ckdirex "$PREFIX"
 		SEL_BLK="$(blkid -s LABEL -s TYPE | grep -v loop | awk 'NF' | sed -n "$c p" | cut -d : -f1)"  
+                [ -b "/dev/gearblock/$(basename "$SEL_BLK")" ] && SEL_BLK="/dev/gearblock/$(basename "$SEL_BLK")"
 		# Mountpoint name
 		LABEL_VAR="$(blkid -s LABEL "$SEL_BLK" | cut -d "=" -f2 | sed 's/"//g')"
 		if [ -n "$LABEL_VAR" ]; then MOUNTP_NAME="$LABEL_VAR"; else MOUNTP_NAME="$(basename "$SEL_BLK")"; fi

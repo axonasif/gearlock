@@ -1,6 +1,7 @@
+image:
+  file: .gitpod.Dockerfile
+
 tasks:
-  - name: Install bashbox
-    before: curl --proto '=https' --tlsv1.2 -sSfL "https://git.io/Jc9bH" | bash -s selfinstall
   - name: Compile gearlock
     init: bashbox build --release
 vscode:
@@ -8,3 +9,4 @@ vscode:
     - timonwong.shellcheck
     - mads-hartmann.bash-ide-vscode
     - evgeniypeshkov.syntax-highlighter
+    - ms-vscode.makefile-tools

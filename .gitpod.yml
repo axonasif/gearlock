@@ -10,3 +10,7 @@ vscode:
     - mads-hartmann.bash-ide-vscode
     - evgeniypeshkov.syntax-highlighter
     - ms-vscode.makefile-tools
+
+github:
+  prebuilds:
+    branches: true

@@ -51,6 +51,9 @@ function load_dri(){
 }
 
 function gpower(){
+	# sync disks first
+	echo s > /proc/sysrq-trigger 
+	
 	if [ "$1" = "poweroff" ]; then
 		echo o > /proc/sysrq-trigger
 	elif [ "$1" = "reboot" ]; then

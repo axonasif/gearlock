@@ -187,7 +187,7 @@ I will need a lot of free time to accomplish this since I'm a student, but you c
 * GearLock core-pkg: https://github.com/AXIM0S/gearlock-core-pkg
 * GearLock mesa-pkg: https://github.com/AXIM0S/gearlock-mesa-pkg
 * GearLock kernel-pkg: https://github.com/AXIM0S/gearlock-kernel-pkg
-* GearLock dev-doc: https://wiki.supreme-gamers.com/gearlock/developer-guide
+* GearLock dev-doc: https://wiki.aopc.dev/gearlock/developer-guide
 
 
 
